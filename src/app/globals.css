@@ -1,26 +1,219 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-cream: #fbf7ee;
+  --color-cream-deep: #f3ecda;
+  --color-white: #ffffff;
+  --color-gold: #c99a3f;
+  --color-gold-light: #e9c877;
+  --color-gold-deep: #a97c26;
+  --color-blue: #6f96b8;
+  --color-blue-light: #a9c6dd;
+  --color-blue-deep: #4d7291;
+  --color-sage: #8ba888;
+  --color-sage-light: #b7cdb2;
+  --color-sage-deep: #67815f;
+  --color-ink: #2c2822;
+  --color-ink-soft: #625c50;
+
+  --bg: var(--color-cream);
+  --bg-elevated: rgba(255, 255, 255, 0.72);
+  --bg-elevated-solid: #ffffff;
+  --bg-sidebar: rgba(255, 255, 255, 0.55);
+  --text-primary: var(--color-ink);
+  --text-secondary: var(--color-ink-soft);
+  --border-soft: rgba(44, 40, 34, 0.08);
+  --border-softer: rgba(44, 40, 34, 0.05);
+  --shadow-color: 30 25 15;
+  --accent-gold: var(--color-gold);
+  --accent-blue: var(--color-blue);
+  --accent-sage: var(--color-sage);
+
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+  --radius-xl: 24px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+:root[data-theme="dark"] {
+  --color-ink: #f2ede2;
+  --color-ink-soft: #c3bcae;
+
+  --bg: #191713;
+  --bg-elevated: rgba(38, 35, 30, 0.68);
+  --bg-elevated-solid: #211e19;
+  --bg-sidebar: rgba(28, 26, 22, 0.6);
+  --text-primary: #f2ede2;
+  --text-secondary: #b7ae9d;
+  --border-soft: rgba(242, 237, 226, 0.1);
+  --border-softer: rgba(242, 237, 226, 0.06);
+  --shadow-color: 0 0 0;
+  --accent-gold: #e0b455;
+  --accent-blue: #8fb3d1;
+  --accent-sage: #9dbb98;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  :root:not([data-theme="light"]) {
+    --color-ink: #f2ede2;
+    --color-ink-soft: #c3bcae;
+    --bg: #191713;
+    --bg-elevated: rgba(38, 35, 30, 0.68);
+    --bg-elevated-solid: #211e19;
+    --bg-sidebar: rgba(28, 26, 22, 0.6);
+    --text-primary: #f2ede2;
+    --text-secondary: #b7ae9d;
+    --border-soft: rgba(242, 237, 226, 0.1);
+    --border-softer: rgba(242, 237, 226, 0.06);
+    --shadow-color: 0 0 0;
+    --accent-gold: #e0b455;
+    --accent-blue: #8fb3d1;
+    --accent-sage: #9dbb98;
   }
 }
 
+@theme inline {
+  --color-cream: var(--color-cream);
+  --color-gold: var(--accent-gold);
+  --color-gold-light: var(--color-gold-light);
+  --color-gold-deep: var(--color-gold-deep);
+  --color-blue: var(--accent-blue);
+  --color-blue-light: var(--color-blue-light);
+  --color-blue-deep: var(--color-blue-deep);
+  --color-sage: var(--accent-sage);
+  --color-sage-light: var(--color-sage-light);
+  --color-sage-deep: var(--color-sage-deep);
+  --color-ink: var(--text-primary);
+  --color-ink-soft: var(--text-secondary);
+  --font-display: var(--font-display);
+  --font-sans: var(--font-sans);
+}
+
+* {
+  border-color: var(--border-soft);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background:
+    radial-gradient(ellipse 120% 80% at 10% -10%, rgba(201, 154, 63, 0.10), transparent 55%),
+    radial-gradient(ellipse 100% 70% at 100% 0%, rgba(111, 150, 184, 0.10), transparent 55%),
+    var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  transition: background-color 0.5s ease, color 0.4s ease;
+  min-height: 100dvh;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent-gold) 35%, transparent);
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--color-ink-soft) 25%, transparent);
+  border-radius: 99px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--color-ink-soft) 40%, transparent);
+  background-clip: padding-box;
+}
+
+/* Glass surfaces */
+.glass {
+  background: var(--bg-elevated);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid var(--border-soft);
+}
+
+.glass-solid {
+  background: var(--bg-elevated-solid);
+  border: 1px solid var(--border-soft);
+}
+
+.card-shadow {
+  box-shadow:
+    0 1px 2px rgba(var(--shadow-color), 0.04),
+    0 8px 24px -8px rgba(var(--shadow-color), 0.10),
+    0 20px 48px -20px rgba(var(--shadow-color), 0.12);
+}
+
+.card-shadow-hover {
+  box-shadow:
+    0 2px 4px rgba(var(--shadow-color), 0.06),
+    0 16px 32px -8px rgba(var(--shadow-color), 0.16),
+    0 28px 64px -20px rgba(var(--shadow-color), 0.20);
+}
+
+.text-gradient-gold {
+  background: linear-gradient(120deg, var(--color-gold-deep), var(--accent-gold) 45%, var(--color-gold-light));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.focus-ring {
+  outline: none;
+}
+.focus-ring:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-gold) 45%, transparent);
+}
+
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.skeleton {
+  background: linear-gradient(
+    100deg,
+    color-mix(in srgb, var(--color-ink-soft) 8%, transparent) 20%,
+    color-mix(in srgb, var(--color-ink-soft) 16%, transparent) 40%,
+    color-mix(in srgb, var(--color-ink-soft) 8%, transparent) 60%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.6s infinite linear;
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+.animate-float-slow {
+  animation: float-slow 5s ease-in-out infinite;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+/* Theme toggle view transition — expanding circle from the toggle button */
+::view-transition-old(root) {
+  animation: none;
+}
+::view-transition-new(root) {
+  animation: vt-reveal 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes vt-reveal {
+  from {
+    clip-path: circle(0% at var(--vt-x, 50%) var(--vt-y, 50%));
+  }
+  to {
+    clip-path: circle(150% at var(--vt-x, 50%) var(--vt-y, 50%));
+  }
 }
