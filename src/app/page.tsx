@@ -4,9 +4,11 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Cross } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { useLanguage } from "@/lib/language-context";
 
 export default function RootPage() {
   const { user, loading, needsSetup } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
 
   useEffect(() => {
@@ -21,7 +23,7 @@ export default function RootPage() {
         <div className="w-12 h-12 rounded-2xl bg-[var(--color-gold)] flex items-center justify-center text-white">
           <Cross size={22} />
         </div>
-        <p className="text-sm text-[var(--text-secondary)]">Loading DWKY Connect…</p>
+        <p className="text-sm text-[var(--text-secondary)]">{t("layout.loadingBrandPrefix")} DWKY Connect…</p>
       </div>
     </div>
   );

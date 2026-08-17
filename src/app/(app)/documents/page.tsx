@@ -12,7 +12,10 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { getUser, useAppStore } from "@/lib/store";
 import { useAuth } from "@/lib/auth-context";
 import { formatDate } from "@/lib/utils";
-import { uploadToDrive, driveDownloadUrl, DriveNotConfiguredError } from "@/lib/upload";
+import { uploadToDrive, driveDownloadUrl } from "@/lib/upload";
+import { useLanguage } from "@/lib/language-context";
+import { translateApiError } from "@/lib/i18n/errors";
+import { enumLabels } from "@/lib/i18n/enum-labels";
 import type { DocumentItem } from "@/lib/types";
 
 const fileIcons: Record<DocumentItem["fileType"], typeof FileText> = {
@@ -39,6 +42,7 @@ const extToFileType: Record<string, DocumentItem["fileType"]> = {
 
 export default function DocumentsPage() {
   const { user } = useAuth();
+  const { t, language } = useLanguage();
   const documentItems = useAppStore((s) => s.documentItems);
   const [category, setCategory] = useState<string>("all");
   const [query, setQuery] = useState("");
@@ -77,7 +81,7 @@ export default function DocumentsPage() {
       }
       setUploadOpen(false);
     } catch (err) {
-      setUploadError(err instanceof DriveNotConfiguredError ? err.message : err instanceof Error ? err.message : "Upload failed.");
+      setUploadError(translateApiError(err, language));
     } finally {
       setUploading(false);
       e.target.value = "";
@@ -87,12 +91,12 @@ export default function DocumentsPage() {
   return (
     <div>
       <PageHeader
-        eyebrow="Records"
-        title="Documents"
-        description="Permission forms, evaluations, progress reports, and attendance records — organized and easy to find."
+        eyebrow={t("documents.eyebrow")}
+        title={t("documents.title")}
+        description={t("documents.description")}
         actions={
           <Button onClick={() => setUploadOpen(true)}>
-            <UploadCloud size={15} /> Upload Document
+            <UploadCloud size={15} /> {t("documents.uploadDocument")}
           </Button>
         }
       />
@@ -103,7 +107,7 @@ export default function DocumentsPage() {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search documents…"
+            placeholder={t("documents.searchPlaceholder")}
             className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[var(--border-soft)] bg-transparent text-sm focus-ring focus:border-[var(--color-gold)]"
           />
         </div>
@@ -114,7 +118,7 @@ export default function DocumentsPage() {
               category === "all" ? "border-[var(--color-gold)] bg-[color-mix(in_srgb,var(--color-gold)_12%,transparent)]" : "border-[var(--border-soft)] text-[var(--text-secondary)]"
             }`}
           >
-            All
+            {t("documents.categoryAll")}
           </button>
           {categories.map((c) => (
             <button
@@ -124,7 +128,7 @@ export default function DocumentsPage() {
                 category === c ? "border-[var(--color-gold)] bg-[color-mix(in_srgb,var(--color-gold)_12%,transparent)]" : "border-[var(--border-soft)] text-[var(--text-secondary)]"
               }`}
             >
-              {c}
+              {enumLabels.documentCategory[language][c]}
             </button>
           ))}
         </div>
@@ -133,8 +137,8 @@ export default function DocumentsPage() {
       {filtered.length === 0 ? (
         <EmptyState
           icon={Folder}
-          title={documentItems.length === 0 ? "No documents yet" : "No documents found"}
-          description={documentItems.length === 0 ? "Upload the first document to this workspace." : "Try a different search term or category."}
+          title={documentItems.length === 0 ? t("documents.noDocumentsYetTitle") : t("documents.noDocumentsFoundTitle")}
+          description={documentItems.length === 0 ? t("documents.noDocumentsYetDescription") : t("documents.noDocumentsFoundDescription")}
         />
       ) : (
         <StaggerGrid className="space-y-2.5">
@@ -150,22 +154,22 @@ export default function DocumentsPage() {
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold truncate">{d.name}</p>
                   <p className="text-[11.5px] text-[var(--text-secondary)]">
-                    {uploader?.name} · {formatDate(d.uploadedAt)} · {d.size}
+                    {uploader?.name} · {formatDate(d.uploadedAt, undefined, language)} · {d.size}
                   </p>
                 </div>
-                <Badge tone="neutral" className="hidden sm:inline-flex">{d.category}</Badge>
+                <Badge tone="neutral" className="hidden sm:inline-flex">{enumLabels.documentCategory[language][d.category]}</Badge>
                 {d.driveFileId ? (
                   <a
                     href={driveDownloadUrl(d.driveFileId)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-2 rounded-lg hover:bg-black/5 text-[var(--text-secondary)] shrink-0"
-                    title="Download"
+                    title={t("documents.downloadTitle")}
                   >
                     <Download size={16} />
                   </a>
                 ) : (
-                  <button className="p-2 rounded-lg hover:bg-black/5 text-[var(--text-secondary)] shrink-0" title="Added before Google Drive was connected" disabled>
+                  <button className="p-2 rounded-lg hover:bg-black/5 text-[var(--text-secondary)] shrink-0" title={t("documents.addedBeforeDrive")} disabled>
                     <Download size={16} />
                   </button>
                 )}
@@ -175,10 +179,10 @@ export default function DocumentsPage() {
         </StaggerGrid>
       )}
 
-      <Modal open={uploadOpen} onClose={() => setUploadOpen(false)} title="Upload Document" size="sm">
+      <Modal open={uploadOpen} onClose={() => setUploadOpen(false)} title={t("documents.uploadDocument")} size="sm">
         <div className="space-y-4">
           <div>
-            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">Category</label>
+            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">{t("common.category")}</label>
             <select
               value={uploadCategory}
               onChange={(e) => setUploadCategory(e.target.value as DocumentItem["category"])}
@@ -186,7 +190,7 @@ export default function DocumentsPage() {
             >
               {categories.map((c) => (
                 <option key={c} value={c}>
-                  {c}
+                  {enumLabels.documentCategory[language][c]}
                 </option>
               ))}
             </select>
@@ -198,8 +202,8 @@ export default function DocumentsPage() {
             className="w-full border-2 border-dashed border-[var(--border-soft)] rounded-2xl py-10 flex flex-col items-center text-center hover:border-[var(--color-gold)] transition-colors disabled:opacity-60"
           >
             <UploadCloud size={28} className="text-[var(--color-gold-deep)] mb-2.5" />
-            <p className="text-sm font-semibold">{uploading ? "Uploading to Google Drive…" : "Click to choose files"}</p>
-            <p className="text-xs text-[var(--text-secondary)] mt-1">PDF, Word, or Excel · up to 4MB</p>
+            <p className="text-sm font-semibold">{uploading ? t("documents.uploadingToDrive") : t("documents.clickToChooseFiles")}</p>
+            <p className="text-xs text-[var(--text-secondary)] mt-1">{t("documents.fileTypeHint")}</p>
           </button>
           {uploadError && <p className="text-[12px] text-red-500 font-medium">{uploadError}</p>}
         </div>

@@ -10,9 +10,11 @@ import { ChildCard } from "@/components/children/ChildCard";
 import { AddChildModal } from "@/components/children/AddChildModal";
 import { useAppStore } from "@/lib/store";
 import { useAuth } from "@/lib/auth-context";
+import { useLanguage } from "@/lib/language-context";
 
 export default function ChildrenPage() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const allChildren = useAppStore((s) => s.children);
   const allClasses = useAppStore((s) => s.classes);
   const [query, setQuery] = useState("");
@@ -34,12 +36,12 @@ export default function ChildrenPage() {
   return (
     <div>
       <PageHeader
-        eyebrow="Ministry Records"
-        title="Children Portfolios"
-        description="Secure digital portfolios tracking artwork, growth, and memories for every child in your care."
+        eyebrow={t("children.eyebrow")}
+        title={t("children.pageTitle")}
+        description={t("children.pageDescription")}
         actions={
           <Button onClick={() => setAddOpen(true)} disabled={eligibleClasses.length === 0}>
-            <UserPlus size={15} /> Add Child
+            <UserPlus size={15} /> {t("children.addChildButton")}
           </Button>
         }
       />
@@ -47,8 +49,8 @@ export default function ChildrenPage() {
       {allClasses.length === 0 ? (
         <EmptyState
           icon={Users}
-          title="No classes set up yet"
-          description={user?.role === "admin" ? "Create an age group and class in the Admin panel before adding children." : "Ask your administrator to set up a class before adding children."}
+          title={t("children.noClassesTitle")}
+          description={user?.role === "admin" ? t("children.noClassesAdminDescription") : t("children.noClassesTeacherDescription")}
         />
       ) : (
         <>
@@ -58,7 +60,7 @@ export default function ChildrenPage() {
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search children…"
+                placeholder={t("children.searchPlaceholder")}
                 className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[var(--border-soft)] bg-transparent text-sm focus-ring focus:border-[var(--color-gold)]"
               />
             </div>
@@ -70,7 +72,7 @@ export default function ChildrenPage() {
                     classFilter === "all" ? "border-[var(--color-gold)] bg-[color-mix(in_srgb,var(--color-gold)_12%,transparent)]" : "border-[var(--border-soft)] text-[var(--text-secondary)]"
                   }`}
                 >
-                  All Classes
+                  {t("children.allClassesFilter")}
                 </button>
                 {visibleClasses.map((c) => (
                   <button
@@ -88,7 +90,7 @@ export default function ChildrenPage() {
           </div>
 
           {filtered.length === 0 ? (
-            <EmptyState icon={Users} title="No children yet" description="Add the first child to this class to start their portfolio." />
+            <EmptyState icon={Users} title={t("children.noChildrenTitle")} description={t("children.noChildrenDescription")} />
           ) : (
             <StaggerGrid className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
               {filtered.map((c) => (

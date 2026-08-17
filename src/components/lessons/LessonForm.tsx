@@ -5,7 +5,9 @@ import { Plus, X, MonitorPlay, FileText, Presentation, Image as ImageIcon, Link2
 import { Button } from "@/components/ui/Button";
 import { useAppStore } from "@/lib/store";
 import { newClientId } from "@/lib/utils";
-import { uploadToDrive, driveDownloadUrl, DriveNotConfiguredError } from "@/lib/upload";
+import { uploadToDrive, driveDownloadUrl } from "@/lib/upload";
+import { useLanguage } from "@/lib/language-context";
+import { translateApiError } from "@/lib/i18n/errors";
 import type { LessonAttachment, LessonPlan } from "@/lib/types";
 
 function ListEditor({ label, items, onChange, placeholder }: { label: string; items: string[]; onChange: (items: string[]) => void; placeholder: string }) {
@@ -91,6 +93,7 @@ export function LessonForm({
   onSaved: (status: "draft" | "published") => void;
 }) {
   const ageGroups = useAppStore((s) => s.ageGroups);
+  const { t, language } = useLanguage();
   const [title, setTitle] = useState(initial?.title ?? "");
   const [passage, setPassage] = useState(initial?.passage ?? "");
   const [theme, setTheme] = useState(initial?.theme ?? "");
@@ -138,7 +141,7 @@ export function LessonForm({
         ]);
       }
     } catch (err) {
-      setAttachmentError(err instanceof DriveNotConfiguredError ? err.message : err instanceof Error ? err.message : "Upload failed.");
+      setAttachmentError(translateApiError(err, language));
     } finally {
       setUploadingFiles(false);
       e.target.value = "";
@@ -188,7 +191,7 @@ export function LessonForm({
       }
       onSaved(status);
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : "Couldn't save the lesson. Please try again.");
+      setSaveError(translateApiError(err, language));
     } finally {
       setSaving(null);
     }
@@ -200,24 +203,24 @@ export function LessonForm({
 
       <section className="grid sm:grid-cols-2 gap-4">
         <div className="sm:col-span-2">
-          <Field label="Lesson Title">
-            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. David and Goliath" className={inputClass} />
+          <Field label={t("lessons.lessonTitleLabel")}>
+            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t("lessons.lessonTitlePlaceholder")} className={inputClass} />
           </Field>
         </div>
-        <Field label="Bible Passage">
-          <input value={passage} onChange={(e) => setPassage(e.target.value)} placeholder="e.g. 1 Samuel 17:1–50" className={inputClass} />
+        <Field label={t("lessons.biblePassageLabel")}>
+          <input value={passage} onChange={(e) => setPassage(e.target.value)} placeholder={t("lessons.biblePassagePlaceholder")} className={inputClass} />
         </Field>
-        <Field label="Theme">
-          <input value={theme} onChange={(e) => setTheme(e.target.value)} placeholder="e.g. Courage & Trust in God" className={inputClass} />
+        <Field label={t("lessons.themeLabel")}>
+          <input value={theme} onChange={(e) => setTheme(e.target.value)} placeholder={t("lessons.themePlaceholder")} className={inputClass} />
         </Field>
         <div className="sm:col-span-2">
-          <Field label="Memory Verse">
-            <input value={memoryVerse} onChange={(e) => setMemoryVerse(e.target.value)} placeholder="Verse text and reference" className={inputClass} />
+          <Field label={t("lessons.memoryVerse")}>
+            <input value={memoryVerse} onChange={(e) => setMemoryVerse(e.target.value)} placeholder={t("lessons.memoryVersePlaceholder")} className={inputClass} />
           </Field>
         </div>
-        <Field label="Age Group">
+        <Field label={t("lessons.ageGroup")}>
           <select value={ageGroupId} onChange={(e) => setAgeGroupId(e.target.value)} className={inputClass} disabled={ageGroups.length === 0}>
-            {ageGroups.length === 0 && <option value="">No age groups yet — ask an admin to create one</option>}
+            {ageGroups.length === 0 && <option value="">{t("lessons.noAgeGroupsOption")}</option>}
             {ageGroups.map((ag) => (
               <option key={ag.id} value={ag.id}>
                 {ag.name} ({ag.range})
@@ -225,35 +228,35 @@ export function LessonForm({
             ))}
           </select>
         </Field>
-        <Field label="Lesson Date">
+        <Field label={t("lessons.lessonDateLabel")}>
           <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputClass} />
         </Field>
       </section>
 
       <section className="space-y-5">
-        <h3 className="font-display font-semibold text-lg">Lesson Content</h3>
-        <ListEditor label="Learning Objectives" items={objectives} onChange={setObjectives} placeholder="Add an objective and press Enter" />
-        <Field label="Opening Activity">
-          <textarea value={openingActivity} onChange={(e) => setOpeningActivity(e.target.value)} rows={2} className={inputClass} placeholder="How will you open the lesson?" />
+        <h3 className="font-display font-semibold text-lg">{t("lessons.lessonContentHeading")}</h3>
+        <ListEditor label={t("lessons.learningObjectives")} items={objectives} onChange={setObjectives} placeholder={t("lessons.objectivesPlaceholder")} />
+        <Field label={t("lessons.openingActivity")}>
+          <textarea value={openingActivity} onChange={(e) => setOpeningActivity(e.target.value)} rows={2} className={inputClass} placeholder={t("lessons.openingActivityPlaceholder")} />
         </Field>
-        <Field label="Bible Story">
-          <textarea value={bibleStory} onChange={(e) => setBibleStory(e.target.value)} rows={4} className={inputClass} placeholder="Outline how you'll tell the Bible story…" />
+        <Field label={t("lessons.bibleStory")}>
+          <textarea value={bibleStory} onChange={(e) => setBibleStory(e.target.value)} rows={4} className={inputClass} placeholder={t("lessons.bibleStoryPlaceholder")} />
         </Field>
-        <ListEditor label="Discussion Questions" items={discussionQuestions} onChange={setDiscussionQuestions} placeholder="Add a discussion question and press Enter" />
-        <Field label="Craft Activity">
-          <textarea value={craftActivity} onChange={(e) => setCraftActivity(e.target.value)} rows={2} className={inputClass} placeholder="Describe the craft activity" />
+        <ListEditor label={t("lessons.discussionQuestions")} items={discussionQuestions} onChange={setDiscussionQuestions} placeholder={t("lessons.discussionQuestionsPlaceholder")} />
+        <Field label={t("lessons.craftActivity")}>
+          <textarea value={craftActivity} onChange={(e) => setCraftActivity(e.target.value)} rows={2} className={inputClass} placeholder={t("lessons.craftActivityPlaceholder")} />
         </Field>
-        <ListEditor label="Worship Songs" items={worshipSongs} onChange={setWorshipSongs} placeholder="Add a song title and press Enter" />
-        <Field label="Closing Prayer">
-          <textarea value={closingPrayer} onChange={(e) => setClosingPrayer(e.target.value)} rows={2} className={inputClass} placeholder="Write the closing prayer" />
+        <ListEditor label={t("lessons.worshipSongs")} items={worshipSongs} onChange={setWorshipSongs} placeholder={t("lessons.worshipSongsPlaceholder")} />
+        <Field label={t("lessons.closingPrayer")}>
+          <textarea value={closingPrayer} onChange={(e) => setClosingPrayer(e.target.value)} rows={2} className={inputClass} placeholder={t("lessons.closingPrayerPlaceholder")} />
         </Field>
-        <Field label="Homework / Take-Home">
-          <textarea value={homework} onChange={(e) => setHomework(e.target.value)} rows={2} className={inputClass} placeholder="Any take-home activity for families" />
+        <Field label={t("lessons.homework")}>
+          <textarea value={homework} onChange={(e) => setHomework(e.target.value)} rows={2} className={inputClass} placeholder={t("lessons.homeworkPlaceholder")} />
         </Field>
       </section>
 
       <section>
-        <h3 className="font-display font-semibold text-lg mb-3">Attachments</h3>
+        <h3 className="font-display font-semibold text-lg mb-3">{t("lessons.attachments")}</h3>
         {attachments.length > 0 && (
           <div className="space-y-2 mb-3">
             {attachments.map((a) => (
@@ -279,7 +282,7 @@ export function LessonForm({
             onClick={() => openFilePicker(".pdf")}
             className="flex items-center gap-3 px-4 py-3.5 rounded-2xl border border-dashed border-[var(--border-soft)] hover:border-[var(--color-gold)] hover:bg-[color-mix(in_srgb,var(--color-gold)_5%,transparent)] transition-colors text-sm font-medium text-[var(--text-secondary)] disabled:opacity-50"
           >
-            <FileText size={17} /> Upload PDF
+            <FileText size={17} /> {t("lessons.uploadPdf")}
           </button>
           <button
             type="button"
@@ -287,7 +290,7 @@ export function LessonForm({
             onClick={() => openFilePicker(".doc,.docx,.ppt,.pptx")}
             className="flex items-center gap-3 px-4 py-3.5 rounded-2xl border border-dashed border-[var(--border-soft)] hover:border-[var(--color-gold)] hover:bg-[color-mix(in_srgb,var(--color-gold)_5%,transparent)] transition-colors text-sm font-medium text-[var(--text-secondary)] disabled:opacity-50"
           >
-            <Presentation size={17} /> Upload PowerPoint / Word
+            <Presentation size={17} /> {t("lessons.uploadPptWord")}
           </button>
           <button
             type="button"
@@ -295,14 +298,14 @@ export function LessonForm({
             onClick={() => openFilePicker("image/*")}
             className="flex items-center gap-3 px-4 py-3.5 rounded-2xl border border-dashed border-[var(--border-soft)] hover:border-[var(--color-gold)] hover:bg-[color-mix(in_srgb,var(--color-gold)_5%,transparent)] transition-colors text-sm font-medium text-[var(--text-secondary)] disabled:opacity-50"
           >
-            <ImageIcon size={17} /> Upload Images
+            <ImageIcon size={17} /> {t("lessons.uploadImages")}
           </button>
           <button
             type="button"
             onClick={() => setYoutubeOpen((v) => !v)}
             className="flex items-center gap-3 px-4 py-3.5 rounded-2xl border border-dashed border-[var(--border-soft)] hover:border-[var(--color-gold)] hover:bg-[color-mix(in_srgb,var(--color-gold)_5%,transparent)] transition-colors text-sm font-medium text-[var(--text-secondary)]"
           >
-            <MonitorPlay size={17} /> Add YouTube Link
+            <MonitorPlay size={17} /> {t("lessons.addYoutubeLink")}
           </button>
         </div>
         {youtubeOpen && (
@@ -316,24 +319,24 @@ export function LessonForm({
               className="flex-1 text-sm px-3.5 py-2 rounded-xl border border-[var(--border-soft)] bg-transparent focus-ring focus:border-[var(--color-gold)]"
             />
             <Button type="button" variant="outline" size="sm" onClick={addYoutubeLink}>
-              Add
+              {t("common.add")}
             </Button>
           </div>
         )}
-        {uploadingFiles && <p className="text-[11px] text-[var(--color-gold-deep)] font-medium mt-3">Uploading to Google Drive…</p>}
+        {uploadingFiles && <p className="text-[11px] text-[var(--color-gold-deep)] font-medium mt-3">{t("lessons.uploadingToGoogleDrive")}</p>}
         {attachmentError && <p className="text-[11px] text-red-500 font-medium mt-3">{attachmentError}</p>}
         <p className="text-[11px] text-[var(--text-secondary)] mt-3">
-          Files are uploaded to your church&apos;s connected Google Drive (up to 4MB each).
+          {t("lessons.attachmentsUploadNote")}
         </p>
       </section>
 
       <div className="flex items-center gap-3 justify-end pt-4 border-t border-[var(--border-soft)]">
         {saveError && <p className="text-[12.5px] text-red-500 font-medium flex-1">{saveError}</p>}
         <Button variant="outline" onClick={() => handleSave("draft")} loading={saving === "draft"} disabled={!!saving || !title.trim()}>
-          Save as Draft
+          {t("lessons.saveAsDraft")}
         </Button>
         <Button onClick={() => handleSave("published")} loading={saving === "published"} disabled={!!saving || !title.trim() || !ageGroupId}>
-          Publish Lesson
+          {t("lessons.publishLesson")}
         </Button>
       </div>
     </div>

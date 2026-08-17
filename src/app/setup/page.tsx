@@ -7,10 +7,13 @@ import { Cross, Eye, EyeOff, Lock, Mail, Sparkles, User as UserIcon } from "luci
 import { useAppStore } from "@/lib/store";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/Button";
+import { useLanguage } from "@/lib/language-context";
+import { translateApiError } from "@/lib/i18n/errors";
 
 export default function SetupPage() {
   const router = useRouter();
   const { loading, needsSetup } = useAuth();
+  const { t, language } = useLanguage();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -28,15 +31,15 @@ export default function SetupPage() {
     e.preventDefault();
     setError("");
     if (!name.trim() || !email.trim()) {
-      setError("Please fill in your name and email.");
+      setError(t("auth.errorFillNameEmail"));
       return;
     }
     if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
+      setError(t("auth.errorPasswordTooShort"));
       return;
     }
     if (password !== confirm) {
-      setError("Passwords don't match.");
+      setError(t("auth.errorPasswordsDontMatch"));
       return;
     }
     setSubmitting(true);
@@ -44,7 +47,7 @@ export default function SetupPage() {
       await useAppStore.getState().createFirstAdmin({ name: name.trim(), email: email.trim(), password });
       router.push("/dashboard");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+      setError(translateApiError(err, language));
       setSubmitting(false);
     }
   }
@@ -80,46 +83,44 @@ export default function SetupPage() {
         </div>
 
         <Sparkles size={26} className="text-[var(--color-gold-deep)] mb-3" />
-        <h1 className="font-display text-2xl font-semibold mb-1.5">Set up your workspace</h1>
-        <p className="text-sm text-[var(--text-secondary)] mb-7">
-          This is a fresh DWKY Connect workspace. Create the first administrator account to get started — you'll be able to add teachers, classes, and children from here.
-        </p>
+        <h1 className="font-display text-2xl font-semibold mb-1.5">{t("auth.setupHeading")}</h1>
+        <p className="text-sm text-[var(--text-secondary)] mb-7">{t("auth.setupIntro")}</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">Your Name</label>
+            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">{t("common.name")}</label>
             <div className="relative">
               <UserIcon size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Grace Meadows"
+                placeholder={t("auth.namePlaceholder")}
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[var(--border-soft)] bg-transparent text-sm focus-ring focus:border-[var(--color-gold)] transition-colors"
               />
             </div>
           </div>
           <div>
-            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">Email address</label>
+            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">{t("common.email")}</label>
             <div className="relative">
               <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
               <input
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 type="email"
-                placeholder="you@yourchurch.org"
+                placeholder={t("auth.emailPlaceholder")}
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[var(--border-soft)] bg-transparent text-sm focus-ring focus:border-[var(--color-gold)] transition-colors"
               />
             </div>
           </div>
           <div>
-            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">Password</label>
+            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">{t("common.password")}</label>
             <div className="relative">
               <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
               <input
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 type={showPassword ? "text" : "password"}
-                placeholder="At least 8 characters"
+                placeholder={t("auth.passwordPlaceholderSetup")}
                 className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-[var(--border-soft)] bg-transparent text-sm focus-ring focus:border-[var(--color-gold)] transition-colors"
               />
               <button
@@ -132,7 +133,7 @@ export default function SetupPage() {
             </div>
           </div>
           <div>
-            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">Confirm Password</label>
+            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">{t("auth.confirmPassword")}</label>
             <input
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
@@ -144,12 +145,12 @@ export default function SetupPage() {
           {error && <p className="text-xs text-red-500 font-medium">{error}</p>}
 
           <Button type="submit" className="w-full" size="lg" loading={submitting}>
-            Create Admin Account
+            {t("auth.createAdminAccount")}
           </Button>
         </form>
 
         <p className="text-center text-[11px] text-[var(--text-secondary)] mt-6 leading-relaxed">
-          Everything you enter is stored only in this browser. There is no public registration after this — only this admin account can create teacher logins.
+          {t("auth.setupFooter")}
         </p>
       </motion.div>
     </div>

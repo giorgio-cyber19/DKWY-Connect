@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { Menu, Search, Plus, LogOut, Settings, ChevronDown, BookPlus, MessageSquarePlus, CalendarPlus, UploadCloud } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { ThemeToggle } from "./ThemeToggle";
+import { LanguageToggle } from "./LanguageToggle";
 import { NotificationCenter } from "./NotificationCenter";
 import { Avatar } from "@/components/ui/Avatar";
 
@@ -88,6 +89,7 @@ export function Topbar({ onOpenMobileSidebar, onOpenSearch }: { onOpenMobileSide
         </div>
 
         <ThemeToggle />
+        <LanguageToggle />
         <NotificationCenter />
 
         <div className="relative ml-1" ref={userRef}>

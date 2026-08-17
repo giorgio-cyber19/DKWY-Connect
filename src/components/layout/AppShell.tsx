@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { useLanguage } from "@/lib/language-context";
 import { useLiveSync } from "@/lib/use-live-sync";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
@@ -13,6 +14,7 @@ import { Cross } from "lucide-react";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user, loading, needsSetup } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -45,7 +47,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="w-12 h-12 rounded-2xl bg-[var(--color-gold)] flex items-center justify-center text-white">
             <Cross size={22} />
           </div>
-          <p className="text-sm text-[var(--text-secondary)]">Loading DWKY Connect…</p>
+          <p className="text-sm text-[var(--text-secondary)]">{t("layout.loadingBrandPrefix")} DWKY Connect…</p>
         </div>
       </div>
     );

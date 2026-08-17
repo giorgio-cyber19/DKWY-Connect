@@ -10,17 +10,19 @@ import { StaggerGrid } from "@/components/ui/Stagger";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LessonCard } from "@/components/lessons/LessonCard";
 import { useAppStore } from "@/lib/store";
+import { useLanguage } from "@/lib/language-context";
 
 export default function LessonsPage() {
   const lessonPlans = useAppStore((s) => s.lessonPlans);
   const ageGroups = useAppStore((s) => s.ageGroups);
   const [status, setStatus] = useState("all");
   const [ageGroup, setAgeGroup] = useState("all");
+  const { t } = useLanguage();
 
   const statusTabs = [
-    { id: "all", label: "All" },
-    { id: "published", label: "Published" },
-    { id: "draft", label: "Drafts" },
+    { id: "all", label: t("lessons.tabAll") },
+    { id: "published", label: t("lessons.tabPublished") },
+    { id: "draft", label: t("lessons.tabDrafts") },
   ];
 
   const filtered = useMemo(() => {
@@ -34,19 +36,19 @@ export default function LessonsPage() {
   return (
     <div>
       <PageHeader
-        eyebrow="Curriculum"
-        title="Lesson Plans"
-        description="Prepare, publish, and revisit lesson plans for every age group in the Sunday School ministry."
+        eyebrow={t("lessons.eyebrowCurriculum")}
+        title={t("lessons.pageTitle")}
+        description={t("lessons.pageDescription")}
         actions={
           <>
             <Link href="/lessons/new">
               <Button variant="outline" size="md">
-                <LayoutTemplate size={15} /> Templates
+                <LayoutTemplate size={15} /> {t("lessons.templatesButton")}
               </Button>
             </Link>
             <Link href="/lessons/new">
               <Button size="md">
-                <Plus size={15} /> New Lesson
+                <Plus size={15} /> {t("lessons.newLessonButton")}
               </Button>
             </Link>
           </>
@@ -63,7 +65,7 @@ export default function LessonsPage() {
               ageGroup === "all" ? "border-[var(--color-gold)] bg-[color-mix(in_srgb,var(--color-gold)_12%,transparent)]" : "border-[var(--border-soft)] text-[var(--text-secondary)]"
             }`}
           >
-            All Ages
+            {t("lessons.allAges")}
           </button>
           {ageGroups.map((ag) => (
             <button
@@ -82,8 +84,8 @@ export default function LessonsPage() {
       {filtered.length === 0 ? (
         <EmptyState
           icon={LayoutTemplate}
-          title={lessonPlans.length === 0 ? "No lesson plans yet" : "No lesson plans found"}
-          description={lessonPlans.length === 0 ? "Create your first lesson plan to get started." : "Try adjusting your filters, or create a new lesson plan."}
+          title={lessonPlans.length === 0 ? t("lessons.emptyNoLessonsYetTitle") : t("lessons.emptyNoLessonsFoundTitle")}
+          description={lessonPlans.length === 0 ? t("lessons.emptyNoLessonsYetDescription") : t("lessons.emptyNoLessonsFoundDescription")}
         />
       ) : (
         <StaggerGrid className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">

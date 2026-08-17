@@ -11,20 +11,24 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { PrayerCard } from "@/components/prayer/PrayerCard";
 import { useAppStore } from "@/lib/store";
 import { useAuth } from "@/lib/auth-context";
-import { uploadToDrive, DriveNotConfiguredError } from "@/lib/upload";
+import { useLanguage } from "@/lib/language-context";
+import { uploadToDrive } from "@/lib/upload";
+import { translateApiError } from "@/lib/i18n/errors";
+import { enumLabels } from "@/lib/i18n/enum-labels";
 import type { PrayerEntry } from "@/lib/types";
-
-const tabs = [
-  { id: "all", label: "All" },
-  { id: "Prayer Request", label: "Prayer Requests" },
-  { id: "Praise Report", label: "Praise Reports" },
-  { id: "Devotional", label: "Devotionals" },
-  { id: "Encouragement", label: "Encouragement" },
-];
 
 export default function PrayerPage() {
   const { user } = useAuth();
+  const { t, language } = useLanguage();
   const entries = useAppStore((s) => s.prayerEntries);
+
+  const tabs = [
+    { id: "all", label: t("prayer.tabAll") },
+    { id: "Prayer Request", label: t("prayer.tabPrayerRequests") },
+    { id: "Praise Report", label: t("prayer.tabPraiseReports") },
+    { id: "Devotional", label: t("prayer.tabDevotionals") },
+    { id: "Encouragement", label: t("prayer.tabEncouragement") },
+  ];
   const [filter, setFilter] = useState("all");
   const [draft, setDraft] = useState("");
   const [type, setType] = useState<PrayerEntry["type"]>("Prayer Request");
@@ -51,7 +55,7 @@ export default function PrayerPage() {
       setDraft("");
       setPhoto(null);
     } catch (err) {
-      setUploadError(err instanceof DriveNotConfiguredError ? err.message : err instanceof Error ? err.message : "Upload failed.");
+      setUploadError(translateApiError(err, language));
     } finally {
       setUploading(false);
     }
@@ -60,9 +64,9 @@ export default function PrayerPage() {
   return (
     <div className="max-w-2xl mx-auto">
       <PageHeader
-        eyebrow="Ministry Heart"
-        title="Prayer & Encouragement"
-        description="A dedicated space for teachers to share prayer needs, celebrate answered prayer, and encourage one another."
+        eyebrow={t("prayer.eyebrow")}
+        title={t("prayer.title")}
+        description={t("prayer.description")}
       />
 
       <Card className="p-5 mb-6">
@@ -72,7 +76,7 @@ export default function PrayerPage() {
             <textarea
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
-              placeholder="Share a prayer request, a praise report, or a word of encouragement…"
+              placeholder={t("prayer.composerPlaceholder")}
               rows={2}
               className="w-full text-sm bg-transparent outline-none resize-none placeholder:text-[var(--text-secondary)]"
             />
@@ -91,10 +95,10 @@ export default function PrayerPage() {
                 onChange={(e) => setType(e.target.value as PrayerEntry["type"])}
                 className="text-[12px] font-semibold px-2.5 py-1.5 rounded-full border border-[var(--border-soft)] bg-transparent"
               >
-                <option>Prayer Request</option>
-                <option>Praise Report</option>
-                <option>Devotional</option>
-                <option>Encouragement</option>
+                <option value="Prayer Request">{enumLabels.prayerType[language]["Prayer Request"]}</option>
+                <option value="Praise Report">{enumLabels.prayerType[language]["Praise Report"]}</option>
+                <option value="Devotional">{enumLabels.prayerType[language].Devotional}</option>
+                <option value="Encouragement">{enumLabels.prayerType[language].Encouragement}</option>
               </select>
               <div className="flex items-center gap-2">
                 <input
@@ -107,15 +111,15 @@ export default function PrayerPage() {
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   className="p-2 rounded-full hover:bg-black/5 text-[var(--color-sage-deep)]"
-                  title="Attach a photo"
+                  title={t("prayer.attachPhotoTitle")}
                 >
                   <ImagePlus size={16} />
                 </button>
-                <button className="p-2 rounded-full hover:bg-black/5 text-[var(--color-blue-deep)]" title="Record voice message (not available yet)" disabled>
+                <button className="p-2 rounded-full hover:bg-black/5 text-[var(--color-blue-deep)]" title={t("prayer.recordVoiceTitle")} disabled>
                   <Mic size={16} />
                 </button>
                 <Button size="sm" onClick={submit} disabled={!draft.trim() || uploading} loading={uploading}>
-                  <Send size={13} /> Share
+                  <Send size={13} /> {t("prayer.shareButton")}
                 </Button>
               </div>
             </div>
@@ -126,7 +130,7 @@ export default function PrayerPage() {
       <Tabs tabs={tabs} active={filter} onChange={setFilter} className="mb-6 flex-wrap" />
 
       {filtered.length === 0 ? (
-        <EmptyState icon={HeartHandshake} title="Nothing here yet" description="Share the first prayer request, praise report, or word of encouragement." />
+        <EmptyState icon={HeartHandshake} title={t("prayer.emptyTitle")} description={t("prayer.emptyDescription")} />
       ) : (
         <StaggerGrid className="space-y-5">
           {filtered.map((e) => (

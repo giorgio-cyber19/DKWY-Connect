@@ -5,8 +5,10 @@ import Link from "next/link";
 import { CheckCircle2, CloudOff, RefreshCw, HardDrive, ArrowRight } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { useLanguage } from "@/lib/language-context";
 
 export function DriveStatusCard() {
+  const { t } = useLanguage();
   const [status, setStatus] = useState<"loading" | "connected" | "not_connected">("loading");
 
   async function checkStatus() {
@@ -27,22 +29,22 @@ export function DriveStatusCard() {
   return (
     <Card className="p-6">
       <h3 className="font-display font-semibold text-lg mb-4 flex items-center gap-2">
-        <HardDrive size={18} /> Google Drive Storage
+        <HardDrive size={18} /> {t("settings.driveTitle")}
       </h3>
 
-      {status === "loading" && <p className="text-sm text-[var(--text-secondary)]">Checking connection…</p>}
+      {status === "loading" && <p className="text-sm text-[var(--text-secondary)]">{t("settings.checkingConnection")}</p>}
 
       {status === "connected" && (
         <div className="flex items-center gap-3 p-3.5 rounded-xl bg-[color-mix(in_srgb,var(--color-sage)_10%,transparent)] border border-[color-mix(in_srgb,var(--color-sage)_25%,transparent)]">
           <CheckCircle2 size={20} className="text-[var(--color-sage-deep)] shrink-0" />
           <div className="flex-1">
-            <p className="text-sm font-semibold">Connected</p>
+            <p className="text-sm font-semibold">{t("settings.connected")}</p>
             <p className="text-[12px] text-[var(--text-secondary)]">
-              Media, documents, lesson attachments, and child portfolio files upload to your church&apos;s Google Drive.
+              {t("settings.connectedDescription")}
             </p>
           </div>
           <Link href="/admin/connect-google-drive" className="text-[11px] font-semibold text-[var(--color-sage-deep)] flex items-center gap-1 shrink-0">
-            Manage <ArrowRight size={11} />
+            {t("settings.manage")} <ArrowRight size={11} />
           </Link>
         </div>
       )}
@@ -52,16 +54,16 @@ export function DriveStatusCard() {
           <div className="flex items-center gap-3 p-3.5 rounded-xl bg-[color-mix(in_srgb,var(--color-gold)_10%,transparent)] border border-[color-mix(in_srgb,var(--color-gold)_25%,transparent)]">
             <CloudOff size={20} className="text-[var(--color-gold-deep)] shrink-0" />
             <div>
-              <p className="text-sm font-semibold">Not connected yet</p>
-              <p className="text-[12px] text-[var(--text-secondary)]">File uploads are disabled until Google Drive is connected.</p>
+              <p className="text-sm font-semibold">{t("settings.notConnected")}</p>
+              <p className="text-[12px] text-[var(--text-secondary)]">{t("settings.notConnectedDescription")}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <Link href="/admin/connect-google-drive">
-              <Button size="sm">Connect Google Drive</Button>
+              <Button size="sm">{t("settings.connectDrive")}</Button>
             </Link>
             <Button size="sm" variant="outline" onClick={checkStatus}>
-              <RefreshCw size={13} /> Re-check
+              <RefreshCw size={13} /> {t("settings.recheck")}
             </Button>
           </div>
         </div>

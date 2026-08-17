@@ -10,9 +10,12 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { ChildCard } from "@/components/children/ChildCard";
 import { useAuth } from "@/lib/auth-context";
 import { getAgeGroup, useAppStore } from "@/lib/store";
+import { useLanguage } from "@/lib/language-context";
+import { enumLabels } from "@/lib/i18n/enum-labels";
 
 export default function MyClassPage() {
   const { user } = useAuth();
+  const { t, language } = useLanguage();
   const children = useAppStore((s) => s.children);
   const classes = useAppStore((s) => s.classes);
   const lessonPlans = useAppStore((s) => s.lessonPlans);
@@ -23,9 +26,9 @@ export default function MyClassPage() {
   if (user.role === "admin" || !myClass) {
     return (
       <div>
-        <PageHeader eyebrow="Ministry Overview" title="All Classes" description="As an administrator, here's a summary of every class in the Sunday School ministry." />
+        <PageHeader eyebrow={t("myClass.allClassesEyebrow")} title={t("myClass.allClassesTitle")} description={t("myClass.allClassesDescription")} />
         {classes.length === 0 ? (
-          <EmptyState icon={Users} title="No classes yet" description="Create an age group and a class in the Admin panel to get started." />
+          <EmptyState icon={Users} title={t("myClass.noClassesTitle")} description={t("myClass.noClassesDescription")} />
         ) : (
           <StaggerGrid className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {classes.map((c) => {
@@ -37,7 +40,7 @@ export default function MyClassPage() {
                   </div>
                   <h3 className="font-display font-semibold text-lg">{c.name}</h3>
                   <p className="text-[12.5px] text-[var(--text-secondary)] mb-3">{ageGroup?.name} · {c.room}</p>
-                  <p className="text-sm font-semibold">{c.childCount} children</p>
+                  <p className="text-sm font-semibold">{c.childCount} {t("myClass.childrenSuffix")}</p>
                 </Card>
               );
             })}
@@ -53,7 +56,7 @@ export default function MyClassPage() {
 
   return (
     <div>
-      <PageHeader eyebrow="Your Ministry" title={myClass.name} description={`${ageGroup?.name} (${ageGroup?.range}) · ${myClass.room}`} />
+      <PageHeader eyebrow={t("myClass.yourMinistryEyebrow")} title={myClass.name} description={`${ageGroup?.name} (${ageGroup?.range}) · ${myClass.room}`} />
 
       <div className="grid sm:grid-cols-3 gap-4 mb-8">
         <Card className="p-5 flex items-center gap-3.5">
@@ -62,7 +65,7 @@ export default function MyClassPage() {
           </div>
           <div>
             <p className="font-display text-xl font-semibold leading-none">{myChildren.length}</p>
-            <p className="text-[11.5px] text-[var(--text-secondary)] mt-1">Children enrolled</p>
+            <p className="text-[11.5px] text-[var(--text-secondary)] mt-1">{t("myClass.childrenEnrolled")}</p>
           </div>
         </Card>
         <Card className="p-5 flex items-center gap-3.5">
@@ -71,7 +74,7 @@ export default function MyClassPage() {
           </div>
           <div>
             <p className="font-display text-xl font-semibold leading-none">{myLessons.length}</p>
-            <p className="text-[11.5px] text-[var(--text-secondary)] mt-1">Lesson plans</p>
+            <p className="text-[11.5px] text-[var(--text-secondary)] mt-1">{t("myClass.lessonPlansStat")}</p>
           </div>
         </Card>
         <Card className="p-5 flex items-center gap-3.5">
@@ -80,20 +83,20 @@ export default function MyClassPage() {
           </div>
           <div>
             <p className="font-display text-xl font-semibold leading-none">{myClass.room}</p>
-            <p className="text-[11.5px] text-[var(--text-secondary)] mt-1">Meeting room</p>
+            <p className="text-[11.5px] text-[var(--text-secondary)] mt-1">{t("myClass.meetingRoom")}</p>
           </div>
         </Card>
       </div>
 
       <section className="mb-8">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-display text-xl font-semibold">Class Roster</h2>
+          <h2 className="font-display text-xl font-semibold">{t("myClass.classRoster")}</h2>
           <Link href="/children" className="text-xs font-semibold text-[var(--color-blue-deep)]">
-            View all portfolios
+            {t("myClass.viewAllPortfolios")}
           </Link>
         </div>
         {myChildren.length === 0 ? (
-          <EmptyState icon={Users} title="No children enrolled yet" />
+          <EmptyState icon={Users} title={t("myClass.noChildrenEnrolled")} />
         ) : (
           <StaggerGrid className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
             {myChildren.map((c) => (
@@ -105,13 +108,13 @@ export default function MyClassPage() {
 
       <section>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-display text-xl font-semibold">Your Lesson Plans</h2>
+          <h2 className="font-display text-xl font-semibold">{t("myClass.yourLessonPlans")}</h2>
           <Link href="/lessons" className="text-xs font-semibold text-[var(--color-blue-deep)]">
-            View all
+            {t("common.viewAll")}
           </Link>
         </div>
         {myLessons.length === 0 ? (
-          <EmptyState icon={Sparkles} title="No lesson plans yet" description="Create your first lesson plan for this age group." />
+          <EmptyState icon={Sparkles} title={t("myClass.noLessonPlansTitle")} description={t("myClass.noLessonPlansDescription")} />
         ) : (
         <div className="space-y-2.5">
           {myLessons.map((l) => (
@@ -124,7 +127,7 @@ export default function MyClassPage() {
                   <p className="text-sm font-semibold truncate">{l.title}</p>
                   <p className="text-[11.5px] text-[var(--text-secondary)]">{l.passage}</p>
                 </div>
-                <Badge tone={l.status === "published" ? "sage" : "neutral"}>{l.status}</Badge>
+                <Badge tone={l.status === "published" ? "sage" : "neutral"}>{enumLabels.lessonStatus[language][l.status]}</Badge>
               </Card>
             </Link>
           ))}

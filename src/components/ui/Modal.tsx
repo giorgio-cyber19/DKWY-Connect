@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { X } from "lucide-react";
 import { useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/lib/language-context";
 
 export function Modal({
   open,
@@ -20,6 +21,8 @@ export function Modal({
   className?: string;
   size?: "sm" | "md" | "lg" | "xl";
 }) {
+  const { t } = useLanguage();
+
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -62,7 +65,7 @@ export function Modal({
                 <button
                   onClick={onClose}
                   className="p-1.5 rounded-full hover:bg-[color-mix(in_srgb,var(--color-ink)_8%,transparent)] transition-colors focus-ring"
-                  aria-label="Close"
+                  aria-label={t("common.close")}
                 >
                   <X size={18} />
                 </button>

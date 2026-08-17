@@ -15,21 +15,22 @@ import {
 
 export interface NavItem {
   href: string;
+  /** A TranslationKey string (e.g. "layout.navDashboard"), not raw display text. */
   label: string;
   icon: LucideIcon;
   adminOnly?: boolean;
 }
 
 export const navItems: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/lessons", label: "Lesson Plans", icon: BookOpen },
-  { href: "/updates", label: "Teacher Updates", icon: MessagesSquare },
-  { href: "/children", label: "Children Portfolios", icon: Users },
-  { href: "/media", label: "Media Library", icon: ImageIcon },
-  { href: "/documents", label: "Documents", icon: FileText },
-  { href: "/calendar", label: "Calendar", icon: CalendarDays },
-  { href: "/prayer", label: "Prayer & Encouragement", icon: HeartHandshake },
-  { href: "/my-class", label: "My Class", icon: GraduationCap },
-  { href: "/settings", label: "Settings", icon: Settings },
-  { href: "/admin", label: "Admin", icon: ShieldCheck, adminOnly: true },
+  { href: "/dashboard", label: "layout.navDashboard", icon: LayoutDashboard },
+  { href: "/lessons", label: "layout.navLessons", icon: BookOpen },
+  { href: "/updates", label: "layout.navUpdates", icon: MessagesSquare },
+  { href: "/children", label: "layout.navChildren", icon: Users },
+  { href: "/media", label: "layout.navMedia", icon: ImageIcon },
+  { href: "/documents", label: "layout.navDocuments", icon: FileText },
+  { href: "/calendar", label: "layout.navCalendar", icon: CalendarDays },
+  { href: "/prayer", label: "layout.navPrayer", icon: HeartHandshake },
+  { href: "/my-class", label: "layout.navMyClass", icon: GraduationCap },
+  { href: "/settings", label: "layout.navSettings", icon: Settings },
+  { href: "/admin", label: "layout.navAdmin", icon: ShieldCheck, adminOnly: true },
 ];

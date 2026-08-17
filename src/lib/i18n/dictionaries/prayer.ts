@@ -1,0 +1,41 @@
+const en = {
+  eyebrow: "Ministry Heart",
+  title: "Prayer & Encouragement",
+  description: "A dedicated space for teachers to share prayer needs, celebrate answered prayer, and encourage one another.",
+  composerPlaceholder: "Share a prayer request, a praise report, or a word of encouragement…",
+  attachPhotoTitle: "Attach a photo",
+  recordVoiceTitle: "Record voice message (not available yet)",
+  shareButton: "Share",
+  tabAll: "All",
+  tabPrayerRequests: "Prayer Requests",
+  tabPraiseReports: "Praise Reports",
+  tabDevotionals: "Devotionals",
+  tabEncouragement: "Encouragement",
+  emptyTitle: "Nothing here yet",
+  emptyDescription: "Share the first prayer request, praise report, or word of encouragement.",
+  viewAttachedPhoto: "View attached photo",
+  prayedForThis: "You prayed for this",
+  prayForThis: "I prayed for this",
+};
+
+const nl: typeof en = {
+  eyebrow: "Hart voor Bediening",
+  title: "Gebed & Bemoediging",
+  description: "Een plek voor docenten om gebedsverzoeken te delen, verhoord gebed te vieren en elkaar te bemoedigen.",
+  composerPlaceholder: "Deel een gebedsverzoek, een lofverslag of een bemoedigend woord…",
+  attachPhotoTitle: "Foto toevoegen",
+  recordVoiceTitle: "Spraakbericht opnemen (nog niet beschikbaar)",
+  shareButton: "Delen",
+  tabAll: "Alles",
+  tabPrayerRequests: "Gebedsverzoeken",
+  tabPraiseReports: "Lofverslagen",
+  tabDevotionals: "Overdenkingen",
+  tabEncouragement: "Bemoediging",
+  emptyTitle: "Nog niets hier",
+  emptyDescription: "Deel het eerste gebedsverzoek, lofverslag of bemoedigend woord.",
+  viewAttachedPhoto: "Bekijk bijgevoegde foto",
+  prayedForThis: "Je hebt hiervoor gebeden",
+  prayForThis: "Ik bid hiervoor",
+};
+
+export const prayer = { en, nl };

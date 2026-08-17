@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import type { Language } from "./i18n";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -40,8 +41,10 @@ export function parseDate(iso: string): Date {
   return new Date(y, (m ?? 1) - 1, d ?? 1);
 }
 
-export function formatDate(iso: string, opts?: Intl.DateTimeFormatOptions) {
-  return parseDate(iso).toLocaleDateString("en-US", {
+const localeMap: Record<Language, string> = { en: "en-US", nl: "nl-NL" };
+
+export function formatDate(iso: string, opts?: Intl.DateTimeFormatOptions, language: Language = "en") {
+  return parseDate(iso).toLocaleDateString(localeMap[language], {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -49,16 +52,34 @@ export function formatDate(iso: string, opts?: Intl.DateTimeFormatOptions) {
   });
 }
 
-export function timeAgo(iso: string) {
+const relativeTime: Record<Language, { justNow: string; minutes: (n: number) => string; hours: (n: number) => string; days: (n: number) => string; weeks: (n: number) => string }> = {
+  en: {
+    justNow: "just now",
+    minutes: (n) => `${n}m ago`,
+    hours: (n) => `${n}h ago`,
+    days: (n) => `${n}d ago`,
+    weeks: (n) => `${n}w ago`,
+  },
+  nl: {
+    justNow: "zojuist",
+    minutes: (n) => `${n}m geleden`,
+    hours: (n) => `${n}u geleden`,
+    days: (n) => `${n}d geleden`,
+    weeks: (n) => `${n}w geleden`,
+  },
+};
+
+export function timeAgo(iso: string, language: Language = "en") {
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
+  const t = relativeTime[language];
+  if (mins < 1) return t.justNow;
+  if (mins < 60) return t.minutes(mins);
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
+  if (hrs < 24) return t.hours(hrs);
   const days = Math.floor(hrs / 24);
-  if (days < 7) return `${days}d ago`;
+  if (days < 7) return t.days(days);
   const weeks = Math.floor(days / 7);
-  if (weeks < 5) return `${weeks}w ago`;
-  return formatDate(iso);
+  if (weeks < 5) return t.weeks(weeks);
+  return formatDate(iso, undefined, language);
 }

@@ -9,8 +9,10 @@ import { Avatar } from "@/components/ui/Avatar";
 import { StaggerItem } from "@/components/ui/Stagger";
 import { getUser, useAppStore } from "@/lib/store";
 import { useAuth } from "@/lib/auth-context";
+import { useLanguage } from "@/lib/language-context";
 import { timeAgo } from "@/lib/utils";
 import { driveDownloadUrl } from "@/lib/upload";
+import { enumLabels } from "@/lib/i18n/enum-labels";
 import type { PrayerEntry } from "@/lib/types";
 
 const typeTone = {
@@ -23,6 +25,7 @@ const typeTone = {
 export function PrayerCard({ entry }: { entry: PrayerEntry }) {
   const author = getUser(entry.authorId);
   const { user } = useAuth();
+  const { t, language } = useLanguage();
   const [playing, setPlaying] = useState(false);
   const prayed = !!user && entry.prayedByUserIds.includes(user.id);
   const count = entry.prayedByUserIds.length;
@@ -37,8 +40,8 @@ export function PrayerCard({ entry }: { entry: PrayerEntry }) {
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold">{author.name}</p>
             <div className="flex items-center gap-2">
-              <Badge tone={typeTone[entry.type]}>{entry.type}</Badge>
-              <span className="text-[11px] text-[var(--text-secondary)]">{timeAgo(entry.date)}</span>
+              <Badge tone={typeTone[entry.type]}>{enumLabels.prayerType[language][entry.type]}</Badge>
+              <span className="text-[11px] text-[var(--text-secondary)]">{timeAgo(entry.date, language)}</span>
             </div>
           </div>
         </div>
@@ -55,7 +58,7 @@ export function PrayerCard({ entry }: { entry: PrayerEntry }) {
             rel="noopener noreferrer"
             className="mt-3.5 flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-[color-mix(in_srgb,var(--color-sage)_10%,transparent)] hover:bg-[color-mix(in_srgb,var(--color-sage)_16%,transparent)] transition-colors text-[12.5px] font-medium text-[var(--color-sage-deep)]"
           >
-            <ImageIcon size={15} /> View attached photo
+            <ImageIcon size={15} /> {t("prayer.viewAttachedPhoto")}
           </a>
         )}
 
@@ -92,7 +95,7 @@ export function PrayerCard({ entry }: { entry: PrayerEntry }) {
           <motion.span whileTap={{ scale: 1.3 }}>
             <HandHeart size={15} />
           </motion.span>
-          {prayed ? "You prayed for this" : "I prayed for this"} · {count}
+          {prayed ? t("prayer.prayedForThis") : t("prayer.prayForThis")} · {count}
         </button>
       </Card>
     </StaggerItem>

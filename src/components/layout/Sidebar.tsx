@@ -6,6 +6,8 @@ import { motion } from "framer-motion";
 import { Cross, ChevronsLeft, X } from "lucide-react";
 import { navItems } from "./nav-items";
 import { useAuth } from "@/lib/auth-context";
+import { useLanguage } from "@/lib/language-context";
+import type { TranslationKey } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 export function Sidebar({
@@ -21,6 +23,7 @@ export function Sidebar({
 }) {
   const pathname = usePathname();
   const { user } = useAuth();
+  const { t } = useLanguage();
 
   const items = navItems.filter((item) => !item.adminOnly || user?.role === "admin");
 
@@ -58,7 +61,7 @@ export function Sidebar({
                 collapsed && "justify-center px-0",
                 active ? "text-[var(--color-gold-deep)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
               )}
-              title={collapsed ? item.label : undefined}
+              title={collapsed ? t(item.label as TranslationKey) : undefined}
             >
               {active && (
                 <motion.div
@@ -74,7 +77,7 @@ export function Sidebar({
                     animate={{ opacity: 1, width: "auto" }}
                     className="relative whitespace-nowrap overflow-hidden"
                   >
-                    {item.label}
+                    {t(item.label as TranslationKey)}
                   </motion.span>
                 )}
             </Link>
@@ -90,7 +93,7 @@ export function Sidebar({
           <motion.span animate={{ rotate: collapsed ? 180 : 0 }} transition={{ duration: 0.3 }}>
             <ChevronsLeft size={17} />
           </motion.span>
-          {!collapsed && "Collapse"}
+          {!collapsed && t("layout.sidebarCollapse")}
         </button>
       </div>
     </div>

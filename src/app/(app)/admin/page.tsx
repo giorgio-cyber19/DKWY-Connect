@@ -10,27 +10,29 @@ import { AdminTeachers } from "@/components/admin/AdminTeachers";
 import { AdminClasses } from "@/components/admin/AdminClasses";
 import { AdminModeration } from "@/components/admin/AdminModeration";
 import { useAuth } from "@/lib/auth-context";
-
-const tabs = [
-  { id: "overview", label: "Overview" },
-  { id: "teachers", label: "Teachers" },
-  { id: "classes", label: "Classes" },
-  { id: "moderation", label: "Moderation & Logs" },
-];
+import { useLanguage } from "@/lib/language-context";
 
 export default function AdminPage() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [tab, setTab] = useState("overview");
+
+  const tabs = [
+    { id: "overview", label: t("admin.tabOverview") },
+    { id: "teachers", label: t("admin.tabTeachers") },
+    { id: "classes", label: t("admin.tabClasses") },
+    { id: "moderation", label: t("admin.tabModeration") },
+  ];
 
   if (!user) return null;
 
   if (user.role !== "admin") {
-    return <EmptyState icon={ShieldOff} title="Administrator access required" description="This area is only available to Sunday School administrators." />;
+    return <EmptyState icon={ShieldOff} title={t("admin.pageAccessDeniedTitle")} description={t("admin.pageAccessDeniedDescription")} />;
   }
 
   return (
     <div>
-      <PageHeader eyebrow="Ministry Management" title="Admin Panel" description="Manage teachers, classes, content, and view ministry-wide analytics." />
+      <PageHeader eyebrow={t("admin.pageEyebrow")} title={t("admin.pageTitle")} description={t("admin.pageDescription")} />
       <Tabs tabs={tabs} active={tab} onChange={setTab} className="mb-6 flex-wrap" />
       {tab === "overview" && <AdminAnalytics />}
       {tab === "teachers" && <AdminTeachers />}

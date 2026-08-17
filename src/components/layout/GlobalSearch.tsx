@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Search, BookOpen, Users, MessagesSquare, FileText, Image as ImageIcon, UserCircle, CornerDownLeft } from "lucide-react";
 import { useAppStore } from "@/lib/store";
+import { useLanguage } from "@/lib/language-context";
 
 interface Result {
   id: string;
@@ -16,6 +17,7 @@ interface Result {
 }
 
 export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { t, language } = useLanguage();
   const [query, setQuery] = useState("");
   const router = useRouter();
   const children = useAppStore((s) => s.children);
@@ -36,37 +38,38 @@ export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => 
 
     children.forEach((c) => {
       if (c.name.toLowerCase().includes(q)) {
-        out.push({ id: c.id, title: c.name, subtitle: "Child Portfolio", href: `/children/${c.id}`, icon: Users, category: "Children" });
+        out.push({ id: c.id, title: c.name, subtitle: t("layout.searchSubtitleChildPortfolio"), href: `/children/${c.id}`, icon: Users, category: t("layout.searchCategoryChildren") });
       }
     });
     lessonPlans.forEach((l) => {
       if (l.title.toLowerCase().includes(q) || l.passage.toLowerCase().includes(q) || l.theme.toLowerCase().includes(q)) {
-        out.push({ id: l.id, title: l.title, subtitle: l.passage, href: `/lessons/${l.id}`, icon: BookOpen, category: "Lesson Plans" });
+        out.push({ id: l.id, title: l.title, subtitle: l.passage, href: `/lessons/${l.id}`, icon: BookOpen, category: t("layout.searchCategoryLessons") });
       }
     });
     posts.forEach((p) => {
       if (p.content.toLowerCase().includes(q)) {
-        out.push({ id: p.id, title: p.type, subtitle: p.content.slice(0, 60) + "…", href: "/updates", icon: MessagesSquare, category: "Teacher Updates" });
+        out.push({ id: p.id, title: p.type, subtitle: p.content.slice(0, 60) + "…", href: "/updates", icon: MessagesSquare, category: t("layout.searchCategoryUpdates") });
       }
     });
     documentItems.forEach((d) => {
       if (d.name.toLowerCase().includes(q)) {
-        out.push({ id: d.id, title: d.name, subtitle: d.category, href: "/documents", icon: FileText, category: "Documents" });
+        out.push({ id: d.id, title: d.name, subtitle: d.category, href: "/documents", icon: FileText, category: t("layout.searchCategoryDocuments") });
       }
     });
     mediaItems.forEach((m) => {
-      if (m.name.toLowerCase().includes(q) || m.tags.some((t) => t.includes(q))) {
-        out.push({ id: m.id, title: m.name, subtitle: m.folder, href: "/media", icon: ImageIcon, category: "Media" });
+      if (m.name.toLowerCase().includes(q) || m.tags.some((tag) => tag.includes(q))) {
+        out.push({ id: m.id, title: m.name, subtitle: m.folder, href: "/media", icon: ImageIcon, category: t("layout.searchCategoryMedia") });
       }
     });
     users.forEach((u) => {
       if (u.name.toLowerCase().includes(q) || u.title.toLowerCase().includes(q)) {
-        out.push({ id: u.id, title: u.name, subtitle: u.title, href: "/my-class", icon: UserCircle, category: "Teachers" });
+        out.push({ id: u.id, title: u.name, subtitle: u.title, href: "/my-class", icon: UserCircle, category: t("layout.searchCategoryTeachers") });
       }
     });
 
     return out.slice(0, 8);
-  }, [query, children, lessonPlans, posts, documentItems, mediaItems, users]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, children, lessonPlans, posts, documentItems, mediaItems, users, language]);
 
   useEffect(() => {
     if (!open) return;
@@ -104,7 +107,7 @@ export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => 
                 autoFocus
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search children, lessons, updates, documents, media, teachers…"
+                placeholder={t("layout.searchPlaceholder")}
                 className="flex-1 bg-transparent text-sm outline-none placeholder:text-[var(--text-secondary)]"
               />
               <kbd className="text-[10px] px-1.5 py-0.5 rounded border border-[var(--border-soft)] text-[var(--text-secondary)]">Esc</kbd>
@@ -112,10 +115,10 @@ export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => 
 
             <div className="max-h-[50vh] overflow-y-auto">
               {query && results.length === 0 && (
-                <p className="text-sm text-[var(--text-secondary)] text-center py-10">No results for "{query}"</p>
+                <p className="text-sm text-[var(--text-secondary)] text-center py-10">{t("layout.noResultsForPrefix")} "{query}"</p>
               )}
               {!query && (
-                <p className="text-sm text-[var(--text-secondary)] text-center py-10">Start typing to search across DWKY Connect…</p>
+                <p className="text-sm text-[var(--text-secondary)] text-center py-10">{t("layout.startTypingSearch")}</p>
               )}
               {results.map((r) => {
                 const Icon = r.icon;

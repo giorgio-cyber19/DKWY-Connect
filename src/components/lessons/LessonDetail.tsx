@@ -31,6 +31,8 @@ import { Modal } from "@/components/ui/Modal";
 import { LessonForm } from "@/components/lessons/LessonForm";
 import { getAgeGroup, getUser, useAppStore } from "@/lib/store";
 import { formatDate } from "@/lib/utils";
+import { useLanguage } from "@/lib/language-context";
+import { enumLabels } from "@/lib/i18n/enum-labels";
 import type { LessonPlan } from "@/lib/types";
 
 const attachmentIcons = { pdf: FileText, docx: FileText, pptx: Presentation, image: ImageIcon, youtube: MonitorPlay };
@@ -53,11 +55,12 @@ export function LessonDetail({ lesson }: { lesson: LessonPlan }) {
   const [editOpen, setEditOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const status = lesson.status;
+  const { t, language } = useLanguage();
 
   return (
     <div>
       <Link href="/lessons" className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] mb-5">
-        <ArrowLeft size={15} /> Back to Lesson Plans
+        <ArrowLeft size={15} /> {t("lessons.backToLessonPlans")}
       </Link>
 
       <motion.div
@@ -70,7 +73,7 @@ export function LessonDetail({ lesson }: { lesson: LessonPlan }) {
         <div className="flex items-center gap-2 mb-3">
           <Badge tone={status === "published" ? "sage" : "neutral"} className="bg-white/90 !text-[var(--color-ink)]">
             {status === "published" ? <CheckCircle2 size={11} /> : <PenLine size={11} />}
-            {status === "published" ? "Published" : "Draft"}
+            {enumLabels.lessonStatus[language][status]}
           </Badge>
           <Badge className="bg-white/20 !text-white">{ageGroup?.name}</Badge>
         </div>
@@ -80,7 +83,7 @@ export function LessonDetail({ lesson }: { lesson: LessonPlan }) {
           <Avatar name={author?.name ?? "?"} color="rgba(255,255,255,0.3)" size="sm" />
           <div className="text-sm">
             <p className="font-semibold">{author?.name}</p>
-            <p className="text-white/75 text-xs">{formatDate(lesson.date)}</p>
+            <p className="text-white/75 text-xs">{formatDate(lesson.date, undefined, language)}</p>
           </div>
         </div>
       </motion.div>
@@ -89,11 +92,11 @@ export function LessonDetail({ lesson }: { lesson: LessonPlan }) {
         <div className="lg:col-span-2 space-y-6">
           <Card className="p-6 sm:p-8 space-y-7">
             <div className="p-4 rounded-2xl bg-[color-mix(in_srgb,var(--color-gold)_10%,transparent)] border border-[color-mix(in_srgb,var(--color-gold)_20%,transparent)]">
-              <p className="text-[11px] font-bold uppercase tracking-wide text-[var(--color-gold-deep)] mb-1">Memory Verse</p>
+              <p className="text-[11px] font-bold uppercase tracking-wide text-[var(--color-gold-deep)] mb-1">{t("lessons.memoryVerse")}</p>
               <p className="font-display italic text-lg">{lesson.memoryVerse}</p>
             </div>
 
-            <Section icon={Target} title="Learning Objectives">
+            <Section icon={Target} title={t("lessons.learningObjectives")}>
               <ul className="space-y-1.5 list-disc pl-4">
                 {lesson.objectives.map((o, i) => (
                   <li key={i}>{o}</li>
@@ -101,15 +104,15 @@ export function LessonDetail({ lesson }: { lesson: LessonPlan }) {
               </ul>
             </Section>
 
-            <Section icon={Sparkles} title="Opening Activity">
+            <Section icon={Sparkles} title={t("lessons.openingActivity")}>
               <p>{lesson.openingActivity}</p>
             </Section>
 
-            <Section icon={BookOpen} title="Bible Story">
+            <Section icon={BookOpen} title={t("lessons.bibleStory")}>
               <p className="whitespace-pre-wrap">{lesson.bibleStory}</p>
             </Section>
 
-            <Section icon={MessagesSquare} title="Discussion Questions">
+            <Section icon={MessagesSquare} title={t("lessons.discussionQuestions")}>
               <ol className="space-y-1.5 list-decimal pl-4">
                 {lesson.discussionQuestions.map((q, i) => (
                   <li key={i}>{q}</li>
@@ -117,11 +120,11 @@ export function LessonDetail({ lesson }: { lesson: LessonPlan }) {
               </ol>
             </Section>
 
-            <Section icon={Scissors} title="Craft Activity">
+            <Section icon={Scissors} title={t("lessons.craftActivity")}>
               <p>{lesson.craftActivity}</p>
             </Section>
 
-            <Section icon={Music4} title="Worship Songs">
+            <Section icon={Music4} title={t("lessons.worshipSongs")}>
               <div className="flex flex-wrap gap-2">
                 {lesson.worshipSongs.map((s) => (
                   <Badge key={s} tone="blue">{s}</Badge>
@@ -129,11 +132,11 @@ export function LessonDetail({ lesson }: { lesson: LessonPlan }) {
               </div>
             </Section>
 
-            <Section icon={HandHeart} title="Closing Prayer">
+            <Section icon={HandHeart} title={t("lessons.closingPrayer")}>
               <p className="italic">{lesson.closingPrayer}</p>
             </Section>
 
-            <Section icon={Home} title="Homework / Take-Home">
+            <Section icon={Home} title={t("lessons.homework")}>
               <p>{lesson.homework}</p>
             </Section>
           </Card>
@@ -141,10 +144,10 @@ export function LessonDetail({ lesson }: { lesson: LessonPlan }) {
 
         <div className="space-y-6">
           <Card className="p-5">
-            <h3 className="font-display font-semibold mb-3">Actions</h3>
+            <h3 className="font-display font-semibold mb-3">{t("lessons.actionsHeading")}</h3>
             <div className="space-y-2">
               <Button className="w-full" size="sm" onClick={() => setEditOpen(true)}>
-                <Pencil size={14} /> Edit Lesson
+                <Pencil size={14} /> {t("lessons.editLesson")}
               </Button>
               <Button
                 variant="outline"
@@ -153,17 +156,17 @@ export function LessonDetail({ lesson }: { lesson: LessonPlan }) {
                 onClick={() => useAppStore.getState().updateLesson(lesson.id, { status: status === "published" ? "draft" : "published" })}
               >
                 {status === "published" ? <PenLine size={14} /> : <CheckCircle2 size={14} />}
-                {status === "published" ? "Move to Draft" : "Publish Now"}
+                {status === "published" ? t("lessons.moveToDraft") : t("lessons.publishNow")}
               </Button>
               <Button variant="ghost" className="w-full" size="sm" onClick={() => setHistoryOpen(true)}>
-                <History size={14} /> Version History ({lesson.versions})
+                <History size={14} /> {t("lessons.versionHistory")} ({lesson.versions})
               </Button>
             </div>
           </Card>
 
           <Card className="p-5">
             <h3 className="font-display font-semibold mb-3 flex items-center gap-2">
-              <Paperclip size={16} /> Attachments
+              <Paperclip size={16} /> {t("lessons.attachments")}
             </h3>
             <div className="space-y-2">
               {lesson.attachments.map((a) => {
@@ -179,22 +182,22 @@ export function LessonDetail({ lesson }: { lesson: LessonPlan }) {
           </Card>
 
           <Card className="p-5">
-            <h3 className="font-display font-semibold mb-3">Lesson Info</h3>
+            <h3 className="font-display font-semibold mb-3">{t("lessons.lessonInfoHeading")}</h3>
             <dl className="space-y-2.5 text-[13px]">
               <div className="flex justify-between">
-                <dt className="text-[var(--text-secondary)]">Age Group</dt>
+                <dt className="text-[var(--text-secondary)]">{t("lessons.ageGroup")}</dt>
                 <dd className="font-medium">{ageGroup?.name}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-[var(--text-secondary)]">Date</dt>
-                <dd className="font-medium">{formatDate(lesson.date)}</dd>
+                <dt className="text-[var(--text-secondary)]">{t("common.date")}</dt>
+                <dd className="font-medium">{formatDate(lesson.date, undefined, language)}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-[var(--text-secondary)]">Last updated</dt>
-                <dd className="font-medium">{formatDate(lesson.updatedAt)}</dd>
+                <dt className="text-[var(--text-secondary)]">{t("lessons.lastUpdated")}</dt>
+                <dd className="font-medium">{formatDate(lesson.updatedAt, undefined, language)}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-[var(--text-secondary)]">Author</dt>
+                <dt className="text-[var(--text-secondary)]">{t("lessons.author")}</dt>
                 <dd className="font-medium">{author?.name}</dd>
               </div>
             </dl>
@@ -202,7 +205,7 @@ export function LessonDetail({ lesson }: { lesson: LessonPlan }) {
         </div>
       </div>
 
-      <Modal open={editOpen} onClose={() => setEditOpen(false)} title="Edit Lesson Plan" size="xl">
+      <Modal open={editOpen} onClose={() => setEditOpen(false)} title={t("lessons.editLessonPlanModalTitle")} size="xl">
         <LessonForm
           initial={lesson}
           lessonId={lesson.id}
@@ -211,7 +214,7 @@ export function LessonDetail({ lesson }: { lesson: LessonPlan }) {
         />
       </Modal>
 
-      <Modal open={historyOpen} onClose={() => setHistoryOpen(false)} title="Version History" size="sm">
+      <Modal open={historyOpen} onClose={() => setHistoryOpen(false)} title={t("lessons.versionHistory")} size="sm">
         <div className="space-y-3">
           {Array.from({ length: lesson.versions }).map((_, i) => {
             const v = lesson.versions - i;
@@ -221,8 +224,8 @@ export function LessonDetail({ lesson }: { lesson: LessonPlan }) {
                   v{v}
                 </span>
                 <div className="min-w-0">
-                  <p className="text-[13px] font-semibold">{v === lesson.versions ? "Current version" : `Revision ${v}`}</p>
-                  <p className="text-[11px] text-[var(--text-secondary)]">{formatDate(lesson.updatedAt)} by {author?.name}</p>
+                  <p className="text-[13px] font-semibold">{v === lesson.versions ? t("lessons.currentVersion") : `${t("lessons.revision")} ${v}`}</p>
+                  <p className="text-[11px] text-[var(--text-secondary)]">{formatDate(lesson.updatedAt, undefined, language)} {t("lessons.by")} {author?.name}</p>
                 </div>
               </div>
             );

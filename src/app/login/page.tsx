@@ -6,10 +6,12 @@ import { useRouter } from "next/navigation";
 import { Cross, Eye, EyeOff, Lock, User as UserIcon, ShieldCheck, Sparkles } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/Button";
+import { useLanguage } from "@/lib/language-context";
 
 export default function LoginPage() {
   const { login, needsSetup, loading } = useAuth();
   const router = useRouter();
+  const { t } = useLanguage();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -26,7 +28,7 @@ export default function LoginPage() {
     setSubmitting(true);
     const ok = await login(identifier, password);
     if (!ok) {
-      setError("That email/username and password don't match an account.");
+      setError(t("auth.loginFailed"));
       setSubmitting(false);
     }
   }
@@ -58,29 +60,29 @@ export default function LoginPage() {
           <div className="relative animate-float-slow">
             <Sparkles size={30} className="mb-4 opacity-90" />
             <h2 className="font-display text-3xl leading-tight font-semibold mb-3">
-              A joyful home for our Sunday School ministry.
+              {t("auth.marketingHeadline")}
             </h2>
             <p className="text-white/85 text-sm leading-relaxed max-w-xs">
-              Lesson plans, portfolios, prayer, and community — all in one warm, organized place for our teaching team.
+              {t("auth.marketingTagline")}
             </p>
           </div>
 
           <div className="relative flex items-center gap-2 text-xs text-white/75">
             <ShieldCheck size={15} />
-            Private staff intranet — not publicly accessible
+            {t("auth.privateIntranetTagline")}
           </div>
         </div>
 
         {/* Right form panel */}
         <div className="p-8 sm:p-10">
           <div className="mb-8">
-            <h1 className="font-display text-2xl font-semibold mb-1">Welcome back</h1>
-            <p className="text-sm text-[var(--text-secondary)]">Sign in to your DWKY Connect workspace.</p>
+            <h1 className="font-display text-2xl font-semibold mb-1">{t("auth.welcomeBack")}</h1>
+            <p className="text-sm text-[var(--text-secondary)]">{t("auth.signInSubtitle")}</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">Email or Username</label>
+              <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">{t("auth.emailOrUsername")}</label>
               <div className="relative">
                 <UserIcon size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
                 <input
@@ -89,12 +91,12 @@ export default function LoginPage() {
                   type="text"
                   autoComplete="username"
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[var(--border-soft)] bg-transparent text-sm focus-ring focus:border-[var(--color-gold)] transition-colors"
-                  placeholder="you@yourchurch.org or username"
+                  placeholder={t("auth.identifierPlaceholder")}
                 />
               </div>
             </div>
             <div>
-              <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">Password</label>
+              <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">{t("common.password")}</label>
               <div className="relative">
                 <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
                 <input
@@ -119,17 +121,17 @@ export default function LoginPage() {
             <div className="flex items-center justify-between text-xs">
               <label className="flex items-center gap-2 text-[var(--text-secondary)] cursor-pointer">
                 <input type="checkbox" defaultChecked className="accent-[var(--color-gold)]" />
-                Keep me signed in
+                {t("auth.keepSignedIn")}
               </label>
             </div>
 
             <Button type="submit" className="w-full" size="lg" loading={submitting}>
-              {submitting ? "Signing in…" : "Sign in"}
+              {submitting ? t("auth.signingIn") : t("auth.signIn")}
             </Button>
           </form>
 
           <p className="text-center text-[11px] text-[var(--text-secondary)] mt-6 leading-relaxed">
-            No public registration. Accounts are created by your Sunday School administrator.
+            {t("auth.loginFooter")}
           </p>
         </div>
       </motion.div>

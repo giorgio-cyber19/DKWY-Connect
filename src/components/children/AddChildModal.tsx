@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { useAppStore } from "@/lib/store";
+import { useLanguage } from "@/lib/language-context";
+import { translateApiError } from "@/lib/i18n/errors";
 import type { SchoolClass } from "@/lib/types";
 
 const inputClass = "w-full text-sm px-3.5 py-2.5 rounded-xl border border-[var(--border-soft)] bg-transparent focus-ring focus:border-[var(--color-gold)] transition-colors";
@@ -32,6 +34,7 @@ export function AddChildModal({
   const [allergies, setAllergies] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const { t, language } = useLanguage();
 
   function reset() {
     setName("");
@@ -64,31 +67,31 @@ export function AddChildModal({
       reset();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't add the child. Please try again.");
+      setError(translateApiError(err, language));
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Add Child" size="sm">
+    <Modal open={open} onClose={onClose} title={t("children.addChildTitle")} size="sm">
       <div className="space-y-4">
         <div>
-          <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">Child&apos;s Name</label>
-          <input value={name} onChange={(e) => setName(e.target.value)} className={inputClass} placeholder="Full name" />
+          <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">{t("children.addChildNameLabel")}</label>
+          <input value={name} onChange={(e) => setName(e.target.value)} className={inputClass} placeholder={t("children.addChildNamePlaceholder")} />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">Age</label>
+            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">{t("children.ageLabel")}</label>
             <input value={age} onChange={(e) => setAge(e.target.value)} type="number" min={0} max={18} className={inputClass} />
           </div>
           <div>
-            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">Birthday</label>
+            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">{t("children.birthdayLabel")}</label>
             <input value={birthday} onChange={(e) => setBirthday(e.target.value)} type="date" className={inputClass} />
           </div>
         </div>
         <div>
-          <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">Class</label>
+          <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">{t("children.classLabel")}</label>
           <select value={classId} onChange={(e) => setClassId(e.target.value)} className={inputClass}>
             {classes.map((c) => (
               <option key={c.id} value={c.id}>
@@ -98,21 +101,23 @@ export function AddChildModal({
           </select>
         </div>
         <div className="pt-1">
-          <p className="text-xs font-semibold text-[var(--text-secondary)] mb-2">Guardian (optional)</p>
+          <p className="text-xs font-semibold text-[var(--text-secondary)] mb-2">
+            {t("children.guardianSectionLabel")} ({t("common.optional")})
+          </p>
           <div className="grid grid-cols-2 gap-2.5">
-            <input value={guardianName} onChange={(e) => setGuardianName(e.target.value)} placeholder="Name" className={inputClass} />
-            <input value={guardianRelation} onChange={(e) => setGuardianRelation(e.target.value)} placeholder="Relation" className={inputClass} />
-            <input value={guardianPhone} onChange={(e) => setGuardianPhone(e.target.value)} placeholder="Phone" className={inputClass} />
-            <input value={guardianEmail} onChange={(e) => setGuardianEmail(e.target.value)} placeholder="Email" className={inputClass} />
+            <input value={guardianName} onChange={(e) => setGuardianName(e.target.value)} placeholder={t("common.name")} className={inputClass} />
+            <input value={guardianRelation} onChange={(e) => setGuardianRelation(e.target.value)} placeholder={t("children.guardianRelationPlaceholder")} className={inputClass} />
+            <input value={guardianPhone} onChange={(e) => setGuardianPhone(e.target.value)} placeholder={t("children.guardianPhonePlaceholder")} className={inputClass} />
+            <input value={guardianEmail} onChange={(e) => setGuardianEmail(e.target.value)} placeholder={t("common.email")} className={inputClass} />
           </div>
         </div>
         <div>
-          <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">Allergies / Medical Notes</label>
-          <input value={allergies} onChange={(e) => setAllergies(e.target.value)} className={inputClass} placeholder="e.g. Peanuts (leave blank if none)" />
+          <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">{t("children.allergiesLabel")}</label>
+          <input value={allergies} onChange={(e) => setAllergies(e.target.value)} className={inputClass} placeholder={t("children.allergiesPlaceholder")} />
         </div>
         {error && <p className="text-xs text-red-500 font-medium">{error}</p>}
         <Button className="w-full" onClick={submit} loading={submitting} disabled={!name.trim() || !classId || submitting}>
-          Add Child
+          {t("children.addChildButton")}
         </Button>
       </div>
     </Modal>

@@ -30,9 +30,11 @@ import { Tabs } from "@/components/ui/Tabs";
 import { StaggerGrid, StaggerItem } from "@/components/ui/Stagger";
 import { getClass, getUser, useAppStore } from "@/lib/store";
 import { useAuth } from "@/lib/auth-context";
+import { useLanguage } from "@/lib/language-context";
 import { formatDate } from "@/lib/utils";
 import { driveDownloadUrl } from "@/lib/upload";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { enumLabels } from "@/lib/i18n/enum-labels";
 import { AddArtworkButton, AddAlbumButton, AddVideoButton, AddChildDocumentButton, AddMilestoneButton } from "@/components/children/ChildRecordModals";
 import type { Child, SpiritualMilestone } from "@/lib/types";
 
@@ -58,21 +60,22 @@ export function ChildDetail({ child }: { child: Child }) {
   const cls = getClass(child.classId);
   const teacher = getUser(child.teacherId);
   const [tab, setTab] = useState("overview");
+  const { t, language } = useLanguage();
 
   const tabs = [
-    { id: "overview", label: "Overview" },
-    { id: "artwork", label: "Artwork" },
-    { id: "photos", label: "Photos" },
-    { id: "videos", label: "Videos" },
-    { id: "documents", label: "Documents" },
-    { id: "growth", label: "Spiritual Growth" },
-    { id: "observations", label: "Observations" },
+    { id: "overview", label: t("children.tabOverview") },
+    { id: "artwork", label: t("children.tabArtwork") },
+    { id: "photos", label: t("children.tabPhotos") },
+    { id: "videos", label: t("children.tabVideos") },
+    { id: "documents", label: t("children.tabDocuments") },
+    { id: "growth", label: t("children.tabGrowth") },
+    { id: "observations", label: t("children.tabObservations") },
   ];
 
   return (
     <div>
       <Link href="/children" className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] mb-5">
-        <ArrowLeft size={15} /> Back to Portfolios
+        <ArrowLeft size={15} /> {t("children.backToPortfolios")}
       </Link>
 
       <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
@@ -89,14 +92,14 @@ export function ChildDetail({ child }: { child: Child }) {
                 )}
               </div>
               <p className="text-[var(--text-secondary)] text-sm mb-4">
-                {cls?.name} · Age {child.age} · Taught by {teacher?.name}
+                {cls?.name} · {t("children.ageLabel")} {child.age} · {t("children.taughtByLabel")} {teacher?.name}
               </p>
               <div className="grid sm:grid-cols-2 gap-3 text-[13px]">
                 <div className="flex items-center gap-2 text-[var(--text-secondary)]">
-                  <Cake size={14} /> Born {formatDate(child.birthday)}
+                  <Cake size={14} /> {t("children.bornLabel")} {formatDate(child.birthday, undefined, language)}
                 </div>
                 <div className="flex items-center gap-2 text-[var(--text-secondary)]">
-                  <MapPin size={14} /> Enrolled {formatDate(child.enrollmentDate)}
+                  <MapPin size={14} /> {t("children.enrolledLabel")} {formatDate(child.enrollmentDate, undefined, language)}
                 </div>
                 {child.guardians.map((g) => (
                   <div key={g.name} className="flex items-center gap-2 text-[var(--text-secondary)]">
@@ -107,7 +110,7 @@ export function ChildDetail({ child }: { child: Child }) {
             </div>
             <div className="sm:w-40 shrink-0 text-center sm:text-right">
               <p className="font-display text-3xl font-semibold text-[var(--color-sage-deep)]">{child.attendanceRate}%</p>
-              <p className="text-[11px] text-[var(--text-secondary)]">Attendance rate</p>
+              <p className="text-[11px] text-[var(--text-secondary)]">{t("children.attendanceRateLabel")}</p>
             </div>
           </div>
         </Card>
@@ -120,7 +123,7 @@ export function ChildDetail({ child }: { child: Child }) {
           <StaggerItem>
             <Card className="p-5">
               <h3 className="font-display font-semibold mb-3 flex items-center gap-2">
-                <Palette size={16} /> Recent Artwork
+                <Palette size={16} /> {t("children.recentArtworkTitle")}
               </h3>
               <div className="grid grid-cols-3 gap-2">
                 {child.artwork.slice(0, 3).map((a) => (
@@ -132,7 +135,7 @@ export function ChildDetail({ child }: { child: Child }) {
           <StaggerItem>
             <Card className="p-5">
               <h3 className="font-display font-semibold mb-3 flex items-center gap-2">
-                <Sparkles size={16} /> Latest Milestones
+                <Sparkles size={16} /> {t("children.latestMilestonesTitle")}
               </h3>
               <div className="space-y-2.5">
                 {child.milestones.slice(0, 3).map((m) => (
@@ -147,7 +150,7 @@ export function ChildDetail({ child }: { child: Child }) {
           <StaggerItem>
             <Card className="p-5">
               <h3 className="font-display font-semibold mb-3 flex items-center gap-2">
-                <Mail size={16} /> Guardian Contacts
+                <Mail size={16} /> {t("children.guardianContactsTitle")}
               </h3>
               <div className="space-y-3">
                 {child.guardians.map((g) => (
@@ -168,7 +171,7 @@ export function ChildDetail({ child }: { child: Child }) {
             <AddArtworkButton childId={child.id} />
           </div>
           {child.artwork.length === 0 ? (
-            <EmptyState icon={Palette} title="No artwork yet" description="Add the first piece of artwork for this child." />
+            <EmptyState icon={Palette} title={t("children.noArtworkTitle")} description={t("children.noArtworkDescription")} />
           ) : (
             <StaggerGrid className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               {child.artwork.map((a) => (
@@ -179,8 +182,8 @@ export function ChildDetail({ child }: { child: Child }) {
                       <div className="p-3.5">
                         <p className="text-[13px] font-semibold truncate">{a.title}</p>
                         <div className="flex items-center justify-between mt-1">
-                          <Badge tone="gold" className="!text-[9.5px] !py-0.5">{a.category}</Badge>
-                          <span className="text-[10.5px] text-[var(--text-secondary)]">{formatDate(a.date)}</span>
+                          <Badge tone="gold" className="!text-[9.5px] !py-0.5">{enumLabels.artworkCategory[language][a.category]}</Badge>
+                          <span className="text-[10.5px] text-[var(--text-secondary)]">{formatDate(a.date, undefined, language)}</span>
                         </div>
                       </div>
                     </Card>
@@ -198,7 +201,7 @@ export function ChildDetail({ child }: { child: Child }) {
             <AddAlbumButton childId={child.id} />
           </div>
           {child.albums.length === 0 ? (
-            <EmptyState icon={Images} title="No photo albums yet" description="Add the first album for this child." />
+            <EmptyState icon={Images} title={t("children.noAlbumsTitle")} description={t("children.noAlbumsDescription")} />
           ) : (
             <StaggerGrid className="grid sm:grid-cols-2 gap-4">
               {child.albums.map((a) => (
@@ -207,11 +210,11 @@ export function ChildDetail({ child }: { child: Child }) {
                     <Card className="overflow-hidden" hover>
                       <div className="h-36 relative flex items-end p-4" style={{ background: `linear-gradient(135deg, ${a.coverColor}, color-mix(in srgb, ${a.coverColor} 50%, black))` }}>
                         <Images size={56} className="absolute -right-1 -top-1 text-white/20" />
-                        <Badge className="bg-white/85">{a.photoCount} photos</Badge>
+                        <Badge className="bg-white/85">{a.photoCount} {t("children.photosCountSuffix")}</Badge>
                       </div>
                       <div className="p-4">
                         <p className="font-semibold text-sm">{a.title}</p>
-                        <p className="text-[12px] text-[var(--text-secondary)]">{a.event} · {formatDate(a.date)}</p>
+                        <p className="text-[12px] text-[var(--text-secondary)]">{a.event} · {formatDate(a.date, undefined, language)}</p>
                       </div>
                     </Card>
                   </DriveLinkWrap>
@@ -228,7 +231,7 @@ export function ChildDetail({ child }: { child: Child }) {
             <AddVideoButton childId={child.id} />
           </div>
           {child.videos.length === 0 ? (
-            <EmptyState icon={Play} title="No videos yet" description="Add the first video for this child." />
+            <EmptyState icon={Play} title={t("children.noVideosTitle")} description={t("children.noVideosDescription")} />
           ) : (
             <StaggerGrid className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {child.videos.map((v) => (
@@ -244,8 +247,8 @@ export function ChildDetail({ child }: { child: Child }) {
                       <div className="p-3.5">
                         <p className="text-[13px] font-semibold truncate">{v.title}</p>
                         <div className="flex items-center justify-between mt-1">
-                          <Badge tone="blue" className="!text-[9.5px] !py-0.5">{v.category}</Badge>
-                          <span className="text-[10.5px] text-[var(--text-secondary)]">{formatDate(v.date)}</span>
+                          <Badge tone="blue" className="!text-[9.5px] !py-0.5">{enumLabels.videoCategory[language][v.category]}</Badge>
+                          <span className="text-[10.5px] text-[var(--text-secondary)]">{formatDate(v.date, undefined, language)}</span>
                         </div>
                       </div>
                     </Card>
@@ -263,7 +266,7 @@ export function ChildDetail({ child }: { child: Child }) {
             <AddChildDocumentButton childId={child.id} />
           </div>
           {child.documents.length === 0 ? (
-            <EmptyState icon={FileText} title="No documents yet" description="Add the first document for this child." />
+            <EmptyState icon={FileText} title={t("children.noDocumentsTitle")} description={t("children.noDocumentsDescription")} />
           ) : (
             <StaggerGrid className="space-y-2.5">
               {child.documents.map((d) => (
@@ -275,7 +278,7 @@ export function ChildDetail({ child }: { child: Child }) {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold truncate">{d.title}</p>
-                        <p className="text-[11.5px] text-[var(--text-secondary)]">{d.type} · {formatDate(d.date)}</p>
+                        <p className="text-[11.5px] text-[var(--text-secondary)]">{enumLabels.childDocumentType[language][d.type]} · {formatDate(d.date, undefined, language)}</p>
                       </div>
                       <Badge tone="neutral">{d.fileType.toUpperCase()}</Badge>
                     </Card>
@@ -293,7 +296,7 @@ export function ChildDetail({ child }: { child: Child }) {
             <AddMilestoneButton childId={child.id} />
           </div>
           {child.milestones.length === 0 ? (
-            <EmptyState icon={Sparkles} title="No milestones yet" description="Record the first spiritual growth milestone for this child." />
+            <EmptyState icon={Sparkles} title={t("children.noMilestonesTitle")} description={t("children.noMilestonesDescription")} />
           ) : (
             <StaggerGrid className="grid sm:grid-cols-2 gap-4">
               {child.milestones.map((m) => {
@@ -308,8 +311,8 @@ export function ChildDetail({ child }: { child: Child }) {
                         <p className="text-sm font-semibold">{m.label}</p>
                         {m.note && <p className="text-[12.5px] text-[var(--text-secondary)] mt-0.5">{m.note}</p>}
                         <div className="flex items-center gap-2 mt-1.5">
-                          <Badge tone="sage" className="!text-[9.5px] !py-0.5">{m.category}</Badge>
-                          <span className="text-[10.5px] text-[var(--text-secondary)]">{formatDate(m.date)}</span>
+                          <Badge tone="sage" className="!text-[9.5px] !py-0.5">{enumLabels.milestoneCategory[language][m.category]}</Badge>
+                          <span className="text-[10.5px] text-[var(--text-secondary)]">{formatDate(m.date, undefined, language)}</span>
                         </div>
                       </div>
                     </Card>
@@ -324,7 +327,7 @@ export function ChildDetail({ child }: { child: Child }) {
       {tab === "observations" && (
         <div>
           <div className="flex items-center gap-2 mb-4 px-4 py-2.5 rounded-xl bg-[color-mix(in_srgb,var(--color-gold)_8%,transparent)] text-[12.5px] text-[var(--color-gold-deep)] font-medium">
-            <Lock size={13} /> Private — visible only to teachers and administrators
+            <Lock size={13} /> {t("children.observationsPrivateNotice")}
           </div>
           <div className="relative pl-6 space-y-6 before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-px before:bg-[var(--border-soft)]">
             {child.observations.map((o) => {
@@ -335,7 +338,7 @@ export function ChildDetail({ child }: { child: Child }) {
                   <Card className="p-4">
                     <div className="flex items-center justify-between mb-1.5">
                       <p className="text-[13px] font-semibold">{obsAuthor?.name}</p>
-                      <span className="text-[11px] text-[var(--text-secondary)]">{formatDate(o.date)}</span>
+                      <span className="text-[11px] text-[var(--text-secondary)]">{formatDate(o.date, undefined, language)}</span>
                     </div>
                     <p className="text-[13.5px] leading-relaxed">{o.note}</p>
                     {o.tag && <Badge tone="gold" className="mt-2">{o.tag}</Badge>}
@@ -355,6 +358,7 @@ export function ChildDetail({ child }: { child: Child }) {
 
 function NewObservationInput({ childId }: { childId: string }) {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [value, setValue] = useState("");
 
   async function submit() {
@@ -377,7 +381,7 @@ function NewObservationInput({ childId }: { childId: string }) {
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && submit()}
-          placeholder="Add a private teacher observation, then press Enter…"
+          placeholder={t("children.observationInputPlaceholder")}
           className="flex-1 text-[13.5px] bg-transparent outline-none"
         />
       </Card>

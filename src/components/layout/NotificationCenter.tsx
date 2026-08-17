@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Bell, BookOpen, Users, MessageCircle, CalendarDays, HeartHandshake, Megaphone } from "lucide-react";
 import { useAppStore } from "@/lib/store";
+import { useLanguage } from "@/lib/language-context";
 import { timeAgo, cn } from "@/lib/utils";
 import type { Notification } from "@/lib/types";
 
@@ -18,6 +19,7 @@ const iconMap: Record<Notification["type"], typeof BookOpen> = {
 };
 
 export function NotificationCenter() {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const items = useAppStore((s) => s.notifications);
   const ref = useRef<HTMLDivElement>(null);
@@ -36,7 +38,7 @@ export function NotificationCenter() {
       <button
         onClick={() => setOpen((o) => !o)}
         className="relative p-2.5 rounded-xl hover:bg-black/5 transition-colors focus-ring"
-        aria-label="Notifications"
+        aria-label={t("layout.notifications")}
       >
         <Bell size={19} />
         {unread > 0 && (
@@ -58,17 +60,17 @@ export function NotificationCenter() {
             className="absolute right-0 mt-2 w-[360px] max-h-[70vh] overflow-y-auto glass-solid rounded-2xl card-shadow-hover z-50"
           >
             <div className="flex items-center justify-between px-4 py-3.5 border-b border-[var(--border-soft)]">
-              <h4 className="font-display font-semibold text-sm">Notifications</h4>
+              <h4 className="font-display font-semibold text-sm">{t("layout.notifications")}</h4>
               {unread > 0 && (
                 <button
                   onClick={() => useAppStore.getState().markAllNotificationsRead()}
                   className="text-[11px] font-semibold text-[var(--color-blue-deep)] hover:underline"
                 >
-                  Mark all read
+                  {t("layout.markAllRead")}
                 </button>
               )}
             </div>
-            {items.length === 0 && <p className="text-sm text-[var(--text-secondary)] text-center py-10">No notifications yet.</p>}
+            {items.length === 0 && <p className="text-sm text-[var(--text-secondary)] text-center py-10">{t("layout.noNotificationsYet")}</p>}
             <div className="divide-y divide-[var(--border-softer)]">
               {items.map((n) => {
                 const Icon = iconMap[n.type];

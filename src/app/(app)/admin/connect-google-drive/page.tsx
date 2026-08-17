@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { useAuth } from "@/lib/auth-context";
 import { useAppStore } from "@/lib/store";
 import { formatBytesLarge } from "@/lib/utils";
+import { useLanguage } from "@/lib/language-context";
 
 interface StorageInfo {
   limitBytes: number | null;
@@ -27,6 +28,7 @@ export default function ConnectGoogleDrivePage() {
 
 function ConnectGoogleDriveContent() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const sessionToken = useAppStore((s) => s.sessionToken);
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<"loading" | "connected" | "not_connected">("loading");
@@ -68,7 +70,7 @@ function ConnectGoogleDriveContent() {
   if (!user) return null;
 
   if (user.role !== "admin") {
-    return <EmptyState icon={ShieldOff} title="Administrator access required" description="Only administrators can connect Google Drive." />;
+    return <EmptyState icon={ShieldOff} title={t("admin.pageAccessDeniedTitle")} description={t("admin.driveAccessDeniedDescription")} />;
   }
 
   const connectHref = sessionToken ? `/api/auth/google/start?token=${encodeURIComponent(sessionToken)}` : undefined;
@@ -76,14 +78,14 @@ function ConnectGoogleDriveContent() {
   return (
     <div className="max-w-xl mx-auto">
       <PageHeader
-        eyebrow="Admin · Integrations"
-        title="Connect Google Drive"
-        description="Authorize DWKY Connect to store uploaded files in your church's Google Drive. This is a one-time setup — every teacher's uploads will use this connection afterward."
+        eyebrow={t("admin.driveEyebrow")}
+        title={t("admin.driveTitle")}
+        description={t("admin.driveDescription")}
       />
 
       {connectedParam === "1" && (
         <div className="mb-5 p-4 rounded-2xl bg-[color-mix(in_srgb,var(--color-sage)_12%,transparent)] border border-[color-mix(in_srgb,var(--color-sage)_30%,transparent)] text-sm text-[var(--color-sage-deep)] font-medium">
-          Google Drive connected successfully.
+          {t("admin.driveConnectedBanner")}
         </div>
       )}
       {errorParam && (
@@ -91,7 +93,7 @@ function ConnectGoogleDriveContent() {
       )}
 
       <Card className="p-6">
-        {status === "loading" && <p className="text-sm text-[var(--text-secondary)]">Checking connection…</p>}
+        {status === "loading" && <p className="text-sm text-[var(--text-secondary)]">{t("admin.driveCheckingConnection")}</p>}
 
         {status === "connected" && (
           <div className="flex items-start gap-3.5">
@@ -99,13 +101,10 @@ function ConnectGoogleDriveContent() {
               <CheckCircle2 size={20} />
             </div>
             <div>
-              <p className="font-semibold">Google Drive is connected</p>
-              <p className="text-sm text-[var(--text-secondary)] mt-1">
-                Files upload into a shared Drive folder, organized into Children Portfolios, Lesson Plans, Photos, Encouragements, and
-                Documents subfolders.
-              </p>
+              <p className="font-semibold">{t("admin.driveConnectedTitle")}</p>
+              <p className="text-sm text-[var(--text-secondary)] mt-1">{t("admin.driveConnectedDescription")}</p>
               <Button variant="outline" size="sm" className="mt-4" disabled={!connectHref} onClick={() => connectHref && (window.location.href = connectHref)}>
-                <HardDrive size={14} /> Reconnect a different account
+                <HardDrive size={14} /> {t("admin.driveReconnectButton")}
               </Button>
             </div>
           </div>
@@ -117,15 +116,12 @@ function ConnectGoogleDriveContent() {
               <CloudOff size={20} />
             </div>
             <div className="flex-1">
-              <p className="font-semibold">Not connected yet</p>
-              <p className="text-sm text-[var(--text-secondary)] mt-1">
-                Click connect and sign in with the Google account whose Drive should store ministry files. You&apos;ll see Google&apos;s
-                consent screen — approve access to Drive.
-              </p>
+              <p className="font-semibold">{t("admin.driveNotConnectedTitle")}</p>
+              <p className="text-sm text-[var(--text-secondary)] mt-1">{t("admin.driveNotConnectedDescription")}</p>
               <Button className="mt-4" disabled={!connectHref} onClick={() => connectHref && (window.location.href = connectHref)}>
-                <ExternalLink size={14} /> Connect Google Drive
+                <ExternalLink size={14} /> {t("admin.driveConnectButton")}
               </Button>
-              {!connectHref && <p className="text-[11px] text-[var(--text-secondary)] mt-2">Preparing your session…</p>}
+              {!connectHref && <p className="text-[11px] text-[var(--text-secondary)] mt-2">{t("admin.drivePreparingSession")}</p>}
             </div>
           </div>
         )}
@@ -134,11 +130,11 @@ function ConnectGoogleDriveContent() {
       {status === "connected" && (
         <Card className="p-6 mt-5">
           <h3 className="font-display font-semibold text-base mb-4 flex items-center gap-2">
-            <Database size={16} /> Storage
+            <Database size={16} /> {t("admin.driveStorageHeading")}
           </h3>
           {storage ? (
             storage.limitBytes === null ? (
-              <p className="text-sm text-[var(--text-secondary)]">Unlimited storage available (Google Workspace account).</p>
+              <p className="text-sm text-[var(--text-secondary)]">{t("admin.driveUnlimitedStorage")}</p>
             ) : (
               <div>
                 <div className="h-2.5 rounded-full bg-black/[0.06] overflow-hidden">
@@ -148,19 +144,17 @@ function ConnectGoogleDriveContent() {
                   />
                 </div>
                 <p className="text-sm mt-3">
-                  <span className="font-semibold">{formatBytesLarge(storage.usageBytes)}</span> of {formatBytesLarge(storage.limitBytes)} used ·{" "}
-                  <span className="font-semibold">{formatBytesLarge(Math.max(0, storage.limitBytes - storage.usageBytes))}</span> free
+                  <span className="font-semibold">{formatBytesLarge(storage.usageBytes)}</span> {t("admin.driveStorageOfLabel")} {formatBytesLarge(storage.limitBytes)}{" "}
+                  {t("admin.driveStorageUsedLabel")} ·{" "}
+                  <span className="font-semibold">{formatBytesLarge(Math.max(0, storage.limitBytes - storage.usageBytes))}</span> {t("admin.driveStorageFreeLabel")}
                 </p>
-                <p className="text-[11px] text-[var(--text-secondary)] mt-2">
-                  This reflects your whole Google account&apos;s storage (Drive, Gmail, Photos) against its plan limit — not just DWKY
-                  Connect&apos;s folder.
-                </p>
+                <p className="text-[11px] text-[var(--text-secondary)] mt-2">{t("admin.driveStorageAccountNote")}</p>
               </div>
             )
           ) : storageUnavailable ? (
-            <p className="text-sm text-[var(--text-secondary)]">Storage details aren&apos;t available right now.</p>
+            <p className="text-sm text-[var(--text-secondary)]">{t("admin.driveStorageUnavailable")}</p>
           ) : (
-            <p className="text-sm text-[var(--text-secondary)]">Checking storage…</p>
+            <p className="text-sm text-[var(--text-secondary)]">{t("admin.driveStorageChecking")}</p>
           )}
         </Card>
       )}

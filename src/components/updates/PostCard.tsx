@@ -9,6 +9,8 @@ import { Avatar } from "@/components/ui/Avatar";
 import { StaggerItem } from "@/components/ui/Stagger";
 import { getUser, useAppStore } from "@/lib/store";
 import { useAuth } from "@/lib/auth-context";
+import { useLanguage } from "@/lib/language-context";
+import { enumLabels } from "@/lib/i18n/enum-labels";
 import { timeAgo, cn } from "@/lib/utils";
 import type { Post } from "@/lib/types";
 
@@ -27,6 +29,7 @@ const QUICK_REACTIONS = ["❤️", "🙌", "🙏", "😂"];
 export function PostCard({ post, compact }: { post: Post; compact?: boolean }) {
   const author = getUser(post.authorId);
   const { user } = useAuth();
+  const { t, language } = useLanguage();
   const [commentText, setCommentText] = useState("");
   const [showComments, setShowComments] = useState(false);
 
@@ -62,13 +65,13 @@ export function PostCard({ post, compact }: { post: Post; compact?: boolean }) {
               <span className="text-[11px] text-[var(--text-secondary)]">{author.title}</span>
               {post.pinned && (
                 <span className="inline-flex items-center gap-1 text-[10.5px] font-semibold text-[var(--color-gold-deep)]">
-                  <Pin size={11} /> Pinned
+                  <Pin size={11} /> {t("updates.pinned")}
                 </span>
               )}
             </div>
             <div className="flex items-center gap-2 mt-0.5">
-              <Badge tone={typeTone[post.type]}>{post.type}</Badge>
-              <span className="text-[11px] text-[var(--text-secondary)]">{timeAgo(post.date)}</span>
+              <Badge tone={typeTone[post.type]}>{enumLabels.postType[language][post.type]}</Badge>
+              <span className="text-[11px] text-[var(--text-secondary)]">{timeAgo(post.date, language)}</span>
             </div>
           </div>
         </div>
@@ -112,7 +115,7 @@ export function PostCard({ post, compact }: { post: Post; compact?: boolean }) {
                 </button>
               );
             })}
-            <p className="text-[11px] text-[var(--text-secondary)]">{totalVotes} votes</p>
+            <p className="text-[11px] text-[var(--text-secondary)]">{totalVotes} {t("updates.votesLabel")}</p>
           </div>
         )}
 
@@ -171,7 +174,7 @@ export function PostCard({ post, compact }: { post: Post; compact?: boolean }) {
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && addComment()}
-                placeholder="Write a comment…"
+                placeholder={t("updates.commentPlaceholder")}
                 className="flex-1 text-[13px] px-3.5 py-2 rounded-full border border-[var(--border-soft)] bg-transparent focus-ring focus:border-[var(--color-gold)]"
               />
               <button onClick={addComment} className="p-2 rounded-full bg-[var(--color-gold)] text-white">

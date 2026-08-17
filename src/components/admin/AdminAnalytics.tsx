@@ -8,6 +8,7 @@ import { StaggerGrid, StaggerItem } from "@/components/ui/Stagger";
 import { useTheme } from "@/lib/theme-context";
 import { useAppStore } from "@/lib/store";
 import { parseDate } from "@/lib/utils";
+import { useLanguage } from "@/lib/language-context";
 
 const categoricalLight = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4"];
 const categoricalDark = ["#3987e5", "#d95926", "#199e70", "#c98500", "#d55181"];
@@ -24,6 +25,7 @@ function TooltipCard({ active, payload, label }: { active?: boolean; payload?: {
 
 export function AdminAnalytics() {
   const { theme } = useTheme();
+  const { t, language } = useLanguage();
   const classes = useAppStore((s) => s.classes);
   const users = useAppStore((s) => s.users);
   const lessonPlans = useAppStore((s) => s.lessonPlans);
@@ -43,7 +45,7 @@ export function AdminAnalytics() {
     const now = new Date();
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      months.push({ key: `${d.getFullYear()}-${d.getMonth()}`, month: d.toLocaleDateString("en-US", { month: "short" }), count: 0 });
+      months.push({ key: `${d.getFullYear()}-${d.getMonth()}`, month: d.toLocaleDateString(language === "nl" ? "nl-NL" : "en-US", { month: "short" }), count: 0 });
     }
     lessonPlans.forEach((l) => {
       if (l.status !== "published") return;
@@ -53,7 +55,7 @@ export function AdminAnalytics() {
       if (bucket) bucket.count += 1;
     });
     return months;
-  }, [lessonPlans]);
+  }, [lessonPlans, language]);
 
   const engagement = users
     .filter((u) => u.role === "teacher")
@@ -77,7 +79,7 @@ export function AdminAnalytics() {
             </div>
             <div>
               <p className="font-display text-xl font-semibold leading-none">{users.filter((u) => u.role === "teacher" && u.status === "active").length}</p>
-              <p className="text-[11px] text-[var(--text-secondary)] mt-1">Active teachers</p>
+              <p className="text-[11px] text-[var(--text-secondary)] mt-1">{t("admin.analyticsStatActiveTeachers")}</p>
             </div>
           </Card>
         </StaggerItem>
@@ -88,7 +90,7 @@ export function AdminAnalytics() {
             </div>
             <div>
               <p className="font-display text-xl font-semibold leading-none">{lessonPlans.length}</p>
-              <p className="text-[11px] text-[var(--text-secondary)] mt-1">Total lesson plans</p>
+              <p className="text-[11px] text-[var(--text-secondary)] mt-1">{t("admin.analyticsStatTotalLessonPlans")}</p>
             </div>
           </Card>
         </StaggerItem>
@@ -99,7 +101,7 @@ export function AdminAnalytics() {
             </div>
             <div>
               <p className="font-display text-xl font-semibold leading-none">{mediaItems.length}</p>
-              <p className="text-[11px] text-[var(--text-secondary)] mt-1">Media files uploaded</p>
+              <p className="text-[11px] text-[var(--text-secondary)] mt-1">{t("admin.analyticsStatMediaFilesUploaded")}</p>
             </div>
           </Card>
         </StaggerItem>
@@ -110,7 +112,7 @@ export function AdminAnalytics() {
             </div>
             <div>
               <p className="font-display text-xl font-semibold leading-none">{children.length}</p>
-              <p className="text-[11px] text-[var(--text-secondary)] mt-1">Children in portfolios</p>
+              <p className="text-[11px] text-[var(--text-secondary)] mt-1">{t("admin.analyticsStatChildrenInPortfolios")}</p>
             </div>
           </Card>
         </StaggerItem>
@@ -118,8 +120,8 @@ export function AdminAnalytics() {
 
       <div className="grid lg:grid-cols-2 gap-5">
         <Card className="p-5 pb-2">
-          <h3 className="font-display font-semibold mb-1">Lesson Activity</h3>
-          <p className="text-[12px] text-[var(--text-secondary)] mb-4">Published lesson plans, last 6 months</p>
+          <h3 className="font-display font-semibold mb-1">{t("admin.analyticsLessonActivityTitle")}</h3>
+          <p className="text-[12px] text-[var(--text-secondary)] mb-4">{t("admin.analyticsLessonActivitySubtitle")}</p>
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={lessonActivity} margin={{ left: -20, right: 8, top: 8, bottom: 0 }}>
@@ -127,17 +129,17 @@ export function AdminAnalytics() {
                 <XAxis dataKey="month" tick={{ fill: textColor, fontSize: 11 }} axisLine={{ stroke: gridColor }} tickLine={false} />
                 <YAxis tick={{ fill: textColor, fontSize: 11 }} axisLine={false} tickLine={false} width={28} allowDecimals={false} />
                 <Tooltip content={<TooltipCard />} cursor={{ fill: "transparent" }} />
-                <Bar dataKey="count" name="lessons" fill={magnitudeHue} radius={[4, 4, 0, 0]} maxBarSize={24} />
+                <Bar dataKey="count" name={t("admin.analyticsChartLessonsLabel")} fill={magnitudeHue} radius={[4, 4, 0, 0]} maxBarSize={24} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </Card>
 
         <Card className="p-5 pb-2">
-          <h3 className="font-display font-semibold mb-1">Children per Class</h3>
-          <p className="text-[12px] text-[var(--text-secondary)] mb-4">Current enrollment across age groups</p>
+          <h3 className="font-display font-semibold mb-1">{t("admin.analyticsChildrenPerClassTitle")}</h3>
+          <p className="text-[12px] text-[var(--text-secondary)] mb-4">{t("admin.analyticsChildrenPerClassSubtitle")}</p>
           {classData.length === 0 ? (
-            <div className="h-56 flex items-center justify-center text-sm text-[var(--text-secondary)]">No classes yet</div>
+            <div className="h-56 flex items-center justify-center text-sm text-[var(--text-secondary)]">{t("admin.analyticsNoClassesYet")}</div>
           ) : (
             <div className="h-56">
               <ResponsiveContainer width="100%" height="100%">
@@ -146,7 +148,7 @@ export function AdminAnalytics() {
                   <XAxis dataKey="name" tick={{ fill: textColor, fontSize: 10 }} axisLine={{ stroke: gridColor }} tickLine={false} interval={0} angle={-15} textAnchor="end" height={40} />
                   <YAxis tick={{ fill: textColor, fontSize: 11 }} axisLine={false} tickLine={false} width={28} allowDecimals={false} />
                   <Tooltip content={<TooltipCard />} cursor={{ fill: "transparent" }} />
-                  <Bar dataKey="count" name="children" radius={[4, 4, 0, 0]} maxBarSize={24}>
+                  <Bar dataKey="count" name={t("admin.analyticsChartChildrenLabel")} radius={[4, 4, 0, 0]} maxBarSize={24}>
                     {classData.map((_, i) => (
                       <Cell key={i} fill={categorical[i % categorical.length]} />
                     ))}
@@ -159,10 +161,10 @@ export function AdminAnalytics() {
       </div>
 
       <Card className="p-5">
-        <h3 className="font-display font-semibold mb-1">Teacher Engagement</h3>
-        <p className="text-[12px] text-[var(--text-secondary)] mb-4">Ranked by lesson plans authored and updates posted</p>
+        <h3 className="font-display font-semibold mb-1">{t("admin.analyticsTeacherEngagementTitle")}</h3>
+        <p className="text-[12px] text-[var(--text-secondary)] mb-4">{t("admin.analyticsTeacherEngagementSubtitle")}</p>
         {engagement.length === 0 ? (
-          <p className="text-sm text-[var(--text-secondary)]">No teachers yet — create teacher accounts to see engagement.</p>
+          <p className="text-sm text-[var(--text-secondary)]">{t("admin.analyticsNoTeachersYet")}</p>
         ) : (
           <div className="space-y-3.5">
             {engagement.map((e) => (
@@ -172,7 +174,7 @@ export function AdminAnalytics() {
                   <div className="h-full rounded-full" style={{ width: `${(e.score / maxScore) * 100}%`, background: magnitudeHue }} />
                 </div>
                 <span className="text-[11px] text-[var(--text-secondary)] w-24 shrink-0 text-right">
-                  {e.lessons} lessons · {e.posts} posts
+                  {e.lessons} {t("admin.analyticsChartLessonsLabel")} · {e.posts} {t("admin.analyticsEngagementPostsSuffix")}
                 </span>
               </div>
             ))}

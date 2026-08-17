@@ -10,21 +10,24 @@ import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/lib/auth-context";
 import { useAppStore } from "@/lib/store";
 import { useTheme } from "@/lib/theme-context";
+import { useLanguage } from "@/lib/language-context";
+import { translateApiError } from "@/lib/i18n/errors";
 import { cn } from "@/lib/utils";
 import { DriveStatusCard } from "@/components/settings/DriveStatusCard";
-
-const notificationOptions = [
-  { key: "lessons", label: "New lesson plans published" },
-  { key: "portfolios", label: "Child portfolio updates" },
-  { key: "comments", label: "Comments on my posts" },
-  { key: "events", label: "New calendar events" },
-  { key: "prayer", label: "New prayer requests" },
-  { key: "admin", label: "Admin announcements" },
-];
 
 export default function SettingsPage() {
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { t, language } = useLanguage();
+
+  const notificationOptions = [
+    { key: "lessons", label: t("settings.notifLessons") },
+    { key: "portfolios", label: t("settings.notifPortfolios") },
+    { key: "comments", label: t("settings.notifComments") },
+    { key: "events", label: t("settings.notifEvents") },
+    { key: "prayer", label: t("settings.notifPrayer") },
+    { key: "admin", label: t("settings.notifAdmin") },
+  ];
   const [name, setName] = useState(user?.name ?? "");
   const [bio, setBio] = useState(user?.bio ?? "");
   const [username, setUsername] = useState(user?.username ?? "");
@@ -43,7 +46,7 @@ export default function SettingsPage() {
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't save your changes. Please try again.");
+      setError(translateApiError(err, language));
     } finally {
       setSaving(false);
     }
@@ -51,11 +54,11 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <PageHeader eyebrow="Your Account" title="Settings" description="Manage your profile, appearance, and notification preferences." />
+      <PageHeader eyebrow={t("settings.eyebrow")} title={t("settings.pageTitle")} description={t("settings.pageDescription")} />
 
       <div className="space-y-6">
         <Card className="p-6">
-          <h3 className="font-display font-semibold text-lg mb-4">Profile</h3>
+          <h3 className="font-display font-semibold text-lg mb-4">{t("settings.profileTitle")}</h3>
           <div className="flex items-center gap-4 mb-5">
             <Avatar name={user.name} color={user.avatarColor} size="xl" />
             <div>
@@ -65,7 +68,7 @@ export default function SettingsPage() {
           </div>
           <div className="space-y-4">
             <div>
-              <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">Full Name</label>
+              <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">{t("settings.fullName")}</label>
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -73,7 +76,7 @@ export default function SettingsPage() {
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">Email</label>
+              <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">{t("common.email")}</label>
               <input
                 value={user.email}
                 disabled
@@ -81,19 +84,19 @@ export default function SettingsPage() {
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">Username (optional)</label>
+              <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">{t("settings.usernameLabel")}</label>
               <input
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="e.g. gracem"
+                placeholder={t("settings.usernamePlaceholder")}
                 className="w-full text-sm px-3.5 py-2.5 rounded-xl border border-[var(--border-soft)] bg-transparent focus-ring focus:border-[var(--color-gold)]"
               />
               <p className="text-[11px] text-[var(--text-secondary)] mt-1.5">
-                Lets you sign in with a username instead of your email. 3-24 characters: letters, numbers, dots, underscores, or hyphens.
+                {t("settings.usernameHelp")}
               </p>
             </div>
             <div>
-              <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">About</label>
+              <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">{t("settings.aboutLabel")}</label>
               <textarea
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
@@ -105,7 +108,7 @@ export default function SettingsPage() {
         </Card>
 
         <Card className="p-6">
-          <h3 className="font-display font-semibold text-lg mb-4">Appearance</h3>
+          <h3 className="font-display font-semibold text-lg mb-4">{t("settings.appearanceTitle")}</h3>
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={() => theme === "dark" && toggleTheme()}
@@ -115,7 +118,7 @@ export default function SettingsPage() {
               )}
             >
               <Sun size={20} />
-              <span className="text-sm font-semibold">Light</span>
+              <span className="text-sm font-semibold">{t("settings.light")}</span>
             </button>
             <button
               onClick={() => theme === "light" && toggleTheme()}
@@ -125,13 +128,13 @@ export default function SettingsPage() {
               )}
             >
               <Moon size={20} />
-              <span className="text-sm font-semibold">Dark</span>
+              <span className="text-sm font-semibold">{t("settings.dark")}</span>
             </button>
           </div>
         </Card>
 
         <Card className="p-6">
-          <h3 className="font-display font-semibold text-lg mb-4">Notifications</h3>
+          <h3 className="font-display font-semibold text-lg mb-4">{t("settings.notificationsTitle")}</h3>
           <div className="space-y-3.5">
             {notificationOptions.map((opt) => (
               <label key={opt.key} className="flex items-center justify-between cursor-pointer">
@@ -154,15 +157,15 @@ export default function SettingsPage() {
         </Card>
 
         <Card className="p-6">
-          <h3 className="font-display font-semibold text-lg mb-4">Security</h3>
+          <h3 className="font-display font-semibold text-lg mb-4">{t("settings.securityTitle")}</h3>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-semibold">Password</p>
-              <p className="text-[12.5px] text-[var(--text-secondary)]">Change the password you use to sign in.</p>
+              <p className="text-sm font-semibold">{t("common.password")}</p>
+              <p className="text-[12.5px] text-[var(--text-secondary)]">{t("settings.passwordDescription")}</p>
             </div>
             <Link href="/change-password">
               <Button variant="outline" size="sm">
-                <KeyRound size={14} /> Change Password
+                <KeyRound size={14} /> {t("settings.changePassword")}
               </Button>
             </Link>
           </div>
@@ -173,7 +176,7 @@ export default function SettingsPage() {
         {error && <p className="text-xs text-red-500 font-medium">{error}</p>}
         <div className="flex items-center gap-3">
           <Button onClick={save} loading={saving} disabled={saving}>
-            {saved ? <Check size={15} /> : null} {saved ? "Saved!" : "Save Changes"}
+            {saved ? <Check size={15} /> : null} {saved ? t("common.saved") : t("common.saveChanges")}
           </Button>
         </div>
       </div>

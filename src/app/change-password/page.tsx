@@ -7,10 +7,13 @@ import { Cross, Eye, EyeOff, KeyRound, Lock } from "lucide-react";
 import { useAppStore } from "@/lib/store";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/Button";
+import { useLanguage } from "@/lib/language-context";
+import { translateApiError } from "@/lib/i18n/errors";
 
 export default function ChangePasswordPage() {
   const router = useRouter();
   const { user, loading } = useAuth();
+  const { t, language } = useLanguage();
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -27,15 +30,15 @@ export default function ChangePasswordPage() {
     e.preventDefault();
     setError("");
     if (!currentPassword) {
-      setError("Enter your current password.");
+      setError(t("auth.errorEnterCurrentPassword"));
       return;
     }
     if (newPassword.length < 8) {
-      setError("Your new password must be at least 8 characters.");
+      setError(t("auth.errorNewPasswordTooShort"));
       return;
     }
     if (newPassword !== confirm) {
-      setError("New passwords don't match.");
+      setError(t("auth.errorNewPasswordsDontMatch"));
       return;
     }
     setSubmitting(true);
@@ -43,7 +46,7 @@ export default function ChangePasswordPage() {
       await useAppStore.getState().changeOwnPassword(currentPassword, newPassword);
       router.push("/dashboard");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't change your password. Please try again.");
+      setError(translateApiError(err, language));
       setSubmitting(false);
     }
   }
@@ -80,17 +83,15 @@ export default function ChangePasswordPage() {
 
         <KeyRound size={26} className="text-[var(--color-gold-deep)] mb-3" />
         <h1 className="font-display text-2xl font-semibold mb-1.5">
-          {user.mustChangePassword ? "Set your own password" : "Change your password"}
+          {user.mustChangePassword ? t("auth.setYourPasswordHeading") : t("auth.changeYourPasswordHeading")}
         </h1>
         <p className="text-sm text-[var(--text-secondary)] mb-7">
-          {user.mustChangePassword
-            ? "You signed in with a one-time password. Choose a new password only you know before continuing."
-            : "Enter your current password and choose a new one."}
+          {user.mustChangePassword ? t("auth.setPasswordDescription") : t("auth.changePasswordDescription")}
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">Current Password</label>
+            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">{t("auth.currentPassword")}</label>
             <div className="relative">
               <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
               <input
@@ -103,7 +104,7 @@ export default function ChangePasswordPage() {
             </div>
           </div>
           <div>
-            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">New Password</label>
+            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">{t("auth.newPassword")}</label>
             <div className="relative">
               <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
               <input
@@ -121,10 +122,10 @@ export default function ChangePasswordPage() {
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
-            <p className="text-[11px] text-[var(--text-secondary)] mt-1.5">Must be at least 8 characters.</p>
+            <p className="text-[11px] text-[var(--text-secondary)] mt-1.5">{t("auth.newPasswordHint")}</p>
           </div>
           <div>
-            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">Confirm New Password</label>
+            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">{t("auth.confirmNewPassword")}</label>
             <input
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
@@ -137,7 +138,7 @@ export default function ChangePasswordPage() {
           {error && <p className="text-xs text-red-500 font-medium">{error}</p>}
 
           <Button type="submit" className="w-full" size="lg" loading={submitting}>
-            Update Password
+            {t("auth.updatePassword")}
           </Button>
         </form>
       </motion.div>

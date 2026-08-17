@@ -9,10 +9,13 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { StaggerGrid, StaggerItem } from "@/components/ui/Stagger";
 import { getClass, useAppStore } from "@/lib/store";
+import { useLanguage } from "@/lib/language-context";
+import { translateApiError } from "@/lib/i18n/errors";
 
 const inputClass = "w-full text-sm px-3.5 py-2.5 rounded-xl border border-[var(--border-soft)] bg-transparent focus-ring focus:border-[var(--color-gold)] transition-colors";
 
 function CredentialReveal({ email, tempPassword, onDone }: { email: string; tempPassword: string; onDone: () => void }) {
+  const { t } = useLanguage();
   const [copied, setCopied] = useState(false);
 
   function copy() {
@@ -28,9 +31,9 @@ function CredentialReveal({ email, tempPassword, onDone }: { email: string; temp
         <Check size={22} />
       </div>
       <div>
-        <p className="text-sm font-semibold mb-1">Account created</p>
+        <p className="text-sm font-semibold mb-1">{t("admin.teachersAccountCreatedTitle")}</p>
         <p className="text-[13px] text-[var(--text-secondary)]">
-          Share these credentials with <strong>{email}</strong> yourself — there&apos;s no email server in this test environment, so this is the only time the password is shown.
+          {t("admin.teachersCredentialSharePrefix")} <strong>{email}</strong> {t("admin.teachersCredentialShareSuffix")}
         </p>
       </div>
       <div className="flex items-center gap-2 px-3.5 py-3 rounded-xl bg-black/[0.04] font-mono text-sm">
@@ -40,13 +43,14 @@ function CredentialReveal({ email, tempPassword, onDone }: { email: string; temp
         </button>
       </div>
       <Button className="w-full" onClick={onDone}>
-        Done
+        {t("common.done")}
       </Button>
     </div>
   );
 }
 
 function CreateTeacherModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { t, language } = useLanguage();
   const classes = useAppStore((s) => s.classes);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -81,7 +85,7 @@ function CreateTeacherModal({ open, onClose }: { open: boolean; onClose: () => v
       });
       setCreated({ email: email.trim(), tempPassword });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't create the account. Please try again.");
+      setError(translateApiError(err, language));
     } finally {
       setSubmitting(false);
     }
@@ -94,7 +98,7 @@ function CreateTeacherModal({ open, onClose }: { open: boolean; onClose: () => v
         reset();
         onClose();
       }}
-      title={created ? undefined : "Create Teacher Account"}
+      title={created ? undefined : t("admin.teachersCreateButton")}
       size="sm"
     >
       {created ? (
@@ -109,25 +113,25 @@ function CreateTeacherModal({ open, onClose }: { open: boolean; onClose: () => v
       ) : (
         <div className="space-y-4">
           <div>
-            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">Full Name</label>
-            <input value={name} onChange={(e) => setName(e.target.value)} className={inputClass} placeholder="e.g. Rebecca Adams" />
+            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">{t("admin.teachersFullNameLabel")}</label>
+            <input value={name} onChange={(e) => setName(e.target.value)} className={inputClass} placeholder={t("admin.teachersFullNamePlaceholder")} />
           </div>
           <div>
-            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">Email Address</label>
-            <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" className={inputClass} placeholder="name@yourchurch.org" />
+            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">{t("admin.teachersEmailAddressLabel")}</label>
+            <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" className={inputClass} placeholder={t("admin.teachersEmailPlaceholder")} />
           </div>
           <div>
-            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">Username (optional)</label>
-            <input value={username} onChange={(e) => setUsername(e.target.value)} className={inputClass} placeholder="e.g. gracem" />
+            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">{t("admin.teachersUsernameOptionalLabel")}</label>
+            <input value={username} onChange={(e) => setUsername(e.target.value)} className={inputClass} placeholder={t("admin.teachersUsernamePlaceholder")} />
           </div>
           <div>
-            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">Title (optional)</label>
-            <input value={title} onChange={(e) => setTitle(e.target.value)} className={inputClass} placeholder="e.g. Primary Teacher" />
+            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">{t("admin.teachersTitleOptionalLabel")}</label>
+            <input value={title} onChange={(e) => setTitle(e.target.value)} className={inputClass} placeholder={t("admin.teachersTitlePlaceholder")} />
           </div>
           <div>
-            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">Assign Class</label>
+            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">{t("admin.teachersAssignClassLabel")}</label>
             <select value={classId} onChange={(e) => setClassId(e.target.value)} className={inputClass}>
-              <option value="">Unassigned</option>
+              <option value="">{t("admin.teachersUnassignedOption")}</option>
               {classes.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -135,10 +139,10 @@ function CreateTeacherModal({ open, onClose }: { open: boolean; onClose: () => v
               ))}
             </select>
           </div>
-          <p className="text-[11.5px] text-[var(--text-secondary)]">A temporary password will be generated and shown once you create the account.</p>
+          <p className="text-[11.5px] text-[var(--text-secondary)]">{t("admin.teachersTempPasswordNote")}</p>
           {error && <p className="text-xs text-red-500 font-medium">{error}</p>}
           <Button className="w-full" onClick={submit} loading={submitting} disabled={!name.trim() || !email.trim() || submitting}>
-            Create Account
+            {t("admin.teachersCreateAccountSubmitButton")}
           </Button>
         </div>
       )}
@@ -147,6 +151,7 @@ function CreateTeacherModal({ open, onClose }: { open: boolean; onClose: () => v
 }
 
 function EditUsernameModal({ user, onClose }: { user: { id: string; name: string; username?: string } | null; onClose: () => void }) {
+  const { t, language } = useLanguage();
   const [username, setUsername] = useState(user?.username ?? "");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -159,29 +164,29 @@ function EditUsernameModal({ user, onClose }: { user: { id: string; name: string
       await useAppStore.getState().setUsername(user.id, username.trim() || null);
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't update the username. Please try again.");
+      setError(translateApiError(err, language));
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <Modal key={user?.id} open={!!user} onClose={onClose} title={user ? `Username for ${user.name}` : undefined} size="sm">
+    <Modal key={user?.id} open={!!user} onClose={onClose} title={user ? `${t("admin.teachersUsernameModalTitlePrefix")} ${user.name}` : undefined} size="sm">
       {user && (
         <div className="space-y-4">
           <div>
-            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">Username</label>
+            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">{t("admin.teachersUsernameLabel")}</label>
             <input
               defaultValue={user.username ?? ""}
               onChange={(e) => setUsername(e.target.value)}
               className={inputClass}
-              placeholder="e.g. gracem"
+              placeholder={t("admin.teachersUsernamePlaceholder")}
             />
-            <p className="text-[11px] text-[var(--text-secondary)] mt-1.5">Leave blank to remove their username.</p>
+            <p className="text-[11px] text-[var(--text-secondary)] mt-1.5">{t("admin.teachersUsernameBlankHint")}</p>
           </div>
           {error && <p className="text-xs text-red-500 font-medium">{error}</p>}
           <Button className="w-full" onClick={submit} loading={submitting} disabled={submitting}>
-            Save Username
+            {t("admin.teachersSaveUsernameButton")}
           </Button>
         </div>
       )}
@@ -190,6 +195,7 @@ function EditUsernameModal({ user, onClose }: { user: { id: string; name: string
 }
 
 export function AdminTeachers() {
+  const { t } = useLanguage();
   const users = useAppStore((s) => s.users);
   const [menuFor, setMenuFor] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
@@ -210,9 +216,12 @@ export function AdminTeachers() {
   return (
     <div>
       <div className="flex items-center justify-between mb-5">
-        <p className="text-sm text-[var(--text-secondary)]">{users.length} account{users.length === 1 ? "" : "s"} · {users.filter((u) => u.status === "active").length} active</p>
+        <p className="text-sm text-[var(--text-secondary)]">
+          {users.length} {users.length === 1 ? t("admin.teachersAccountSingular") : t("admin.teachersAccountPlural")} ·{" "}
+          {users.filter((u) => u.status === "active").length} {t("admin.teachersActiveSuffix")}
+        </p>
         <Button size="sm" onClick={() => setCreateOpen(true)}>
-          <UserPlus size={14} /> Create Teacher Account
+          <UserPlus size={14} /> {t("admin.teachersCreateButton")}
         </Button>
       </div>
 
@@ -226,8 +235,8 @@ export function AdminTeachers() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-semibold truncate">{u.name}</p>
-                    <Badge tone={u.role === "admin" ? "gold" : "blue"}>{u.role}</Badge>
-                    {u.status === "disabled" && <Badge tone="danger">Disabled</Badge>}
+                    <Badge tone={u.role === "admin" ? "gold" : "blue"}>{u.role === "admin" ? t("common.admin") : t("common.teacher")}</Badge>
+                    {u.status === "disabled" && <Badge tone="danger">{t("common.disabled")}</Badge>}
                   </div>
                   <p className="text-[11.5px] text-[var(--text-secondary)]">
                     {u.email} {u.username && `· @${u.username}`} {cls && `· ${cls.name}`}
@@ -247,14 +256,14 @@ export function AdminTeachers() {
                           }}
                           className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-medium hover:bg-black/[0.04]"
                         >
-                          <AtSign size={14} /> Edit Username
+                          <AtSign size={14} /> {t("admin.teachersEditUsernameAction")}
                         </button>
                         <button onClick={() => resetPassword(u)} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-medium hover:bg-black/[0.04]">
-                          <KeyRound size={14} /> Reset Password
+                          <KeyRound size={14} /> {t("admin.teachersResetPasswordAction")}
                         </button>
                         <button onClick={() => toggleStatus(u.id)} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-medium hover:bg-black/[0.04]">
                           {u.status === "active" ? <Ban size={14} className="text-red-500" /> : <CheckCircle2 size={14} className="text-[var(--color-sage-deep)]" />}
-                          {u.status === "active" ? "Disable Account" : "Re-enable Account"}
+                          {u.status === "active" ? t("admin.teachersDisableAccountAction") : t("admin.teachersReEnableAccountAction")}
                         </button>
                       </div>
                     )}

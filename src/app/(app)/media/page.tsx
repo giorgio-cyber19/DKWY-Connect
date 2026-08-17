@@ -25,9 +25,12 @@ import { StaggerGrid, StaggerItem } from "@/components/ui/Stagger";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { getUser, useAppStore } from "@/lib/store";
 import { useAuth } from "@/lib/auth-context";
+import { useLanguage } from "@/lib/language-context";
 import { mediaFolders } from "@/lib/constants";
+import { mediaFolderLabels } from "@/lib/i18n/dictionaries/media";
+import { translateApiError } from "@/lib/i18n/errors";
 import { formatDate, cn } from "@/lib/utils";
-import { uploadToDrive, driveDownloadUrl, DriveNotConfiguredError } from "@/lib/upload";
+import { uploadToDrive, driveDownloadUrl } from "@/lib/upload";
 import type { MediaItem } from "@/lib/types";
 
 const typeIcons: Record<MediaItem["type"], typeof ImageIcon> = {
@@ -69,6 +72,7 @@ const typeColors: Record<MediaItem["type"], string> = {
 
 export default function MediaPage() {
   const { user } = useAuth();
+  const { t, language } = useLanguage();
   const mediaItems = useAppStore((s) => s.mediaItems);
   const [folder, setFolder] = useState<string | null>(null);
   const [query, setQuery] = useState("");
@@ -124,7 +128,7 @@ export default function MediaPage() {
       setUploadTags("");
       setUploadOpen(false);
     } catch (err) {
-      setUploadError(err instanceof DriveNotConfiguredError ? err.message : err instanceof Error ? err.message : "Upload failed.");
+      setUploadError(translateApiError(err, language));
     } finally {
       setUploading(false);
       e.target.value = "";
@@ -134,12 +138,12 @@ export default function MediaPage() {
   return (
     <div>
       <PageHeader
-        eyebrow="Resources"
-        title="Media Library"
-        description="A centralized home for lesson illustrations, worship songs, craft templates, photos, and curriculum resources."
+        eyebrow={t("media.eyebrow")}
+        title={t("media.title")}
+        description={t("media.description")}
         actions={
           <Button onClick={() => setUploadOpen(true)}>
-            <UploadCloud size={15} /> Upload
+            <UploadCloud size={15} /> {t("common.upload")}
           </Button>
         }
       />
@@ -154,7 +158,7 @@ export default function MediaPage() {
             )}
           >
             <span className="flex items-center gap-2">
-              <Folder size={16} /> All Files
+              <Folder size={16} /> {t("media.allFiles")}
             </span>
             <span className="text-xs">{mediaItems.length}</span>
           </button>
@@ -170,7 +174,7 @@ export default function MediaPage() {
                 )}
               >
                 <span className="flex items-center gap-2 truncate">
-                  <Folder size={16} className="shrink-0" /> <span className="truncate">{f}</span>
+                  <Folder size={16} className="shrink-0" /> <span className="truncate">{mediaFolderLabels[language][f]}</span>
                 </span>
                 <span className="text-xs shrink-0">{count}</span>
               </button>
@@ -185,7 +189,7 @@ export default function MediaPage() {
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search by name or tag…"
+                placeholder={t("media.searchPlaceholder")}
                 className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[var(--border-soft)] bg-transparent text-sm focus-ring focus:border-[var(--color-gold)]"
               />
             </div>
@@ -201,9 +205,9 @@ export default function MediaPage() {
 
           {selected.length > 0 && (
             <div className="flex items-center gap-3 mb-4 px-4 py-2.5 rounded-xl bg-[color-mix(in_srgb,var(--color-blue)_10%,transparent)] text-sm">
-              <span className="font-semibold text-[var(--color-blue-deep)]">{selected.length} selected</span>
-              <Button size="sm" variant="outline" disabled title="Not available in this test environment">
-                <Download size={13} /> Bulk Download
+              <span className="font-semibold text-[var(--color-blue-deep)]">{selected.length} {t("media.selected")}</span>
+              <Button size="sm" variant="outline" disabled title={t("media.notAvailableTestEnv")}>
+                <Download size={13} /> {t("media.bulkDownload")}
               </Button>
               <button onClick={() => setSelected([])} className="ml-auto text-[var(--text-secondary)]">
                 <X size={15} />
@@ -214,8 +218,8 @@ export default function MediaPage() {
           {filtered.length === 0 ? (
             <EmptyState
               icon={Folder}
-              title={mediaItems.length === 0 ? "No files yet" : "No files found"}
-              description={mediaItems.length === 0 ? "Upload the first file to this library." : "Try a different search term, or upload new files to this folder."}
+              title={mediaItems.length === 0 ? t("media.noFilesYetTitle") : t("media.noFilesFoundTitle")}
+              description={mediaItems.length === 0 ? t("media.noFilesYetDescription") : t("media.noFilesFoundDescription")}
             />
           ) : view === "grid" ? (
             <StaggerGrid className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -248,7 +252,7 @@ export default function MediaPage() {
                       </div>
                       <div className="p-3.5">
                         <p className="text-[12.5px] font-semibold truncate">{m.name}</p>
-                        <p className="text-[10.5px] text-[var(--text-secondary)] mt-0.5">{m.size} · {formatDate(m.uploadedAt)}</p>
+                        <p className="text-[10.5px] text-[var(--text-secondary)] mt-0.5">{m.size} · {formatDate(m.uploadedAt, undefined, language)}</p>
                       </div>
                     </Card>
                   </StaggerItem>
@@ -268,9 +272,9 @@ export default function MediaPage() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-[13px] font-semibold truncate">{m.name}</p>
-                        <p className="text-[11px] text-[var(--text-secondary)]">{m.folder} · {uploader?.name}</p>
+                        <p className="text-[11px] text-[var(--text-secondary)]">{mediaFolderLabels[language][m.folder]} · {uploader?.name}</p>
                       </div>
-                      <span className="text-[11px] text-[var(--text-secondary)] shrink-0 hidden sm:block">{formatDate(m.uploadedAt)}</span>
+                      <span className="text-[11px] text-[var(--text-secondary)] shrink-0 hidden sm:block">{formatDate(m.uploadedAt, undefined, language)}</span>
                       <span className="text-[11px] text-[var(--text-secondary)] shrink-0">{m.size}</span>
                     </Card>
                   </StaggerItem>
@@ -293,7 +297,7 @@ export default function MediaPage() {
             <div className="p-6">
               <h3 className="font-display font-semibold text-lg mb-1">{preview.name}</h3>
               <p className="text-sm text-[var(--text-secondary)] mb-4">
-                {preview.folder} · {preview.size} · Uploaded {formatDate(preview.uploadedAt)} by {getUser(preview.uploadedBy)?.name}
+                {mediaFolderLabels[language][preview.folder]} · {preview.size} · {t("media.uploadedLabel")} {formatDate(preview.uploadedAt, undefined, language)} {t("media.byLabel")} {getUser(preview.uploadedBy)?.name}
               </p>
               {preview.tags.length > 0 && (
                 <div className="flex items-center gap-1.5 flex-wrap mb-5">
@@ -308,12 +312,12 @@ export default function MediaPage() {
                 {preview.driveFileId ? (
                   <a href={driveDownloadUrl(preview.driveFileId)} target="_blank" rel="noopener noreferrer" className="flex-1">
                     <Button size="sm" className="w-full">
-                      <Download size={14} /> Download
+                      <Download size={14} /> {t("common.download")}
                     </Button>
                   </a>
                 ) : (
-                  <Button size="sm" className="flex-1" disabled title="This file was added before Google Drive was connected">
-                    <Download size={14} /> Download
+                  <Button size="sm" className="flex-1" disabled title={t("media.addedBeforeDrive")}>
+                    <Download size={14} /> {t("common.download")}
                   </Button>
                 )}
               </div>
@@ -322,24 +326,24 @@ export default function MediaPage() {
         )}
       </Modal>
 
-      <Modal open={uploadOpen} onClose={() => setUploadOpen(false)} title="Upload to Media Library" size="sm">
+      <Modal open={uploadOpen} onClose={() => setUploadOpen(false)} title={t("media.uploadModalTitle")} size="sm">
         <div className="space-y-4">
           <div>
-            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">Folder</label>
+            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">{t("media.folderLabel")}</label>
             <select value={uploadFolder} onChange={(e) => setUploadFolder(e.target.value)} className="w-full text-sm px-3.5 py-2.5 rounded-xl border border-[var(--border-soft)] bg-transparent">
               {mediaFolders.map((f) => (
                 <option key={f} value={f}>
-                  {f}
+                  {mediaFolderLabels[language][f]}
                 </option>
               ))}
             </select>
           </div>
           <div>
-            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">Tags (comma separated, optional)</label>
+            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">{t("media.tagsLabel")}</label>
             <input
               value={uploadTags}
               onChange={(e) => setUploadTags(e.target.value)}
-              placeholder="e.g. worship, kids"
+              placeholder={t("media.tagsPlaceholder")}
               className="w-full text-sm px-3.5 py-2.5 rounded-xl border border-[var(--border-soft)] bg-transparent"
             />
           </div>
@@ -350,11 +354,11 @@ export default function MediaPage() {
             className="w-full border-2 border-dashed border-[var(--border-soft)] rounded-2xl py-10 flex flex-col items-center text-center hover:border-[var(--color-gold)] transition-colors disabled:opacity-60"
           >
             <UploadCloud size={28} className={cn("text-[var(--color-gold-deep)] mb-2.5", uploading && "animate-pulse")} />
-            <p className="text-sm font-semibold">{uploading ? "Uploading to Google Drive…" : "Click to choose files"}</p>
-            <p className="text-xs text-[var(--text-secondary)] mt-1">Images, video, audio, PDF, Word, PowerPoint · up to 4MB</p>
+            <p className="text-sm font-semibold">{uploading ? t("media.uploadingToDrive") : t("media.clickToChooseFiles")}</p>
+            <p className="text-xs text-[var(--text-secondary)] mt-1">{t("media.fileTypeHint")}</p>
           </button>
           {uploadError && <p className="text-[12px] text-red-500 font-medium">{uploadError}</p>}
-          <p className="text-[11px] text-[var(--text-secondary)]">Files are uploaded to your church&apos;s connected Google Drive.</p>
+          <p className="text-[11px] text-[var(--text-secondary)]">{t("media.driveNote")}</p>
         </div>
       </Modal>
     </div>

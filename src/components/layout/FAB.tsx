@@ -4,17 +4,19 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Plus, BookPlus, MessageSquarePlus, CalendarPlus, UploadCloud } from "lucide-react";
-
-const actions = [
-  { label: "Lesson Plan", icon: BookPlus, href: "/lessons/new" },
-  { label: "Update Post", icon: MessageSquarePlus, href: "/updates" },
-  { label: "Event", icon: CalendarPlus, href: "/calendar" },
-  { label: "Upload", icon: UploadCloud, href: "/media" },
-];
+import { useLanguage } from "@/lib/language-context";
 
 export function FAB() {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+
+  const actions = [
+    { label: t("layout.fabLessonPlan"), icon: BookPlus, href: "/lessons/new" },
+    { label: t("layout.fabUpdatePost"), icon: MessageSquarePlus, href: "/updates" },
+    { label: t("layout.fabEvent"), icon: CalendarPlus, href: "/calendar" },
+    { label: t("common.upload"), icon: UploadCloud, href: "/media" },
+  ];
 
   useEffect(() => {
     function handler(e: MouseEvent) {
