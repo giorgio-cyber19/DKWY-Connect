@@ -66,6 +66,17 @@ export async function PATCH(request: Request, ctx: RouteContext<"/api/posts/[id]
     return NextResponse.json(updated);
   }
 
+  if (action === "pray") {
+    const prayedByUserIds = post.prayedByUserIds ?? [];
+    const prayed = prayedByUserIds.includes(claims.userId);
+    const updated = {
+      ...post,
+      prayedByUserIds: prayed ? prayedByUserIds.filter((u) => u !== claims.userId) : [...prayedByUserIds, claims.userId],
+    };
+    await putEntity("posts", updated);
+    return NextResponse.json(updated);
+  }
+
   if (action === "pin") {
     if (claims.role !== "admin") return NextResponse.json({ error: "forbidden", message: "Only administrators can pin posts." }, { status: 403 });
     const updated = { ...post, pinned: !post.pinned };

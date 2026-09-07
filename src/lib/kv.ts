@@ -3,6 +3,8 @@ import { Redis } from "@upstash/redis";
 
 const REFRESH_TOKEN_KEY = "dwky-connect:google-drive:refresh-token";
 const ROOT_FOLDER_KEY = "dwky-connect:google-drive:root-folder-id";
+const PASSWORD_RESET_PREFIX = "dwky-connect:password-reset:";
+const PASSWORD_RESET_TTL_SECONDS = 60 * 60; // 1 hour
 
 let client: Redis | null = null;
 
@@ -48,4 +50,16 @@ export async function getStoredRootFolderId(): Promise<string | null> {
 
 export async function setStoredRootFolderId(id: string): Promise<void> {
   await getClient().set(ROOT_FOLDER_KEY, id);
+}
+
+/** Single-use, 1-hour-lived token → userId mapping for the forgot-password flow. */
+export async function setPasswordResetToken(token: string, userId: string): Promise<void> {
+  await getClient().set(`${PASSWORD_RESET_PREFIX}${token}`, userId, { ex: PASSWORD_RESET_TTL_SECONDS });
+}
+
+/** Atomically reads and deletes the token so it can never be used twice. */
+export async function consumePasswordResetToken(token: string): Promise<string | null> {
+  if (!isKvConfigured()) return null;
+  const userId = await getClient().getdel<string>(`${PASSWORD_RESET_PREFIX}${token}`);
+  return userId ?? null;
 }

@@ -18,7 +18,8 @@ import type {
   MediaItem,
   DocumentItem,
   CalendarEvent,
-  PrayerEntry,
+  Holiday,
+  RosterEntry,
   Notification,
   AuditLogEntry,
 } from "./types";
@@ -36,7 +37,8 @@ interface BootstrapResponse {
   mediaItems: MediaItem[];
   documentItems: DocumentItem[];
   calendarEvents: CalendarEvent[];
-  prayerEntries: PrayerEntry[];
+  holidays: Holiday[];
+  rosterEntries: RosterEntry[];
   notifications: Notification[];
   auditLog: AuditLogEntry[];
 }
@@ -51,7 +53,8 @@ interface AppState {
   mediaItems: MediaItem[];
   documentItems: DocumentItem[];
   calendarEvents: CalendarEvent[];
-  prayerEntries: PrayerEntry[];
+  holidays: Holiday[];
+  rosterEntries: RosterEntry[];
   notifications: Notification[];
   auditLog: AuditLogEntry[];
   currentUserId: string | null;
@@ -69,7 +72,7 @@ interface AppState {
 
   // self-service account
   changeOwnPassword: (currentPassword: string, newPassword: string) => Promise<void>;
-  updateProfile: (input: { name?: string; bio?: string; username?: string | null }) => Promise<User>;
+  updateProfile: (input: { name?: string; bio?: string; username?: string | null; accentColor?: string | null }) => Promise<User>;
 
   // notifications
   markNotificationRead: (id: string) => Promise<void>;
@@ -83,7 +86,11 @@ interface AppState {
 
   // classes / age groups
   createAgeGroup: (input: { name: string; range: string }) => Promise<AgeGroup>;
+  updateAgeGroup: (id: string, data: { name: string; range: string }) => Promise<AgeGroup>;
+  removeAgeGroup: (id: string) => Promise<void>;
   createClass: (input: { name: string; ageGroupId: string; room: string }) => Promise<SchoolClass>;
+  updateClass: (id: string, data: { name: string; ageGroupId: string; room: string }) => Promise<SchoolClass>;
+  removeClass: (id: string) => Promise<void>;
 
   // children
   createChild: (input: {
@@ -91,11 +98,12 @@ interface AppState {
     age: number;
     birthday: string;
     classId: string;
-    teacherId: string;
+    teacherId?: string;
     guardians: Guardian[];
     address?: string;
     allergies?: string;
   }) => Promise<Child>;
+  removeChild: (id: string) => Promise<void>;
   addArtwork: (childId: string, item: Omit<ArtworkItem, "id">) => Promise<void>;
   addAlbum: (childId: string, item: Omit<PhotoAlbum, "id">) => Promise<void>;
   addVideo: (childId: string, item: Omit<VideoItem, "id">) => Promise<void>;
@@ -122,9 +130,18 @@ interface AppState {
   // calendar
   createEvent: (item: Omit<CalendarEvent, "id">) => Promise<CalendarEvent>;
 
-  // prayer
-  createPrayerEntry: (item: Omit<PrayerEntry, "id" | "date" | "prayedByUserIds">) => Promise<PrayerEntry>;
-  togglePrayedFor: (id: string, userId: string) => Promise<void>;
+  // holidays
+  createHoliday: (input: Omit<Holiday, "id">) => Promise<Holiday>;
+  updateHoliday: (id: string, data: Omit<Holiday, "id">) => Promise<Holiday>;
+  removeHoliday: (id: string) => Promise<void>;
+
+  // roster
+  createRosterEntry: (
+    input: Omit<RosterEntry, "id" | "calendarEventId" | "createdAt" | "updatedAt" | "createdBy">
+  ) => Promise<RosterEntry>;
+  updateRosterEntry: (id: string, data: Partial<RosterEntry>) => Promise<RosterEntry>;
+  removeRosterEntry: (id: string) => Promise<void>;
+  togglePrayedFor: (postId: string, userId: string) => Promise<void>;
 }
 
 export const useAppStore = create<AppState>()(
@@ -139,7 +156,8 @@ export const useAppStore = create<AppState>()(
       mediaItems: [],
       documentItems: [],
       calendarEvents: [],
-      prayerEntries: [],
+      holidays: [],
+      rosterEntries: [],
       notifications: [],
       auditLog: [],
       currentUserId: null,
@@ -161,7 +179,8 @@ export const useAppStore = create<AppState>()(
             mediaItems: data.mediaItems,
             documentItems: data.documentItems,
             calendarEvents: data.calendarEvents,
-            prayerEntries: data.prayerEntries,
+            holidays: data.holidays,
+            rosterEntries: data.rosterEntries,
             notifications: data.notifications,
             auditLog: data.auditLog,
           });
@@ -203,7 +222,8 @@ export const useAppStore = create<AppState>()(
           mediaItems: [],
           documentItems: [],
           calendarEvents: [],
-          prayerEntries: [],
+          holidays: [],
+          rosterEntries: [],
           notifications: [],
           auditLog: [],
         }),
@@ -262,10 +282,32 @@ export const useAppStore = create<AppState>()(
         return ageGroup;
       },
 
+      updateAgeGroup: async (id, data) => {
+        const ageGroup = await apiPatch<AgeGroup>(`/api/age-groups/${id}`, data);
+        set((s) => ({ ageGroups: s.ageGroups.map((a) => (a.id === id ? ageGroup : a)) }));
+        return ageGroup;
+      },
+
+      removeAgeGroup: async (id) => {
+        await apiDelete(`/api/age-groups/${id}`);
+        set((s) => ({ ageGroups: s.ageGroups.filter((a) => a.id !== id) }));
+      },
+
       createClass: async (input) => {
         const schoolClass = await apiPost<SchoolClass>("/api/classes", input);
         set((s) => ({ classes: [...s.classes, schoolClass] }));
         return schoolClass;
+      },
+
+      updateClass: async (id, data) => {
+        const schoolClass = await apiPatch<SchoolClass>(`/api/classes/${id}`, data);
+        set((s) => ({ classes: s.classes.map((c) => (c.id === id ? schoolClass : c)) }));
+        return schoolClass;
+      },
+
+      removeClass: async (id) => {
+        await apiDelete(`/api/classes/${id}`);
+        await get().bootstrap();
       },
 
       createChild: async (input) => {
@@ -275,6 +317,11 @@ export const useAppStore = create<AppState>()(
           classes: s.classes.map((c) => (c.id === child.classId ? { ...c, childCount: c.childCount + 1 } : c)),
         }));
         return child;
+      },
+
+      removeChild: async (id) => {
+        await apiDelete(`/api/children/${id}`);
+        await get().bootstrap();
       },
 
       addArtwork: async (childId, item) => {
@@ -362,15 +409,59 @@ export const useAppStore = create<AppState>()(
         return event;
       },
 
-      createPrayerEntry: async (item) => {
-        const entry = await apiPost<PrayerEntry>("/api/prayer", item);
-        set((s) => ({ prayerEntries: [entry, ...s.prayerEntries] }));
-        return entry;
+      createHoliday: async (item) => {
+        const holiday = await apiPost<Holiday>("/api/holidays", item);
+        set((s) => ({ holidays: [...s.holidays, holiday] }));
+        return holiday;
       },
 
-      togglePrayedFor: async (id, userId) => {
-        const entry = await apiPatch<PrayerEntry>(`/api/prayer/${id}`, { userId });
-        set((s) => ({ prayerEntries: s.prayerEntries.map((p) => (p.id === id ? entry : p)) }));
+      updateHoliday: async (id, data) => {
+        const holiday = await apiPatch<Holiday>(`/api/holidays/${id}`, data);
+        set((s) => ({ holidays: s.holidays.map((h) => (h.id === id ? holiday : h)) }));
+        return holiday;
+      },
+
+      removeHoliday: async (id) => {
+        await apiDelete(`/api/holidays/${id}`);
+        set((s) => ({ holidays: s.holidays.filter((h) => h.id !== id) }));
+      },
+
+      createRosterEntry: async (input) => {
+        const { rosterEntry, calendarEvent } = await apiPost<{ rosterEntry: RosterEntry; calendarEvent: CalendarEvent }>(
+          "/api/roster",
+          input
+        );
+        set((s) => ({
+          rosterEntries: [rosterEntry, ...s.rosterEntries],
+          calendarEvents: [...s.calendarEvents, calendarEvent],
+        }));
+        return rosterEntry;
+      },
+
+      updateRosterEntry: async (id, data) => {
+        const { rosterEntry, calendarEvent } = await apiPatch<{ rosterEntry: RosterEntry; calendarEvent: CalendarEvent }>(
+          `/api/roster/${id}`,
+          data
+        );
+        set((s) => ({
+          rosterEntries: s.rosterEntries.map((r) => (r.id === id ? rosterEntry : r)),
+          calendarEvents: s.calendarEvents.map((e) => (e.id === calendarEvent.id ? calendarEvent : e)),
+        }));
+        return rosterEntry;
+      },
+
+      removeRosterEntry: async (id) => {
+        const entry = get().rosterEntries.find((r) => r.id === id);
+        await apiDelete(`/api/roster/${id}`);
+        set((s) => ({
+          rosterEntries: s.rosterEntries.filter((r) => r.id !== id),
+          calendarEvents: s.calendarEvents.filter((e) => e.id !== entry?.calendarEventId),
+        }));
+      },
+
+      togglePrayedFor: async (postId, userId) => {
+        const post = await apiPatch<Post>(`/api/posts/${postId}`, { action: "pray", userId });
+        set((s) => ({ posts: s.posts.map((p) => (p.id === postId ? post : p)) }));
       },
     }),
     {
@@ -407,3 +498,4 @@ export const getClass = (id?: string) => (id ? useAppStore.getState().classes.fi
 export const getAgeGroup = (id?: string) => (id ? useAppStore.getState().ageGroups.find((a) => a.id === id) : undefined);
 export const getChild = (id: string) => useAppStore.getState().children.find((c) => c.id === id);
 export const getLesson = (id: string) => useAppStore.getState().lessonPlans.find((l) => l.id === id);
+export const getRosterEntry = (id: string) => useAppStore.getState().rosterEntries.find((r) => r.id === id);

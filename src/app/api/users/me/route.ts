@@ -3,6 +3,7 @@ import { getBearerToken, verifySessionToken } from "@/lib/session";
 import { hashPassword, verifyPassword, toPublicUser } from "@/lib/password";
 import { getCollection, getEntity, putEntity } from "@/lib/db";
 import { normalizeUsername, isValidUsernameFormat, isUsernameTaken } from "@/lib/username";
+import { isValidHexColor } from "@/lib/accent-color";
 import type { User } from "@/lib/types";
 
 export async function PATCH(request: Request) {
@@ -53,6 +54,17 @@ export async function PATCH(request: Request) {
           return NextResponse.json({ error: "username_taken", message: "That username is already in use." }, { status: 409 });
         }
         updated.username = username;
+      }
+    }
+
+    if ("accentColor" in (body ?? {})) {
+      const accentColor = body?.accentColor;
+      if (accentColor === null) {
+        delete updated.accentColor;
+      } else if (typeof accentColor === "string" && isValidHexColor(accentColor)) {
+        updated.accentColor = accentColor.toLowerCase();
+      } else {
+        return NextResponse.json({ error: "bad_request", message: "That isn't a valid color." }, { status: 400 });
       }
     }
 

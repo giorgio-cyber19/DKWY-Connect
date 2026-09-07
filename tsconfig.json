@@ -19,6 +19,7 @@
       }
     ],
     "paths": {
+      "@/components/ui/avatar": ["./src/types/youversion-avatar-stub.ts"],
       "@/*": ["./src/*"]
     }
   },

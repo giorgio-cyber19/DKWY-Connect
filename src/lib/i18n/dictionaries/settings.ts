@@ -14,6 +14,13 @@ const en = {
   light: "Light",
   dark: "Dark",
 
+  accentColorTitle: "Accent Color",
+  accentColorDescription: "Pick your own accent color for buttons and highlights. This only changes how the app looks for you.",
+  accentColorWheelLabel: "Accent color wheel",
+  accentColorHexLabel: "Hex code",
+  accentColorLightnessLabel: "Lightness",
+  accentColorResetButton: "Reset to default",
+
   notificationsTitle: "Notifications",
   notifLessons: "New lesson plans published",
   notifPortfolios: "Child portfolio updates",
@@ -52,6 +59,13 @@ const nl: typeof en = {
   appearanceTitle: "Weergave",
   light: "Licht",
   dark: "Donker",
+
+  accentColorTitle: "Accentkleur",
+  accentColorDescription: "Kies je eigen accentkleur voor knoppen en accenten. Dit verandert alleen hoe de app er voor jou uitziet.",
+  accentColorWheelLabel: "Accentkleurenwiel",
+  accentColorHexLabel: "Hexcode",
+  accentColorLightnessLabel: "Lichtheid",
+  accentColorResetButton: "Terugzetten naar standaard",
 
   notificationsTitle: "Meldingen",
   notifLessons: "Nieuwe lesplannen gepubliceerd",

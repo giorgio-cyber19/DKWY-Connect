@@ -1,74 +1,116 @@
 @import "tailwindcss";
 
 :root {
-  --color-cream: #fbf7ee;
-  --color-cream-deep: #f3ecda;
-  --color-white: #ffffff;
-  --color-gold: #c99a3f;
-  --color-gold-light: #e9c877;
-  --color-gold-deep: #a97c26;
-  --color-blue: #6f96b8;
-  --color-blue-light: #a9c6dd;
-  --color-blue-deep: #4d7291;
-  --color-sage: #8ba888;
-  --color-sage-light: #b7cdb2;
-  --color-sage-deep: #67815f;
-  --color-ink: #2c2822;
-  --color-ink-soft: #625c50;
+  /* Tells the browser which palette to use for native controls it renders
+     itself — select dropdown popups, checkboxes, scrollbars — so they don't
+     fall back to light-mode white-on-white when our own theme is dark. */
+  color-scheme: light;
+
+  /* grounds */
+  --color-cream: #f7f9fd;        /* page background (cool near-white) */
+  --color-cream-deep: #f0f4fc;   /* tinted panel / hover */
+  --color-white: #ffffff;        /* cards */
+
+  /* accents */
+  --color-gold: #f0b43c;
+  --color-gold-light: #fff1d6;
+  --color-gold-deep: #9a5a00;
+
+  --color-blue: #2f8f5b;         /* primary */
+  --color-blue-light: #e6f4ea;
+  --color-blue-deep: #1c5c3a;
+
+  --verse-text: var(--color-blue-deep);
+  /* Verse-of-the-Day card: tinted relative to --bg-sidebar (not a fixed color) so it stays
+     visibly distinct from the panel behind it in both themes and follows a custom accent
+     color if the teacher has set one. */
+  --verse-card-bg: color-mix(in srgb, var(--color-blue) 20%, var(--bg-sidebar));
+
+  --color-sage: #1fa0a8;         /* teal, replaces the muted sage */
+  --color-sage-light: #ddf4ec;
+  --color-sage-deep: #1b6b5e;
+
+  --color-coral: #e4574c;        /* birthdays, alerts, unread dot */
+  --color-coral-light: #fdebe9;
+  --color-coral-deep: #7a2c25;
+
+  --color-ink: #151a2d;
+  --color-ink-soft: #5f6478;
+  --color-ink-faint: #98a0b8;    /* metadata, placeholders */
 
   --bg: var(--color-cream);
-  --bg-elevated: rgba(255, 255, 255, 0.72);
+  --bg-elevated: #ffffff;        /* opaque — no more milky glass */
   --bg-elevated-solid: #ffffff;
-  --bg-sidebar: rgba(255, 255, 255, 0.55);
+  --bg-sidebar: #ffffff;
   --text-primary: var(--color-ink);
   --text-secondary: var(--color-ink-soft);
-  --border-soft: rgba(44, 40, 34, 0.08);
-  --border-softer: rgba(44, 40, 34, 0.05);
-  --shadow-color: 30 25 15;
+  --border-soft: rgba(21, 26, 45, 0.07);
+  --border-softer: rgba(21, 26, 45, 0.04);
+  --shadow-color: 21 26 45;
   --accent-gold: var(--color-gold);
   --accent-blue: var(--color-blue);
   --accent-sage: var(--color-sage);
 
-  --radius-sm: 12px;
-  --radius-md: 16px;
-  --radius-lg: 20px;
-  --radius-xl: 24px;
+  --radius-sm: 10px;
+  --radius-md: 12px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+
+  --bg-image: url("/background.jpg");
 }
 
 :root[data-theme="dark"] {
-  --color-ink: #f2ede2;
-  --color-ink-soft: #c3bcae;
+  color-scheme: dark;
 
-  --bg: #191713;
-  --bg-elevated: rgba(38, 35, 30, 0.68);
-  --bg-elevated-solid: #211e19;
-  --bg-sidebar: rgba(28, 26, 22, 0.6);
-  --text-primary: #f2ede2;
-  --text-secondary: #b7ae9d;
-  --border-soft: rgba(242, 237, 226, 0.1);
-  --border-softer: rgba(242, 237, 226, 0.06);
+  /* Neutral dark grey grounds — deliberately no blue tint, only the accent
+     colors below carry hue. */
+  --color-ink: #f0f0f2;
+  --color-ink-soft: #a8a8b0;
+  --color-ink-faint: #808088;
+  --bg: #18181b;
+  --bg-elevated: #212124;
+  --bg-elevated-solid: #212124;
+  --bg-sidebar: #1c1c1f;
+  --text-primary: #f0f0f2;
+  --text-secondary: #a8a8b0;
+  --border-soft: rgba(240, 240, 242, 0.09);
+  --border-softer: rgba(240, 240, 242, 0.05);
   --shadow-color: 0 0 0;
-  --accent-gold: #e0b455;
-  --accent-blue: #8fb3d1;
-  --accent-sage: #9dbb98;
+  --accent-gold: #f5c463;
+  --accent-blue: #5fcf8f;
+  --accent-sage: #46bfc4;
+  --color-blue-light: rgba(95, 207, 143, 0.14);
+  --color-gold-light: rgba(245, 196, 99, 0.14);
+  --color-sage-light: rgba(70, 191, 196, 0.14);
+  --color-coral-light: rgba(228, 87, 76, 0.14);
+  --verse-text: #ffffff;
+  --bg-image: url("/background-dark.jpg");
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --color-ink: #f2ede2;
-    --color-ink-soft: #c3bcae;
-    --bg: #191713;
-    --bg-elevated: rgba(38, 35, 30, 0.68);
-    --bg-elevated-solid: #211e19;
-    --bg-sidebar: rgba(28, 26, 22, 0.6);
-    --text-primary: #f2ede2;
-    --text-secondary: #b7ae9d;
-    --border-soft: rgba(242, 237, 226, 0.1);
-    --border-softer: rgba(242, 237, 226, 0.06);
+    color-scheme: dark;
+    --color-ink: #f0f0f2;
+    --color-ink-soft: #a8a8b0;
+    --color-ink-faint: #808088;
+    --bg: #18181b;
+    --bg-elevated: #212124;
+    --bg-elevated-solid: #212124;
+    --bg-sidebar: #1c1c1f;
+    --text-primary: #f0f0f2;
+    --text-secondary: #a8a8b0;
+    --border-soft: rgba(240, 240, 242, 0.09);
+    --border-softer: rgba(240, 240, 242, 0.05);
     --shadow-color: 0 0 0;
-    --accent-gold: #e0b455;
-    --accent-blue: #8fb3d1;
-    --accent-sage: #9dbb98;
+    --accent-gold: #f5c463;
+    --accent-blue: #5fcf8f;
+    --accent-sage: #46bfc4;
+    --color-blue-light: rgba(95, 207, 143, 0.14);
+    --color-gold-light: rgba(245, 196, 99, 0.14);
+    --color-sage-light: rgba(70, 191, 196, 0.14);
+    --color-coral-light: rgba(228, 87, 76, 0.14);
+    --verse-text: #ffffff;
+    --bg-image: url("/background-dark.jpg");
   }
 }
 
@@ -83,8 +125,12 @@
   --color-sage: var(--accent-sage);
   --color-sage-light: var(--color-sage-light);
   --color-sage-deep: var(--color-sage-deep);
+  --color-coral: var(--color-coral);
+  --color-coral-light: var(--color-coral-light);
+  --color-coral-deep: var(--color-coral-deep);
   --color-ink: var(--text-primary);
   --color-ink-soft: var(--text-secondary);
+  --color-ink-faint: var(--color-ink-faint);
   --font-display: var(--font-display);
   --font-sans: var(--font-sans);
 }
@@ -93,19 +139,49 @@
   border-color: var(--border-soft);
 }
 
+/* Native <select> controls don't reliably pick up theme colors from Tailwind
+   utility classes for their closed box or (especially) their dropdown popup
+   — color-scheme alone wasn't enough on some browsers, so force it directly.
+   Unlayered on purpose: this must win over the layered `bg-transparent`
+   utility already on every <select> in the app. */
+select {
+  background-color: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+select option {
+  background-color: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
 html {
   scroll-behavior: smooth;
 }
 
 body {
-  background:
-    radial-gradient(ellipse 120% 80% at 10% -10%, rgba(201, 154, 63, 0.10), transparent 55%),
-    radial-gradient(ellipse 100% 70% at 100% 0%, rgba(111, 150, 184, 0.10), transparent 55%),
-    var(--bg);
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(ellipse 90% 60% at 12% -10%, rgba(47, 143, 91, 0.10), transparent 60%),
+    radial-gradient(ellipse 80% 55% at 100% 4%, rgba(240, 180, 60, 0.14), transparent 60%),
+    var(--bg-image);
+  background-size: auto, auto, cover;
+  background-position: 0 0, 0 0, center top;
+  background-repeat: no-repeat, no-repeat, no-repeat;
+  background-attachment: scroll, scroll, fixed;
   color: var(--text-primary);
   font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   transition: background-color 0.5s ease, color 0.4s ease;
   min-height: 100dvh;
+}
+
+/* `background-attachment: fixed` is notoriously broken on mobile browsers (iOS Safari and
+   many Android browsers fake it by rendering the image at the wrong scale while scrolling),
+   which makes the photo look zoomed-in, blurry, and pixelated. Mobile has no scroll-based
+   parallax to lose, so just scroll the image with the page there instead. */
+@media (max-width: 768px), (pointer: coarse) {
+  body {
+    background-attachment: scroll, scroll, scroll;
+  }
 }
 
 ::selection {
@@ -131,31 +207,84 @@ body {
   background-clip: padding-box;
 }
 
-/* Glass surfaces */
-.glass {
-  background: var(--bg-elevated);
-  backdrop-filter: blur(20px) saturate(160%);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
-  border: 1px solid var(--border-soft);
-}
-
+/* Glass surfaces — deliberately redefined as opaque cards for the Chapel
+   Bright direction, so every existing className="glass"/"glass-solid" call
+   site updates at once without hunting them down individually. */
+.glass,
 .glass-solid {
-  background: var(--bg-elevated-solid);
+  background: var(--bg-elevated);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   border: 1px solid var(--border-soft);
 }
 
+/* Flatter, cooler shadows */
 .card-shadow {
   box-shadow:
-    0 1px 2px rgba(var(--shadow-color), 0.04),
-    0 8px 24px -8px rgba(var(--shadow-color), 0.10),
-    0 20px 48px -20px rgba(var(--shadow-color), 0.12);
+    0 1px 2px rgba(var(--shadow-color), 0.03),
+    0 12px 30px -26px rgba(var(--shadow-color), 0.5);
 }
-
 .card-shadow-hover {
   box-shadow:
-    0 2px 4px rgba(var(--shadow-color), 0.06),
-    0 16px 32px -8px rgba(var(--shadow-color), 0.16),
-    0 28px 64px -20px rgba(var(--shadow-color), 0.20);
+    0 2px 4px rgba(var(--shadow-color), 0.05),
+    0 22px 50px -30px rgba(var(--shadow-color), 0.55);
+}
+
+/* The hero / banner surface used on the dashboard */
+.chapel-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-xl);
+  background: var(--color-blue);
+  color: #ffffff;
+  box-shadow: 0 22px 50px -30px color-mix(in srgb, var(--color-blue) 80%, transparent);
+}
+.chapel-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 86% 6%, rgba(240, 180, 60, 0.42), transparent 44%),
+    radial-gradient(circle at 62% 120%, rgba(31, 160, 168, 0.40), transparent 46%);
+}
+.chapel-hero > * { position: relative; }
+
+/* Light-gold brand panel — used on the login screen's left side. Deliberately
+   fixed colors (not theme custom properties): this is a branding surface
+   that should look the same regardless of the visitor's light/dark
+   preference, and several tokens (e.g. --color-gold-light) are redefined as
+   translucent overlays in dark mode rather than solid fills, which would
+   make a fixed-appearance panel go nearly invisible if it inherited them. */
+.login-panel-gold {
+  position: relative;
+  overflow: hidden;
+  background: #fff1d6;
+  color: #151a2d;
+}
+.login-panel-gold::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 85% 8%, rgba(47, 143, 91, 0.10), transparent 46%),
+    radial-gradient(circle at 10% 100%, rgba(31, 160, 168, 0.12), transparent 50%);
+}
+.login-panel-gold > * { position: relative; }
+
+/* Scripture / verse text */
+.verse {
+  font-family: var(--font-verse), Georgia, serif;
+  font-style: italic;
+  font-weight: 500;
+  line-height: 1.55;
+}
+
+/* The YouVersion "Verse of the Day" embed ships its own card background (plain white in
+   light mode, near-identical to --bg-sidebar in dark mode) with no prop to customize it —
+   override its rendered class directly so the card reads as distinct from the sidebar panel
+   behind it. Its own text-color classes are left untouched, so contrast stays intact. */
+.verse-of-day-card section[class*="bg-card"] {
+  background-color: var(--verse-card-bg) !important;
 }
 
 .text-gradient-gold {
@@ -200,6 +329,97 @@ body {
 }
 .no-scrollbar {
   scrollbar-width: none;
+}
+
+/* YouVersion Bible SDK theming — map its design tokens onto DWKY Connect's
+   own theme-aware CSS variables so it reads as one system in both themes. */
+[data-yv-sdk] {
+  --yv-primary: var(--color-gold-deep);
+  --yv-primary-foreground: #ffffff;
+  --yv-background: var(--bg-elevated);
+  --yv-foreground: var(--text-primary);
+  --yv-card: var(--bg-elevated);
+  --yv-card-foreground: var(--text-primary);
+  --yv-border: var(--border-soft);
+  --yv-muted: var(--bg-elevated-solid);
+  --yv-muted-foreground: var(--text-secondary);
+  --yv-radius: var(--radius-lg);
+}
+
+/* Print — used by the Roster's "Print Roster" button. */
+.print-only {
+  display: none;
+}
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  body {
+    background: #fff !important;
+  }
+  .roster-print-area {
+    padding: 0 !important;
+  }
+  .roster-scroll-area {
+    max-height: none !important;
+    overflow: visible !important;
+    border: none !important;
+  }
+  .roster-scroll-area th,
+  .roster-scroll-area td {
+    position: static !important;
+  }
+  /* The on-screen table's columns use fixed min-widths that add up to well more than a
+     printable A4-landscape page, which pushed everything right and cut columns off the
+     edge. For print, force it to lay out within the actual page width instead. */
+  .roster-scroll-area table {
+    table-layout: fixed !important;
+    width: 100% !important;
+  }
+  .roster-scroll-area th,
+  .roster-scroll-area td {
+    min-width: 0 !important;
+    max-width: none !important;
+    font-size: 8.5px !important;
+    padding: 3px 4px !important;
+  }
+  /* The cell contents (buttons/paragraphs from EditableTextCell, EditableDateCell, chip
+     rows) carry their own whitespace-nowrap/truncate utility classes for the on-screen
+     spreadsheet — an element's own style always wins over the td's, so those need
+     overriding directly, not just the td/th, or text runs straight through the border
+     into the next column instead of wrapping. */
+  .roster-scroll-area td,
+  .roster-scroll-area th,
+  .roster-scroll-area td *,
+  .roster-scroll-area th * {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    overflow-wrap: break-word;
+  }
+  /* The Sunday School / Teen Club name chips are a fixed-shape pill (avatar + name)
+     that doesn't shrink on its own — as a lone inline-flex item it just renders at its
+     full natural width regardless of the column, so its rounded background/border spilled
+     into the next cell. Letting the chip and its name text actually shrink/wrap keeps the
+     whole pill — border included — inside its own column. */
+  .roster-chip {
+    max-width: 100% !important;
+  }
+  .roster-chip-name {
+    min-width: 0 !important;
+    overflow-wrap: break-word;
+  }
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  @page {
+    size: A4 landscape;
+    margin: 12mm;
+  }
 }
 
 /* Theme toggle view transition — expanding circle from the toggle button */

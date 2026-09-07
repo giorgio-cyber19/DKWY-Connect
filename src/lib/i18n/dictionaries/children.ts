@@ -19,13 +19,13 @@ const en = {
 
   // ChildCard.tsx
   ageLabel: "Age",
-  attendanceSuffix: "attendance",
 
   // AddChildModal.tsx
   addChildTitle: "Add Child",
   addChildNameLabel: "Child's Name",
   addChildNamePlaceholder: "Full name",
   birthdayLabel: "Birthday",
+  ageAutoPlaceholder: "Calculated from birthday",
   classLabel: "Class",
   guardianSectionLabel: "Guardian",
   guardianRelationPlaceholder: "Relation",
@@ -57,7 +57,7 @@ const en = {
   videoTitlePlaceholder: "e.g. Psalm 23 Recitation",
   durationLabel: "Duration",
   durationPlaceholder: "e.g. 1:24",
-  videoFileLabel: "Video file (optional, up to 4MB)",
+  videoFileLabel: "Video file (optional)",
 
   // ChildRecordModals.tsx — Document
   addDocumentButtonLabel: "Add Document",
@@ -83,9 +83,13 @@ const en = {
 
   // ChildDetail.tsx — header
   taughtByLabel: "Taught by",
+  noTeacherAssignedLabel: "No teacher assigned",
   bornLabel: "Born",
   enrolledLabel: "Enrolled",
-  attendanceRateLabel: "Attendance rate",
+  deleteChildButton: "Delete Portfolio",
+  deleteChildConfirmTitle: "Delete this child's portfolio?",
+  deleteChildConfirmMessage:
+    "This permanently removes their entire portfolio — artwork, photos, videos, documents, milestones, and observations. This can't be undone.",
 
   // ChildDetail.tsx — overview tab
   recentArtworkTitle: "Recent Artwork",
@@ -139,13 +143,13 @@ const nl: typeof en = {
 
   // ChildCard.tsx
   ageLabel: "Leeftijd",
-  attendanceSuffix: "aanwezigheid",
 
   // AddChildModal.tsx
   addChildTitle: "Kind Toevoegen",
   addChildNameLabel: "Naam van het Kind",
   addChildNamePlaceholder: "Volledige naam",
   birthdayLabel: "Verjaardag",
+  ageAutoPlaceholder: "Berekend op basis van geboortedatum",
   classLabel: "Klas",
   guardianSectionLabel: "Voogd",
   guardianRelationPlaceholder: "Relatie",
@@ -177,7 +181,7 @@ const nl: typeof en = {
   videoTitlePlaceholder: "bijv. Voordracht Psalm 23",
   durationLabel: "Duur",
   durationPlaceholder: "bijv. 1:24",
-  videoFileLabel: "Videobestand (optioneel, tot 4MB)",
+  videoFileLabel: "Videobestand (optioneel)",
 
   // ChildRecordModals.tsx — Document
   addDocumentButtonLabel: "Document Toevoegen",
@@ -203,9 +207,13 @@ const nl: typeof en = {
 
   // ChildDetail.tsx — header
   taughtByLabel: "Lesgegeven door",
+  noTeacherAssignedLabel: "Geen leraar toegewezen",
   bornLabel: "Geboren",
   enrolledLabel: "Ingeschreven",
-  attendanceRateLabel: "Aanwezigheidspercentage",
+  deleteChildButton: "Portfolio Verwijderen",
+  deleteChildConfirmTitle: "Portfolio van dit kind verwijderen?",
+  deleteChildConfirmMessage:
+    "Dit verwijdert permanent het volledige portfolio — kunstwerken, foto's, video's, documenten, mijlpalen en observaties. Dit kan niet ongedaan worden gemaakt.",
 
   // ChildDetail.tsx — overview tab
   recentArtworkTitle: "Recente Tekeningen",

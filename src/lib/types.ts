@@ -15,6 +15,8 @@ export interface User {
   status: "active" | "disabled";
   bio?: string;
   mustChangePassword?: boolean;
+  /** Personal accent color override (hex), chosen via the color wheel in Settings. Unset = app default green. */
+  accentColor?: string;
 }
 
 export interface AgeGroup {
@@ -105,7 +107,7 @@ export interface Child {
   age: number;
   birthday: string;
   classId: string;
-  teacherId: string;
+  teacherId?: string;
   enrollmentDate: string;
   guardians: Guardian[];
   address?: string;
@@ -116,7 +118,6 @@ export interface Child {
   documents: ChildDocument[];
   milestones: SpiritualMilestone[];
   observations: TeacherObservation[];
-  attendanceRate: number;
 }
 
 export interface LessonAttachment {
@@ -171,11 +172,15 @@ export interface PollOption {
 export interface Post {
   id: string;
   authorId: string;
-  type: "Announcement" | "Weekly Update" | "Testimony" | "Prayer Request" | "Teaching Tip" | "Event Reminder" | "Photo";
+  type: "Update" | "Announcement" | "Photo" | "Devotional" | "Prayer";
   content: string;
   date: string;
   pinned: boolean;
   imageColor?: string;
+  driveFileId?: string;
+  driveViewUrl?: string;
+  /** Only meaningful for type "Prayer" — who has tapped "I prayed for this". */
+  prayedByUserIds?: string[];
   reactions: Reaction[];
   comments: Comment[];
   poll?: { question: string; options: PollOption[]; votesByUser: Record<string, number> };
@@ -214,24 +219,54 @@ export interface CalendarEvent {
   date: string;
   endDate?: string;
   time?: string;
-  type: "Sunday Lesson" | "Teacher Meeting" | "Children Event" | "Holiday Program" | "VBS" | "Birthday" | "Parent Meeting";
+  type:
+    | "Sunday Lesson"
+    | "Teacher Meeting"
+    | "Children Event"
+    | "Holiday Program"
+    | "VBS"
+    | "Birthday"
+    | "Parent Meeting"
+    | "Sunday School & Youth Roster";
   location?: string;
   description?: string;
   color: string;
+  /** Set only for events created from a RosterEntry — the backward link. */
+  rosterId?: string;
 }
 
-export interface PrayerEntry {
+export interface Holiday {
   id: string;
-  authorId: string;
-  type: "Prayer Request" | "Praise Report" | "Devotional" | "Encouragement";
-  content: string;
-  verse?: string;
+  /** Kept in Dutch exactly as published by the school — never translated. */
+  name: string;
+  type: "school_vacation" | "national_holiday";
+  /** "YYYY-MM-DD" — inclusive. Equal to endDate for a single-day national holiday. */
+  startDate: string;
+  /** "YYYY-MM-DD" — inclusive. */
+  endDate: string;
+  /** True while the date is unconfirmed (e.g. moon-sighting-dependent Islamic holidays). */
+  provisional: boolean;
+  /** e.g. "2025-2026". */
+  schoolYear: string;
+}
+
+export interface RosterEntry {
+  id: string;
+  /** "YYYY-MM-DD" — any day of the week, not restricted to Sundays. */
   date: string;
-  prayedByUserIds: string[];
-  hasVoiceNote?: boolean;
-  voiceDuration?: string;
-  driveFileId?: string;
-  driveViewUrl?: string;
+  sundaySchoolUserIds: string[];
+  teenClubUserIds: string[];
+  theme: string;
+  notes: string;
+  serviceType: string;
+  preacher: string;
+  liturgy: string;
+  musicalAccompaniment: string;
+  /** Forward link to the linked CalendarEvent — always set. */
+  calendarEventId: string;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string;
 }
 
 export interface Notification {
@@ -250,4 +285,45 @@ export interface AuditLogEntry {
   action: string;
   target: string;
   date: string;
+}
+
+export interface AiChatMessage {
+  role: "user" | "assistant";
+  content: string;
+  timestamp: string;
+}
+
+export interface AiConversation {
+  id: string;
+  userId: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+  messages: AiChatMessage[];
+}
+
+/** Lightweight listing shape — never carries `messages`, so the sidebar list stays cheap regardless of conversation length. */
+export type AiConversationSummary = Omit<AiConversation, "messages" | "userId">;
+
+/**
+ * One highlighted Bible verse, saved per-teacher. Deliberately one record per verse (not
+ * per highlight *action*, which can span several verses at once) — matches how the Bible
+ * reader itself scopes a highlight-remove to "the selected verses currently showing that
+ * color", so removing part of a previously-highlighted range never requires splitting a
+ * stored range back apart.
+ */
+export interface SavedVerseHighlight {
+  /** USFM version id from the Bible reader, e.g. 3034 for the Berean Standard Bible. */
+  versionId: number;
+  /** USFM passage id, e.g. "JHN.3.16" — unique together with versionId. */
+  passageId: string;
+  /** USFM book code, e.g. "JHN". */
+  book: string;
+  chapter: string;
+  verse: number;
+  /** 6-character lowercase hex, no "#" — one of the Bible reader's 5 preset highlight colors. */
+  color: string;
+  /** Human-readable reference captured at highlight time, e.g. "John 3:16" (or a range if several verses were highlighted together). */
+  reference: string;
+  createdAt: string;
 }

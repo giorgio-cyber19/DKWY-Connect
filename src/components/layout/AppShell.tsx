@@ -10,6 +10,7 @@ import { Topbar } from "./Topbar";
 import { GlobalSearch } from "./GlobalSearch";
 import { PageTransition } from "./PageTransition";
 import { FAB } from "./FAB";
+import { YouVersionThemeProvider } from "@/components/bible/YouVersionThemeProvider";
 import { Cross } from "lucide-react";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -54,21 +55,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-dvh">
-      <Sidebar
-        collapsed={collapsed}
-        onToggleCollapse={() => setCollapsed((c) => !c)}
-        mobileOpen={mobileOpen}
-        onCloseMobile={() => setMobileOpen(false)}
-      />
-      <div className="flex-1 min-w-0 flex flex-col">
-        <Topbar onOpenMobileSidebar={() => setMobileOpen(true)} onOpenSearch={() => setSearchOpen(true)} />
-        <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 sm:py-8 max-w-[1400px] w-full mx-auto">
-          <PageTransition>{children}</PageTransition>
-        </main>
+    <YouVersionThemeProvider>
+      <div className="flex min-h-dvh">
+        <Sidebar
+          collapsed={collapsed}
+          onToggleCollapse={() => setCollapsed((c) => !c)}
+          mobileOpen={mobileOpen}
+          onCloseMobile={() => setMobileOpen(false)}
+        />
+        <div className="flex-1 min-w-0 flex flex-col">
+          <Topbar onOpenMobileSidebar={() => setMobileOpen(true)} onOpenSearch={() => setSearchOpen(true)} />
+          <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 sm:py-8 max-w-[1400px] w-full mx-auto">
+            <PageTransition>{children}</PageTransition>
+          </main>
+        </div>
+        <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
+        <FAB />
       </div>
-      <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
-      <FAB />
-    </div>
+    </YouVersionThemeProvider>
   );
 }

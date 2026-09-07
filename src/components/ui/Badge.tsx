@@ -1,11 +1,12 @@
 import { cn } from "@/lib/utils";
 
-type Tone = "gold" | "blue" | "sage" | "neutral" | "danger";
+type Tone = "gold" | "blue" | "sage" | "coral" | "neutral" | "danger";
 
 const tones: Record<Tone, string> = {
-  gold: "bg-[color-mix(in_srgb,var(--color-gold)_16%,transparent)] text-[var(--color-gold-deep)]",
-  blue: "bg-[color-mix(in_srgb,var(--color-blue)_16%,transparent)] text-[var(--color-blue-deep)]",
-  sage: "bg-[color-mix(in_srgb,var(--color-sage)_18%,transparent)] text-[var(--color-sage-deep)]",
+  gold: "bg-[var(--color-gold-light)] text-[var(--color-gold-deep)]",
+  blue: "bg-[var(--color-blue-light)] text-[var(--color-blue-deep)]",
+  sage: "bg-[var(--color-sage-light)] text-[var(--color-sage-deep)]",
+  coral: "bg-[var(--color-coral-light)] text-[var(--color-coral-deep)]",
   neutral: "bg-[color-mix(in_srgb,var(--color-ink)_8%,transparent)] text-[var(--text-secondary)]",
   danger: "bg-red-500/12 text-red-500",
 };

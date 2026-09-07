@@ -27,7 +27,7 @@ export function FAB() {
   }, []);
 
   return (
-    <div ref={ref} className="fixed bottom-6 right-6 z-40 sm:hidden">
+    <div ref={ref} className="no-print fixed bottom-6 right-6 z-40 sm:hidden">
       {open && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute bottom-16 right-0 flex flex-col items-end gap-2.5 mb-2">
             {actions.map((a, i) => (

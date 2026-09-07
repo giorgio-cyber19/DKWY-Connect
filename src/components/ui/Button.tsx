@@ -16,8 +16,8 @@ interface ButtonProps extends Omit<HTMLMotionProps<"button">, "children"> {
 
 const variants: Record<Variant, string> = {
   primary:
-    "bg-gradient-to-b from-[var(--color-gold-light)] to-[var(--color-gold)] text-[#3a2a0a] shadow-[0_4px_14px_-2px_rgba(201,154,63,0.5)] hover:shadow-[0_6px_20px_-2px_rgba(201,154,63,0.6)] border border-[rgba(255,255,255,0.3)]",
-  secondary: "bg-[var(--color-blue)] text-white shadow-[0_4px_14px_-2px_rgba(111,150,184,0.45)] hover:shadow-[0_6px_20px_-2px_rgba(111,150,184,0.55)]",
+    "bg-[var(--color-blue)] text-white shadow-[0_8px_18px_-10px_color-mix(in_srgb,var(--color-blue)_75%,transparent)] hover:bg-[color-mix(in_srgb,var(--color-blue)_88%,white)]",
+  secondary: "bg-[var(--color-gold)] text-[#151a2d]",
   outline: "border border-[var(--border-soft)] bg-transparent text-[var(--text-primary)] hover:bg-[color-mix(in_srgb,var(--color-ink)_5%,transparent)]",
   ghost: "bg-transparent text-[var(--text-primary)] hover:bg-[color-mix(in_srgb,var(--color-ink)_6%,transparent)]",
   danger: "bg-red-500/90 text-white hover:bg-red-500 shadow-[0_4px_14px_-2px_rgba(239,68,68,0.4)]",

@@ -24,10 +24,27 @@ const en = {
   signingIn: "Signing in…",
   loginFailed: "That email/username and password don't match an account.",
   loginFooter: "No public registration. Accounts are created by your Sunday School administrator.",
-  marketingHeadline: "A joyful home for our Sunday School ministry.",
+  marketingHeadline: "A joyful home for our Sunday School & Youth ministry.",
   marketingTagline:
-    "Lesson plans, portfolios, prayer, and community — all in one warm, organized place for our teaching team.",
-  privateIntranetTagline: "Private staff intranet — not publicly accessible",
+    "Lesson plans, portfolios, resources, and community — all in one place for the Duta Watjana Kids & Youth Committee.",
+  copyrightFooter: "© 2026 DWKY Connect · Designed & developed by GLAP",
+  forgotPassword: "Forgot password?",
+
+  // Forgot password page
+  forgotPasswordHeading: "Reset your password",
+  forgotPasswordDescription: "Enter your email or username and we'll send you a link to choose a new password.",
+  sendResetLink: "Send reset link",
+  resetLinkSentHeading: "Check your inbox",
+  resetLinkSentMessage: "If an account matches that email or username, we've sent a password reset link to it. The link expires in 1 hour.",
+  backToLogin: "Back to login",
+
+  // Reset password page
+  resetPasswordHeading: "Choose a new password",
+  resetPasswordDescription: "Enter a new password for your DWKY Connect account.",
+  resetPassword: "Reset password",
+  resetPasswordSuccessHeading: "Password updated",
+  resetPasswordSuccessMessage: "Your password has been changed. You can now sign in with your new password.",
+  requestNewLink: "Request a new link",
 
   // Change password page
   setYourPasswordHeading: "Set your own password",
@@ -71,10 +88,27 @@ const nl: typeof en = {
   signingIn: "Bezig met inloggen…",
   loginFailed: "Dit e-mailadres/deze gebruikersnaam en dit wachtwoord komen niet overeen met een account.",
   loginFooter: "Geen openbare registratie. Accounts worden aangemaakt door de beheerder van je zondagsschool.",
-  marketingHeadline: "Een fijne plek voor onze zondagsschoolbediening.",
+  marketingHeadline: "Een fijne thuisbasis voor onze zondagsschool- en jeugdbediening.",
   marketingTagline:
-    "Lesplannen, portfolio's, gebed en gemeenschap — allemaal op één warme, overzichtelijke plek voor ons lerarenteam.",
-  privateIntranetTagline: "Privé-intranet voor medewerkers — niet openbaar toegankelijk",
+    "Lesplannen, portfolio's, hulpmiddelen en gemeenschap — allemaal op één plek voor het Duta Watjana Kids & Youth Committee.",
+  copyrightFooter: "© 2026 DWKY Connect · Designed & developed by GLAP",
+  forgotPassword: "Wachtwoord vergeten?",
+
+  // Forgot password page
+  forgotPasswordHeading: "Wachtwoord opnieuw instellen",
+  forgotPasswordDescription: "Voer je e-mailadres of gebruikersnaam in en we sturen je een link om een nieuw wachtwoord te kiezen.",
+  sendResetLink: "Resetlink versturen",
+  resetLinkSentHeading: "Controleer je inbox",
+  resetLinkSentMessage: "Als er een account bij dit e-mailadres of deze gebruikersnaam hoort, hebben we er een resetlink naartoe gestuurd. De link verloopt na 1 uur.",
+  backToLogin: "Terug naar inloggen",
+
+  // Reset password page
+  resetPasswordHeading: "Kies een nieuw wachtwoord",
+  resetPasswordDescription: "Voer een nieuw wachtwoord in voor je DWKY Connect account.",
+  resetPassword: "Wachtwoord opnieuw instellen",
+  resetPasswordSuccessHeading: "Wachtwoord bijgewerkt",
+  resetPasswordSuccessMessage: "Je wachtwoord is gewijzigd. Je kunt nu inloggen met je nieuwe wachtwoord.",
+  requestNewLink: "Nieuwe link aanvragen",
 
   // Change password page
   setYourPasswordHeading: "Stel je eigen wachtwoord in",

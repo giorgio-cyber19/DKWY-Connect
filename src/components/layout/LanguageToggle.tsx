@@ -20,7 +20,7 @@ export function LanguageToggle() {
         transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
         className="block"
       >
-        {language === "en" ? "🇬🇧" : "🇳🇱"}
+        {language === "en" ? "🇺🇸" : "🇳🇱"}
       </motion.span>
     </button>
   );

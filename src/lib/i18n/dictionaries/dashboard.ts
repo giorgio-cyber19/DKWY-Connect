@@ -31,6 +31,9 @@ const en = {
   quickUploadDesc: "Add photos, artwork, or documents",
   recentlyUpdatedPortfolios: "Recently Updated Portfolios",
   agePrefix: "Age",
+  thisSundayPill: "This Sunday",
+  roomPrefix: "Room",
+  noMemoryVerseYet: "No memory verse set for this week yet.",
 };
 
 const nl: typeof en = {
@@ -66,6 +69,9 @@ const nl: typeof en = {
   quickUploadDesc: "Voeg foto's, tekeningen of documenten toe",
   recentlyUpdatedPortfolios: "Recent Bijgewerkte Portfolio's",
   agePrefix: "Leeftijd",
+  thisSundayPill: "Aanstaande Zondag",
+  roomPrefix: "Lokaal",
+  noMemoryVerseYet: "Nog geen geheugenvers ingesteld voor deze week.",
 };
 
 export const dashboard = { en, nl };

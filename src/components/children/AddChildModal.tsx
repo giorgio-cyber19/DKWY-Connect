@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { useAppStore } from "@/lib/store";
 import { useLanguage } from "@/lib/language-context";
 import { translateApiError } from "@/lib/i18n/errors";
+import { calculateAge, cn } from "@/lib/utils";
 import type { SchoolClass } from "@/lib/types";
 
 const inputClass = "w-full text-sm px-3.5 py-2.5 rounded-xl border border-[var(--border-soft)] bg-transparent focus-ring focus:border-[var(--color-gold)] transition-colors";
@@ -24,7 +25,6 @@ export function AddChildModal({
   defaultTeacherId?: string;
 }) {
   const [name, setName] = useState("");
-  const [age, setAge] = useState("5");
   const [birthday, setBirthday] = useState("");
   const [classId, setClassId] = useState(defaultClassId ?? classes[0]?.id ?? "");
   const [guardianName, setGuardianName] = useState("");
@@ -38,7 +38,6 @@ export function AddChildModal({
 
   function reset() {
     setName("");
-    setAge("5");
     setBirthday("");
     setGuardianName("");
     setGuardianPhone("");
@@ -47,16 +46,16 @@ export function AddChildModal({
   }
 
   async function submit() {
-    if (!name.trim() || !classId) return;
+    if (!name.trim() || !classId || !birthday) return;
     const cls = classes.find((c) => c.id === classId);
-    const teacherId = defaultTeacherId ?? cls?.teacherIds[0] ?? "";
+    const teacherId = defaultTeacherId ?? cls?.teacherIds[0];
     setSubmitting(true);
     setError("");
     try {
       await useAppStore.getState().createChild({
         name: name.trim(),
-        age: Number(age) || 0,
-        birthday: birthday || new Date().toISOString().slice(0, 10),
+        age: calculateAge(birthday),
+        birthday,
         classId,
         teacherId,
         guardians: guardianName.trim()
@@ -82,12 +81,18 @@ export function AddChildModal({
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">{t("children.ageLabel")}</label>
-            <input value={age} onChange={(e) => setAge(e.target.value)} type="number" min={0} max={18} className={inputClass} />
-          </div>
-          <div>
             <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">{t("children.birthdayLabel")}</label>
             <input value={birthday} onChange={(e) => setBirthday(e.target.value)} type="date" className={inputClass} />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">{t("children.ageLabel")}</label>
+            <input
+              value={birthday ? calculateAge(birthday) : ""}
+              readOnly
+              disabled
+              placeholder={t("children.ageAutoPlaceholder")}
+              className={cn(inputClass, "opacity-60 cursor-not-allowed")}
+            />
           </div>
         </div>
         <div>
@@ -116,7 +121,7 @@ export function AddChildModal({
           <input value={allergies} onChange={(e) => setAllergies(e.target.value)} className={inputClass} placeholder={t("children.allergiesPlaceholder")} />
         </div>
         {error && <p className="text-xs text-red-500 font-medium">{error}</p>}
-        <Button className="w-full" onClick={submit} loading={submitting} disabled={!name.trim() || !classId || submitting}>
+        <Button className="w-full" onClick={submit} loading={submitting} disabled={!name.trim() || !classId || !birthday || submitting}>
           {t("children.addChildButton")}
         </Button>
       </div>

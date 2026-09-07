@@ -14,6 +14,7 @@ import { useLanguage } from "@/lib/language-context";
 import { translateApiError } from "@/lib/i18n/errors";
 import { cn } from "@/lib/utils";
 import { DriveStatusCard } from "@/components/settings/DriveStatusCard";
+import { AccentColorPicker } from "@/components/settings/AccentColorPicker";
 
 export default function SettingsPage() {
   const { user } = useAuth();
@@ -31,6 +32,7 @@ export default function SettingsPage() {
   const [name, setName] = useState(user?.name ?? "");
   const [bio, setBio] = useState(user?.bio ?? "");
   const [username, setUsername] = useState(user?.username ?? "");
+  const [accentColor, setAccentColor] = useState<string | null>(user?.accentColor ?? null);
   const [notifs, setNotifs] = useState<Record<string, boolean>>({ lessons: true, portfolios: true, comments: true, events: true, prayer: true, admin: true });
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -42,7 +44,7 @@ export default function SettingsPage() {
     setSaving(true);
     setError("");
     try {
-      await useAppStore.getState().updateProfile({ name, bio, username: username.trim() || null });
+      await useAppStore.getState().updateProfile({ name, bio, username: username.trim() || null, accentColor });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (err) {
@@ -134,6 +136,12 @@ export default function SettingsPage() {
         </Card>
 
         <Card className="p-6">
+          <h3 className="font-display font-semibold text-lg mb-1">{t("settings.accentColorTitle")}</h3>
+          <p className="text-[12.5px] text-[var(--text-secondary)] mb-4">{t("settings.accentColorDescription")}</p>
+          <AccentColorPicker value={accentColor} onChange={setAccentColor} />
+        </Card>
+
+        <Card className="p-6">
           <h3 className="font-display font-semibold text-lg mb-4">{t("settings.notificationsTitle")}</h3>
           <div className="space-y-3.5">
             {notificationOptions.map((opt) => (
@@ -141,14 +149,18 @@ export default function SettingsPage() {
                 <span className="text-sm">{opt.label}</span>
                 <button
                   type="button"
+                  role="switch"
+                  aria-checked={notifs[opt.key]}
+                  aria-label={opt.label}
                   onClick={() => setNotifs((prev) => ({ ...prev, [opt.key]: !prev[opt.key] }))}
-                  className={cn("w-10 h-6 rounded-full relative transition-colors", notifs[opt.key] ? "bg-[var(--color-gold)]" : "bg-black/15")}
+                  className={cn(
+                    "w-10 h-6 rounded-full relative transition-colors focus-ring",
+                    notifs[opt.key] ? "bg-[var(--color-gold)]" : "bg-[color-mix(in_srgb,var(--text-secondary)_30%,transparent)]"
+                  )}
                 >
                   <span
-                    className={cn(
-                      "absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform",
-                      notifs[opt.key] ? "translate-x-[18px]" : "translate-x-0.5"
-                    )}
+                    className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform"
+                    style={{ transform: notifs[opt.key] ? "translateX(16px)" : "translateX(0)" }}
                   />
                 </button>
               </label>

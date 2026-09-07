@@ -18,9 +18,14 @@ function AddButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-1.5 text-xs font-semibold text-[var(--color-gold-deep)] px-3 py-1.5 rounded-full border border-[var(--color-gold-light)] hover:bg-[color-mix(in_srgb,var(--color-gold)_8%,transparent)] transition-colors"
+      className="flex items-center gap-2 text-sm font-bold text-[#151a2d] px-4 py-2.5 rounded-full
+        bg-gradient-to-b from-[var(--accent-gold)] to-[var(--color-gold-deep)]
+        shadow-[0_3px_0_0_var(--color-gold-deep),0_8px_16px_-6px_rgba(0,0,0,0.45)]
+        hover:brightness-110 active:translate-y-[2px]
+        active:shadow-[0_1px_0_0_var(--color-gold-deep),0_4px_8px_-4px_rgba(0,0,0,0.45)]
+        transition-all duration-150"
     >
-      <Plus size={13} /> {label}
+      <Plus size={16} strokeWidth={2.5} /> {label}
     </button>
   );
 }
@@ -56,10 +61,16 @@ function FilePickerField({
         type="button"
         disabled={disabled}
         onClick={() => ref.current?.click()}
-        className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border border-dashed border-[var(--border-soft)] hover:border-[var(--color-gold)] transition-colors text-sm text-left disabled:opacity-50"
+        className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left
+          bg-gradient-to-b from-[var(--accent-gold)] to-[var(--color-gold-deep)]
+          shadow-[0_3px_0_0_var(--color-gold-deep),0_8px_16px_-6px_rgba(0,0,0,0.45)]
+          hover:brightness-110 active:translate-y-[2px]
+          active:shadow-[0_1px_0_0_var(--color-gold-deep),0_4px_8px_-4px_rgba(0,0,0,0.45)]
+          transition-all duration-150
+          disabled:opacity-50 disabled:pointer-events-none"
       >
-        <UploadCloud size={16} className="text-[var(--color-gold-deep)] shrink-0" />
-        <span className="truncate text-[var(--text-secondary)]">
+        <UploadCloud size={20} className="text-[#151a2d] shrink-0" />
+        <span className="truncate text-[15px] font-semibold text-[#151a2d]">
           {files.length > 0 ? files.map((f) => f.name).join(", ") : t("children.filePickerPlaceholder")}
         </span>
       </button>

@@ -9,7 +9,10 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@google/genai": "^2.20.0",
     "@upstash/redis": "^1.38.2",
+    "@youversion/platform-core": "^2.6.3",
+    "@youversion/platform-react-ui": "^2.6.3",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
     "framer-motion": "^13.1.0",
@@ -18,7 +21,10 @@
     "next": "16.3.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
+    "react-markdown": "^10.1.0",
     "recharts": "^3.10.1",
+    "remark-gfm": "^4.0.1",
+    "resend": "^6.20.0",
     "server-only": "^0.0.1",
     "tailwind-merge": "^3.6.0",
     "zustand": "^5.0.14"

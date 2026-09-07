@@ -38,7 +38,7 @@ export function Topbar({ onOpenMobileSidebar, onOpenSearch }: { onOpenMobileSide
   ];
 
   return (
-    <header className="sticky top-0 z-30 h-16 flex items-center gap-3 px-4 sm:px-6 border-b border-[var(--border-soft)] bg-[var(--bg-elevated)] backdrop-blur-xl">
+    <header className="no-print sticky top-0 z-30 h-16 flex items-center gap-3 px-4 sm:px-6 border-b border-[var(--border-soft)] bg-[var(--bg-elevated)] backdrop-blur-xl">
       <button onClick={onOpenMobileSidebar} className="lg:hidden p-2 rounded-xl hover:bg-black/5">
         <Menu size={19} />
       </button>

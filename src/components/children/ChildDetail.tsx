@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
@@ -12,7 +13,6 @@ import {
   AlertTriangle,
   Palette,
   Images,
-  Video,
   FileText,
   Sparkles,
   NotebookPen,
@@ -22,11 +22,14 @@ import {
   BookMarked,
   HeartHandshake,
   MessagesSquare,
+  Trash2,
 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { Tabs } from "@/components/ui/Tabs";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { StaggerGrid, StaggerItem } from "@/components/ui/Stagger";
 import { getClass, getUser, useAppStore } from "@/lib/store";
 import { useAuth } from "@/lib/auth-context";
@@ -35,6 +38,7 @@ import { formatDate } from "@/lib/utils";
 import { driveDownloadUrl } from "@/lib/upload";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { enumLabels } from "@/lib/i18n/enum-labels";
+import { translateApiError } from "@/lib/i18n/errors";
 import { AddArtworkButton, AddAlbumButton, AddVideoButton, AddChildDocumentButton, AddMilestoneButton } from "@/components/children/ChildRecordModals";
 import type { Child, SpiritualMilestone } from "@/lib/types";
 
@@ -61,6 +65,23 @@ export function ChildDetail({ child }: { child: Child }) {
   const teacher = getUser(child.teacherId);
   const [tab, setTab] = useState("overview");
   const { t, language } = useLanguage();
+  const { user } = useAuth();
+  const router = useRouter();
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  async function confirmDeleteChild() {
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await useAppStore.getState().removeChild(child.id);
+      router.push("/children");
+    } catch (err) {
+      setDeleteError(translateApiError(err, language));
+      setDeleting(false);
+    }
+  }
 
   const tabs = [
     { id: "overview", label: t("children.tabOverview") },
@@ -83,16 +104,23 @@ export function ChildDetail({ child }: { child: Child }) {
           <div className="flex flex-col sm:flex-row gap-6">
             <Avatar name={child.name} color={child.photoColor} size="xl" />
             <div className="flex-1">
-              <div className="flex items-center gap-2 flex-wrap mb-1">
-                <h1 className="font-display text-2xl sm:text-3xl font-semibold">{child.name}</h1>
-                {child.allergies && (
-                  <Badge tone="danger">
-                    <AlertTriangle size={11} /> {child.allergies}
-                  </Badge>
+              <div className="flex items-start justify-between gap-3 flex-wrap mb-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1 className="font-display text-2xl sm:text-3xl font-semibold">{child.name}</h1>
+                  {child.allergies && (
+                    <Badge tone="danger">
+                      <AlertTriangle size={11} /> {child.allergies}
+                    </Badge>
+                  )}
+                </div>
+                {user?.role === "admin" && (
+                  <Button variant="outline" size="sm" onClick={() => setConfirmingDelete(true)}>
+                    <Trash2 size={13} /> {t("children.deleteChildButton")}
+                  </Button>
                 )}
               </div>
               <p className="text-[var(--text-secondary)] text-sm mb-4">
-                {cls?.name} · {t("children.ageLabel")} {child.age} · {t("children.taughtByLabel")} {teacher?.name}
+                {cls?.name} · {t("children.ageLabel")} {child.age} · {t("children.taughtByLabel")} {teacher?.name ?? t("children.noTeacherAssignedLabel")}
               </p>
               <div className="grid sm:grid-cols-2 gap-3 text-[13px]">
                 <div className="flex items-center gap-2 text-[var(--text-secondary)]">
@@ -107,10 +135,6 @@ export function ChildDetail({ child }: { child: Child }) {
                   </div>
                 ))}
               </div>
-            </div>
-            <div className="sm:w-40 shrink-0 text-center sm:text-right">
-              <p className="font-display text-3xl font-semibold text-[var(--color-sage-deep)]">{child.attendanceRate}%</p>
-              <p className="text-[11px] text-[var(--text-secondary)]">{t("children.attendanceRateLabel")}</p>
             </div>
           </div>
         </Card>
@@ -352,6 +376,16 @@ export function ChildDetail({ child }: { child: Child }) {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmingDelete}
+        onClose={() => setConfirmingDelete(false)}
+        onConfirm={confirmDeleteChild}
+        title={t("children.deleteChildConfirmTitle")}
+        message={t("children.deleteChildConfirmMessage")}
+        confirming={deleting}
+        error={deleteError}
+      />
     </div>
   );
 }

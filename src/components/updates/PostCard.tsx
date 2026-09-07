@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Pin, MessageCircle, Send, BarChart3 } from "lucide-react";
+import { Pin, MessageCircle, Send, BarChart3, HandHeart, Image as ImageIcon } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
@@ -12,16 +12,15 @@ import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/language-context";
 import { enumLabels } from "@/lib/i18n/enum-labels";
 import { timeAgo, cn } from "@/lib/utils";
+import { driveDownloadUrl } from "@/lib/upload";
 import type { Post } from "@/lib/types";
 
-const typeTone: Record<Post["type"], "gold" | "blue" | "sage" | "neutral"> = {
+export const typeTone: Record<Post["type"], "gold" | "blue" | "sage" | "coral" | "neutral"> = {
+  Update: "blue",
   Announcement: "gold",
-  "Weekly Update": "blue",
-  Testimony: "sage",
-  "Prayer Request": "gold",
-  "Teaching Tip": "blue",
-  "Event Reminder": "neutral",
   Photo: "sage",
+  Devotional: "neutral",
+  Prayer: "coral",
 };
 
 const QUICK_REACTIONS = ["❤️", "🙌", "🙏", "😂"];
@@ -51,6 +50,14 @@ export function PostCard({ post, compact }: { post: Post; compact?: boolean }) {
     if (!user || myVoteIndex !== undefined) return;
     useAppStore.getState().votePoll(post.id, user.id, i);
   }
+
+  function togglePrayed() {
+    if (!user) return;
+    useAppStore.getState().togglePrayedFor(post.id, user.id);
+  }
+
+  const prayedByUserIds = post.prayedByUserIds ?? [];
+  const prayed = !!user && prayedByUserIds.includes(user.id);
 
   if (!author) return null;
 
@@ -85,6 +92,17 @@ export function PostCard({ post, compact }: { post: Post; compact?: boolean }) {
           />
         )}
 
+        {post.driveFileId && (
+          <a
+            href={driveDownloadUrl(post.driveFileId)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3.5 flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-[color-mix(in_srgb,var(--color-sage)_10%,transparent)] hover:bg-[color-mix(in_srgb,var(--color-sage)_16%,transparent)] transition-colors text-[12.5px] font-medium text-[var(--color-sage-deep)]"
+          >
+            <ImageIcon size={15} /> {t("updates.viewAttachedPhoto")}
+          </a>
+        )}
+
         {post.poll && (
           <div className="mt-3.5 p-4 rounded-2xl border border-[var(--border-soft)] space-y-2.5">
             <p className="text-sm font-semibold flex items-center gap-1.5">
@@ -117,6 +135,23 @@ export function PostCard({ post, compact }: { post: Post; compact?: boolean }) {
             })}
             <p className="text-[11px] text-[var(--text-secondary)]">{totalVotes} {t("updates.votesLabel")}</p>
           </div>
+        )}
+
+        {!compact && post.type === "Prayer" && (
+          <button
+            onClick={togglePrayed}
+            className={cn(
+              "mt-3.5 flex items-center gap-2 px-4 py-2 rounded-full text-[12.5px] font-semibold border transition-colors",
+              prayed
+                ? "border-[var(--color-gold)] bg-[color-mix(in_srgb,var(--color-gold)_14%,transparent)] text-[var(--color-gold-deep)]"
+                : "border-[var(--border-soft)] hover:border-[var(--color-gold-light)]"
+            )}
+          >
+            <motion.span whileTap={{ scale: 1.3 }} className="inline-flex">
+              <HandHeart size={15} />
+            </motion.span>
+            {prayed ? t("updates.prayedForThis") : t("updates.prayForThis")} · {prayedByUserIds.length}
+          </button>
         )}
 
         {!compact && (

@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { Cross, Eye, EyeOff, Lock, User as UserIcon, ShieldCheck, Sparkles } from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
+import { Eye, EyeOff, Lock, User as UserIcon } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/Button";
 import { useLanguage } from "@/lib/language-context";
@@ -47,29 +49,26 @@ export default function LoginPage() {
         transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
         className="relative z-10 w-full max-w-4xl grid md:grid-cols-2 rounded-[28px] overflow-hidden card-shadow-hover glass-solid"
       >
-        {/* Left brand panel */}
-        <div className="relative hidden md:flex flex-col justify-between p-10 bg-gradient-to-br from-[var(--color-gold-deep)] via-[var(--color-gold)] to-[var(--color-blue-deep)] text-white overflow-hidden">
-          <div className="absolute inset-0 opacity-20" style={{ backgroundImage: "radial-gradient(circle at 20% 20%, white, transparent 45%)" }} />
-          <div className="relative flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center">
-              <Cross size={20} strokeWidth={2.4} />
+        {/* Left brand panel — fixed colors on purpose, see .login-panel-gold */}
+        <div className="login-panel-gold hidden md:flex flex-col justify-between p-10">
+          <div className="flex items-center gap-2.5">
+            <div className="relative w-10 h-10 rounded-full overflow-hidden shrink-0">
+              <Image src="/seal.png" alt="DWKY Connect" fill sizes="40px" className="object-cover" />
             </div>
             <span className="font-display font-semibold text-lg tracking-tight">DWKY Connect</span>
           </div>
 
-          <div className="relative animate-float-slow">
-            <Sparkles size={30} className="mb-4 opacity-90" />
+          <div>
             <h2 className="font-display text-3xl leading-tight font-semibold mb-3">
               {t("auth.marketingHeadline")}
             </h2>
-            <p className="text-white/85 text-sm leading-relaxed max-w-xs">
+            <p className="text-[#151a2d]/70 text-sm leading-relaxed max-w-xs">
               {t("auth.marketingTagline")}
             </p>
           </div>
 
-          <div className="relative flex items-center gap-2 text-xs text-white/75">
-            <ShieldCheck size={15} />
-            {t("auth.privateIntranetTagline")}
+          <div className="text-xs text-[#151a2d]/65">
+            {t("auth.copyrightFooter")}
           </div>
         </div>
 
@@ -123,6 +122,9 @@ export default function LoginPage() {
                 <input type="checkbox" defaultChecked className="accent-[var(--color-gold)]" />
                 {t("auth.keepSignedIn")}
               </label>
+              <Link href="/forgot-password" className="font-semibold text-[var(--color-blue-deep)] hover:underline">
+                {t("auth.forgotPassword")}
+              </Link>
             </div>
 
             <Button type="submit" className="w-full" size="lg" loading={submitting}>

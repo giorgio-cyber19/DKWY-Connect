@@ -22,7 +22,7 @@ const en = {
   tagsPlaceholder: "e.g. worship, kids",
   uploadingToDrive: "Uploading to Google Drive…",
   clickToChooseFiles: "Click to choose files",
-  fileTypeHint: "Images, video, audio, PDF, Word, PowerPoint · up to 4MB",
+  fileTypeHint: "Images, video, audio, PDF, Word, PowerPoint",
   driveNote: "Files are uploaded to your church's connected Google Drive.",
 };
 
@@ -48,7 +48,7 @@ const nl: typeof en = {
   tagsPlaceholder: "bijv. aanbidding, kinderen",
   uploadingToDrive: "Uploaden naar Google Drive…",
   clickToChooseFiles: "Klik om bestanden te kiezen",
-  fileTypeHint: "Afbeeldingen, video, audio, PDF, Word, PowerPoint · tot 4MB",
+  fileTypeHint: "Afbeeldingen, video, audio, PDF, Word, PowerPoint",
   driveNote: "Bestanden worden geüpload naar de Google Drive van je kerk.",
 };
 

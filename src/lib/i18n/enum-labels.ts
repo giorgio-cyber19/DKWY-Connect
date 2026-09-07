@@ -1,4 +1,4 @@
-import type { Post, CalendarEvent, PrayerEntry, ArtworkItem, VideoItem, ChildDocument, SpiritualMilestone, DocumentItem, MediaItem, LessonPlan } from "@/lib/types";
+import type { Post, CalendarEvent, Holiday, ArtworkItem, VideoItem, ChildDocument, SpiritualMilestone, DocumentItem, MediaItem, LessonPlan } from "@/lib/types";
 
 /**
  * These map persisted English literals (stored in Redis, used as TypeScript
@@ -8,22 +8,18 @@ import type { Post, CalendarEvent, PrayerEntry, ArtworkItem, VideoItem, ChildDoc
 type LabelMap<T extends string> = Record<T, string>;
 
 const postTypeEn: LabelMap<Post["type"]> = {
+  Update: "Update",
   Announcement: "Announcement",
-  "Weekly Update": "Weekly Update",
-  Testimony: "Testimony",
-  "Prayer Request": "Prayer Request",
-  "Teaching Tip": "Teaching Tip",
-  "Event Reminder": "Event Reminder",
   Photo: "Photo",
+  Devotional: "Devotional",
+  Prayer: "Prayer",
 };
 const postTypeNl: LabelMap<Post["type"]> = {
+  Update: "Update",
   Announcement: "Aankondiging",
-  "Weekly Update": "Wekelijkse Update",
-  Testimony: "Getuigenis",
-  "Prayer Request": "Gebedsverzoek",
-  "Teaching Tip": "Lestip",
-  "Event Reminder": "Evenementherinnering",
   Photo: "Foto",
+  Devotional: "Overdenking",
+  Prayer: "Gebed",
 };
 
 const eventTypeEn: LabelMap<CalendarEvent["type"]> = {
@@ -34,6 +30,7 @@ const eventTypeEn: LabelMap<CalendarEvent["type"]> = {
   VBS: "VBS",
   Birthday: "Birthday",
   "Parent Meeting": "Parent Meeting",
+  "Sunday School & Youth Roster": "Sunday School & Youth Roster",
 };
 const eventTypeNl: LabelMap<CalendarEvent["type"]> = {
   "Sunday Lesson": "Zondagsles",
@@ -43,19 +40,16 @@ const eventTypeNl: LabelMap<CalendarEvent["type"]> = {
   VBS: "Vakantiebijbelweek",
   Birthday: "Verjaardag",
   "Parent Meeting": "Oudervergadering",
+  "Sunday School & Youth Roster": "Rooster Zondagsschool & Jeugd",
 };
 
-const prayerTypeEn: LabelMap<PrayerEntry["type"]> = {
-  "Prayer Request": "Prayer Request",
-  "Praise Report": "Praise Report",
-  Devotional: "Devotional",
-  Encouragement: "Encouragement",
+const holidayTypeEn: LabelMap<Holiday["type"]> = {
+  school_vacation: "School Vacation",
+  national_holiday: "National Holiday",
 };
-const prayerTypeNl: LabelMap<PrayerEntry["type"]> = {
-  "Prayer Request": "Gebedsverzoek",
-  "Praise Report": "Lofverslag",
-  Devotional: "Overdenking",
-  Encouragement: "Bemoediging",
+const holidayTypeNl: LabelMap<Holiday["type"]> = {
+  school_vacation: "Schoolvakantie",
+  national_holiday: "Nationale Feestdag",
 };
 
 const artworkCategoryEn: LabelMap<ArtworkItem["category"]> = {
@@ -158,7 +152,7 @@ const lessonStatusNl: LabelMap<LessonPlan["status"]> = {
 export const enumLabels = {
   postType: { en: postTypeEn, nl: postTypeNl },
   eventType: { en: eventTypeEn, nl: eventTypeNl },
-  prayerType: { en: prayerTypeEn, nl: prayerTypeNl },
+  holidayType: { en: holidayTypeEn, nl: holidayTypeNl },
   artworkCategory: { en: artworkCategoryEn, nl: artworkCategoryNl },
   videoCategory: { en: videoCategoryEn, nl: videoCategoryNl },
   childDocumentType: { en: childDocumentTypeEn, nl: childDocumentTypeNl },

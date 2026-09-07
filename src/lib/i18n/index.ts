@@ -6,12 +6,14 @@ import { children } from "./dictionaries/children";
 import { media } from "./dictionaries/media";
 import { documents } from "./dictionaries/documents";
 import { calendar } from "./dictionaries/calendar";
-import { prayer } from "./dictionaries/prayer";
+import { roster } from "./dictionaries/roster";
+import { bible } from "./dictionaries/bible";
 import { myClass } from "./dictionaries/myClass";
 import { settings } from "./dictionaries/settings";
 import { admin } from "./dictionaries/admin";
 import { auth } from "./dictionaries/auth";
 import { layout } from "./dictionaries/layout";
+import { aiChat } from "./dictionaries/aiChat";
 
 export type Language = "en" | "nl";
 
@@ -25,12 +27,14 @@ const dictionaries = {
     media: media.en,
     documents: documents.en,
     calendar: calendar.en,
-    prayer: prayer.en,
+    roster: roster.en,
+    bible: bible.en,
     myClass: myClass.en,
     settings: settings.en,
     admin: admin.en,
     auth: auth.en,
     layout: layout.en,
+    aiChat: aiChat.en,
   },
   nl: {
     common: common.nl,
@@ -41,12 +45,14 @@ const dictionaries = {
     media: media.nl,
     documents: documents.nl,
     calendar: calendar.nl,
-    prayer: prayer.nl,
+    roster: roster.nl,
+    bible: bible.nl,
     myClass: myClass.nl,
     settings: settings.nl,
     admin: admin.nl,
     auth: auth.nl,
     layout: layout.nl,
+    aiChat: aiChat.nl,
   },
 } as const;
 

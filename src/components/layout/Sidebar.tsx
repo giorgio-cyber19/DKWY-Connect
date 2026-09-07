@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { Cross, ChevronsLeft, X } from "lucide-react";
+import { ChevronsLeft, X } from "lucide-react";
 import { navItems } from "./nav-items";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/language-context";
+import { VerseOfTheDayCard } from "@/components/bible/VerseOfTheDayCard";
 import type { TranslationKey } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -30,8 +32,8 @@ export function Sidebar({
   const content = (
     <div className="flex flex-col h-full">
       <div className={cn("flex items-center gap-2.5 px-4 h-16 shrink-0", collapsed && "justify-center px-0")}>
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[var(--color-gold-light)] to-[var(--color-gold-deep)] flex items-center justify-center text-white shrink-0 shadow-[0_2px_8px_-2px_rgba(201,154,63,0.6)]">
-          <Cross size={17} strokeWidth={2.4} />
+        <div className="relative w-9 h-9 rounded-full overflow-hidden shrink-0 shadow-[0_4px_10px_-2px_rgba(47,143,91,0.5)]">
+          <Image src="/seal.png" alt="DWKY Connect" fill sizes="36px" className="object-cover" />
         </div>
         {!collapsed && (
             <motion.span
@@ -59,14 +61,14 @@ export function Sidebar({
               className={cn(
                 "relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] font-medium transition-colors duration-200 group focus-ring",
                 collapsed && "justify-center px-0",
-                active ? "text-[var(--color-gold-deep)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                active ? "text-white" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
               )}
               title={collapsed ? t(item.label as TranslationKey) : undefined}
             >
               {active && (
                 <motion.div
                   layoutId="sidebar-active"
-                  className="absolute inset-0 rounded-xl bg-[color-mix(in_srgb,var(--color-gold)_14%,transparent)] border border-[color-mix(in_srgb,var(--color-gold)_25%,transparent)]"
+                  className="absolute inset-0 rounded-xl bg-[var(--color-blue)]"
                   transition={{ type: "spring", stiffness: 380, damping: 32 }}
                 />
               )}
@@ -84,6 +86,8 @@ export function Sidebar({
           );
         })}
       </nav>
+
+      {!collapsed && <VerseOfTheDayCard />}
 
       <div className="p-2.5 shrink-0">
         <button
@@ -105,7 +109,7 @@ export function Sidebar({
       <motion.aside
         animate={{ width: collapsed ? 76 : 260 }}
         transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-        className="hidden lg:block shrink-0 h-dvh sticky top-0 border-r border-[var(--border-soft)] bg-[var(--bg-sidebar)] backdrop-blur-xl"
+        className="no-print hidden lg:block shrink-0 h-dvh sticky top-0 border-r border-[var(--border-soft)] bg-[var(--bg-sidebar)]"
       >
         {content}
       </motion.aside>
@@ -123,7 +127,7 @@ export function Sidebar({
               initial={{ x: -280 }}
               animate={{ x: 0 }}
               transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-              className="fixed inset-y-0 left-0 z-50 w-[260px] glass-solid lg:hidden"
+              className="no-print fixed inset-y-0 left-0 z-50 w-[260px] glass-solid lg:hidden"
             >
               {content}
             </motion.aside>

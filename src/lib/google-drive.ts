@@ -1,7 +1,7 @@
 import "server-only";
 import { google, type Auth } from "googleapis";
-import { Readable } from "node:stream";
 import { encryptSecret, decryptSecret } from "./crypto";
+import { formatFileBytes } from "./format-bytes";
 import {
   getStoredRefreshToken,
   setStoredRefreshToken,
@@ -151,39 +151,52 @@ export interface DriveFile {
   modifiedTime?: string;
 }
 
-function formatBytes(bytes: number): string {
-  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-export async function uploadFileToDrive(
-  buffer: Buffer,
+/**
+ * Starts a Drive resumable-upload session and hands back its session URL so
+ * the browser can PUT the file bytes straight to Google — never through our
+ * own server. That's what lets uploads exceed Vercel's hard 4.5MB request
+ * body limit on serverless functions, which no amount of app-level
+ * configuration can raise. The session URL itself is scoped to this one
+ * upload (valid ~1 week) and needs no further Authorization header, so it's
+ * safe to expose to the client — our Drive refresh token never leaves the
+ * server.
+ */
+export async function createResumableUploadSession(
   filename: string,
   mimeType: string,
+  fileSize: number,
   category: DriveCategory,
   childId?: string
-): Promise<DriveFile> {
+): Promise<string> {
   const auth = await getAuthorizedClient();
   const drive = getDrive(auth);
   const parentId = await resolveCategoryFolder(drive, category, childId);
 
-  const res = await drive.files.create({
-    requestBody: { name: filename, parents: [parentId] },
-    media: { mimeType, body: Readable.from(buffer) },
-    fields: "id, name, webViewLink, size, mimeType, modifiedTime",
-  });
+  const { token } = await auth.getAccessToken();
+  if (!token) throw new Error("Failed to obtain a Google Drive access token.");
 
-  const file = res.data;
-  if (!file.id) throw new Error("Upload succeeded but Drive returned no file id");
+  const res = await fetch(
+    "https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&fields=id,name,webViewLink,size,mimeType,modifiedTime",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json; charset=UTF-8",
+        "X-Upload-Content-Type": mimeType,
+        "X-Upload-Content-Length": String(fileSize),
+      },
+      body: JSON.stringify({ name: filename, parents: [parentId] }),
+    }
+  );
 
-  return {
-    fileId: file.id,
-    name: file.name ?? filename,
-    viewUrl: file.webViewLink ?? `https://drive.google.com/file/d/${file.id}/view`,
-    size: file.size ? formatBytes(Number(file.size)) : formatBytes(buffer.length),
-    mimeType: file.mimeType ?? mimeType,
-    modifiedTime: file.modifiedTime ?? undefined,
-  };
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Failed to start a Drive upload session (${res.status}): ${text}`);
+  }
+
+  const sessionUrl = res.headers.get("Location");
+  if (!sessionUrl) throw new Error("Google Drive didn't return an upload session URL.");
+  return sessionUrl;
 }
 
 export async function deleteFileFromDrive(fileId: string): Promise<void> {
@@ -203,7 +216,7 @@ export async function renameFileInDrive(fileId: string, newName: string): Promis
     fileId: file.id!,
     name: file.name ?? newName,
     viewUrl: file.webViewLink ?? `https://drive.google.com/file/d/${file.id}/view`,
-    size: file.size ? formatBytes(Number(file.size)) : "—",
+    size: file.size ? formatFileBytes(Number(file.size)) : "—",
     mimeType: file.mimeType ?? "application/octet-stream",
     modifiedTime: file.modifiedTime ?? undefined,
   };
@@ -225,7 +238,7 @@ export async function listFolderFiles(category: DriveCategory, childId?: string)
     fileId: file.id!,
     name: file.name ?? "Untitled",
     viewUrl: file.webViewLink ?? `https://drive.google.com/file/d/${file.id}/view`,
-    size: file.size ? formatBytes(Number(file.size)) : "—",
+    size: file.size ? formatFileBytes(Number(file.size)) : "—",
     mimeType: file.mimeType ?? "application/octet-stream",
     modifiedTime: file.modifiedTime ?? undefined,
   }));

@@ -13,7 +13,7 @@ const en = {
   addedBeforeDrive: "Added before Google Drive was connected",
   clickToChooseFiles: "Click to choose files",
   uploadingToDrive: "Uploading to Google Drive…",
-  fileTypeHint: "PDF, Word, or Excel · up to 4MB",
+  fileTypeHint: "PDF, Word, or Excel",
 };
 
 const nl: typeof en = {
@@ -31,7 +31,7 @@ const nl: typeof en = {
   addedBeforeDrive: "Toegevoegd voordat Google Drive verbonden was",
   clickToChooseFiles: "Klik om bestanden te kiezen",
   uploadingToDrive: "Uploaden naar Google Drive…",
-  fileTypeHint: "PDF, Word of Excel · tot 4MB",
+  fileTypeHint: "PDF, Word of Excel",
 };
 
 export const documents = { en, nl };

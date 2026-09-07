@@ -11,10 +11,10 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const name = body?.name;
   const classId = body?.classId;
-  const teacherId = body?.teacherId;
-  if (typeof name !== "string" || !name.trim() || typeof classId !== "string" || !classId || typeof teacherId !== "string" || !teacherId) {
-    return NextResponse.json({ error: "bad_request", message: "Name, class, and teacher are required." }, { status: 400 });
+  if (typeof name !== "string" || !name.trim() || typeof classId !== "string" || !classId) {
+    return NextResponse.json({ error: "bad_request", message: "Name and class are required." }, { status: 400 });
   }
+  const teacherId = typeof body.teacherId === "string" && body.teacherId ? body.teacherId : undefined;
 
   const existingChildren = await getCollection<Child>("children");
   const child: Child = {
@@ -35,7 +35,6 @@ export async function POST(request: Request) {
     documents: [],
     milestones: [],
     observations: [],
-    attendanceRate: 100,
   };
   await putEntity("children", child);
   await appendFeed<AuditLogEntry>(

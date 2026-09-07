@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Image as ImageIcon, BarChart3, Send, X } from "lucide-react";
 import { Card } from "@/components/ui/Card";
@@ -11,21 +11,23 @@ import { useAppStore } from "@/lib/store";
 import { useLanguage } from "@/lib/language-context";
 import { enumLabels } from "@/lib/i18n/enum-labels";
 import { translateApiError } from "@/lib/i18n/errors";
+import { uploadToDrive } from "@/lib/upload";
 import type { Post } from "@/lib/types";
 
-const types: Post["type"][] = ["Weekly Update", "Announcement", "Testimony", "Prayer Request", "Teaching Tip", "Event Reminder", "Photo"];
+const types: Post["type"][] = ["Update", "Announcement", "Photo", "Devotional", "Prayer"];
 
 export function PostComposer() {
   const { user } = useAuth();
   const { t, language } = useLanguage();
   const [content, setContent] = useState("");
-  const [type, setType] = useState<Post["type"]>("Weekly Update");
+  const [type, setType] = useState<Post["type"]>("Update");
   const [showPoll, setShowPoll] = useState(false);
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollOptions, setPollOptions] = useState(["", ""]);
-  const [addPhoto, setAddPhoto] = useState(false);
+  const [photo, setPhoto] = useState<File | null>(null);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!user) return null;
 
@@ -34,11 +36,13 @@ export function PostComposer() {
     setSubmitting(true);
     setError("");
     try {
+      const uploaded = photo ? await uploadToDrive(photo, "encouragements") : undefined;
       await useAppStore.getState().createPost({
         authorId: user!.id,
         type,
         content,
-        imageColor: addPhoto ? "var(--color-gold-light)" : undefined,
+        driveFileId: uploaded?.fileId,
+        driveViewUrl: uploaded?.viewUrl,
         poll:
           showPoll && pollQuestion.trim()
             ? { question: pollQuestion, options: pollOptions.filter((o) => o.trim()).map((o) => ({ text: o, votes: 0 })), votesByUser: {} }
@@ -48,7 +52,7 @@ export function PostComposer() {
       setShowPoll(false);
       setPollQuestion("");
       setPollOptions(["", ""]);
-      setAddPhoto(false);
+      setPhoto(null);
     } catch (err) {
       setError(translateApiError(err, language));
     } finally {
@@ -69,9 +73,10 @@ export function PostComposer() {
             className="w-full text-sm bg-transparent outline-none resize-none placeholder:text-[var(--text-secondary)]"
           />
 
-          {addPhoto && (
-            <div className="relative h-32 rounded-2xl bg-gradient-to-br from-[var(--color-gold-light)] to-[var(--color-blue-light)]">
-              <button onClick={() => setAddPhoto(false)} className="absolute top-2 right-2 p-1 rounded-full bg-black/20 text-white">
+          {photo && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-black/[0.03] text-[12.5px]">
+              <span className="flex-1 truncate">{photo.name}</span>
+              <button onClick={() => setPhoto(null)} className="text-[var(--text-secondary)] hover:text-red-500">
                 <X size={13} />
               </button>
             </div>
@@ -118,8 +123,15 @@ export function PostComposer() {
                   </option>
                 ))}
               </select>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => setPhoto(e.target.files?.[0] ?? null)}
+              />
               <button
-                onClick={() => setAddPhoto((v) => !v)}
+                onClick={() => fileInputRef.current?.click()}
                 className="p-2 rounded-full hover:bg-black/5 text-[var(--color-sage-deep)]"
                 title={t("updates.addPhotoTitle")}
               >

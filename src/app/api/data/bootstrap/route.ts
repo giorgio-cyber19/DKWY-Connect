@@ -12,12 +12,25 @@ import type {
   MediaItem,
   DocumentItem,
   CalendarEvent,
-  PrayerEntry,
+  Holiday,
+  RosterEntry,
   Notification,
   AuditLogEntry,
 } from "@/lib/types";
 
-const ENTITIES = ["users", "ageGroups", "classes", "children", "lessons", "posts", "mediaItems", "documentItems", "calendarEvents", "prayerEntries"] as const;
+const ENTITIES = [
+  "users",
+  "ageGroups",
+  "classes",
+  "children",
+  "lessons",
+  "posts",
+  "mediaItems",
+  "documentItems",
+  "calendarEvents",
+  "holidays",
+  "rosterEntries",
+] as const;
 
 const PREFIX = "dwky-connect";
 
@@ -88,7 +101,8 @@ export async function GET(request: Request) {
     mediaItems: records.mediaItems as MediaItem[],
     documentItems: records.documentItems as DocumentItem[],
     calendarEvents: records.calendarEvents as CalendarEvent[],
-    prayerEntries: records.prayerEntries as PrayerEntry[],
+    holidays: records.holidays as Holiday[],
+    rosterEntries: records.rosterEntries as RosterEntry[],
     notifications,
     auditLog,
   });

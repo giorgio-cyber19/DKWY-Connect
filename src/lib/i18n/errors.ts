@@ -12,12 +12,32 @@ const errorMessages: Record<string, Record<Language, string>> = {
   username_taken: { en: "That username is already in use.", nl: "Deze gebruikersnaam is al in gebruik." },
   email_taken: { en: "That email is already in use by another account.", nl: "Dit e-mailadres is al in gebruik bij een ander account." },
   not_configured: { en: "Google Drive isn't connected yet. An administrator needs to connect it from Settings.", nl: "Google Drive is nog niet verbonden. Een beheerder moet dit instellen via Instellingen." },
-  too_large: { en: "Files over 4MB aren't supported by this upload path yet — try a smaller file.", nl: "Bestanden groter dan 4MB worden nog niet ondersteund — probeer een kleiner bestand." },
   upload_failed: { en: "Upload to Google Drive failed. Check server logs.", nl: "Uploaden naar Google Drive is mislukt. Controleer de serverlogs." },
   delete_failed: { en: "Delete failed.", nl: "Verwijderen is mislukt." },
   rename_failed: { en: "Rename failed.", nl: "Hernoemen is mislukt." },
   list_failed: { en: "Couldn't load files from Google Drive.", nl: "Kon bestanden niet laden vanuit Google Drive." },
   storage_unavailable: { en: "Couldn't retrieve storage details from Google Drive.", nl: "Kon opslaggegevens niet ophalen van Google Drive." },
+  invalid_reset_token: { en: "This reset link is invalid or has expired. Request a new one.", nl: "Deze resetlink is ongeldig of verlopen. Vraag een nieuwe aan." },
+  in_use: {
+    en: "This is still being used elsewhere. Reassign or remove those items first.",
+    nl: "Dit wordt nog ergens anders gebruikt. Wijs eerst iets anders toe of verwijder die items.",
+  },
+  ai_not_configured: {
+    en: "DWKY AI isn't set up yet. An administrator needs to add an API key.",
+    nl: "DWKY AI is nog niet ingesteld. Een beheerder moet een API-sleutel toevoegen.",
+  },
+  rate_limited: {
+    en: "You've reached the current AI usage limit. Please try again later.",
+    nl: "Je hebt de huidige AI-gebruikslimiet bereikt. Probeer het later opnieuw.",
+  },
+  ai_busy: {
+    en: "DWKY AI is temporarily unavailable. Please try again in a moment.",
+    nl: "DWKY AI is tijdelijk niet beschikbaar. Probeer het over een moment opnieuw.",
+  },
+  ai_error: {
+    en: "DWKY AI is temporarily unavailable. Please try again in a moment.",
+    nl: "DWKY AI is tijdelijk niet beschikbaar. Probeer het over een moment opnieuw.",
+  },
 };
 
 const generic: Record<Language, string> = {

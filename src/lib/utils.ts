@@ -41,6 +41,16 @@ export function parseDate(iso: string): Date {
   return new Date(y, (m ?? 1) - 1, d ?? 1);
 }
 
+/** Whole years elapsed since a "YYYY-MM-DD" birthday, as of today. */
+export function calculateAge(birthday: string): number {
+  const birth = parseDate(birthday);
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const hasHadBirthdayThisYear = today.getMonth() > birth.getMonth() || (today.getMonth() === birth.getMonth() && today.getDate() >= birth.getDate());
+  if (!hasHadBirthdayThisYear) age--;
+  return Math.max(0, age);
+}
+
 const localeMap: Record<Language, string> = { en: "en-US", nl: "nl-NL" };
 
 export function formatDate(iso: string, opts?: Intl.DateTimeFormatOptions, language: Language = "en") {

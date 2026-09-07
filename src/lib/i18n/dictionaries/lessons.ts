@@ -103,7 +103,7 @@ const en = {
   uploadImages: "Upload Images",
   addYoutubeLink: "Add YouTube Link",
   uploadingToGoogleDrive: "Uploading to Google Drive…",
-  attachmentsUploadNote: "Files are uploaded to your church's connected Google Drive (up to 4MB each).",
+  attachmentsUploadNote: "Files are uploaded to your church's connected Google Drive.",
   saveAsDraft: "Save as Draft",
   publishLesson: "Publish Lesson",
 };
@@ -213,7 +213,7 @@ const nl: typeof en = {
   uploadImages: "Afbeeldingen Uploaden",
   addYoutubeLink: "YouTube-link Toevoegen",
   uploadingToGoogleDrive: "Uploaden naar Google Drive…",
-  attachmentsUploadNote: "Bestanden worden geüpload naar de Google Drive van je kerk (max. 4MB per bestand).",
+  attachmentsUploadNote: "Bestanden worden geüpload naar de Google Drive van je kerk.",
   saveAsDraft: "Opslaan als Concept",
   publishLesson: "Les Publiceren",
 };

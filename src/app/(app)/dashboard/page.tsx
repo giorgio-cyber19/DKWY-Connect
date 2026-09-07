@@ -9,7 +9,6 @@ import {
   HeartHandshake,
   ArrowRight,
   UploadCloud,
-  Sparkles,
   GraduationCap,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
@@ -18,9 +17,9 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { StaggerGrid, StaggerItem } from "@/components/ui/Stagger";
-import { MetricCard } from "@/components/dashboard/MetricCard";
+import { MotifCluster } from "@/components/dashboard/MotifCluster";
 import { LessonCard } from "@/components/lessons/LessonCard";
-import { PostCard } from "@/components/updates/PostCard";
+import { PostCard, typeTone } from "@/components/updates/PostCard";
 import { getUser, getClass, useAppStore } from "@/lib/store";
 import { parseDate, formatDate } from "@/lib/utils";
 import { useLanguage } from "@/lib/language-context";
@@ -53,7 +52,6 @@ export default function DashboardPage() {
   const lessonPlans = useAppStore((s) => s.lessonPlans);
   const posts = useAppStore((s) => s.posts);
   const calendarEvents = useAppStore((s) => s.calendarEvents);
-  const prayerEntries = useAppStore((s) => s.prayerEntries);
   const classes = useAppStore((s) => s.classes);
 
   if (!user) return null;
@@ -71,56 +69,91 @@ export default function DashboardPage() {
     .filter((e) => parseDate(e.date) >= todayMidnight)
     .sort((a, b) => parseDate(a.date).getTime() - parseDate(b.date).getTime())
     .slice(0, 4);
-  const activePrayers = prayerEntries.slice(0, 2);
+  const prayerPosts = posts.filter((p) => p.type === "Prayer");
+  const activePrayers = prayerPosts.slice(0, 2);
   const recentPortfolios = myChildren.slice(0, 6);
 
   return (
-    <div className="space-y-8">
-      {/* Welcome banner */}
+    <div className="space-y-5 sm:space-y-8">
+      {/* Welcome hero */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        className="relative overflow-hidden rounded-[24px] p-7 sm:p-9 card-shadow text-white"
-        style={{ background: "linear-gradient(120deg, var(--color-gold-deep), var(--color-gold) 55%, var(--color-blue-deep))" }}
+        className="chapel-hero p-5 sm:p-9"
       >
-        <Sparkles size={120} className="absolute -right-6 -top-6 opacity-15" />
-        <p className="text-xs font-bold uppercase tracking-[0.14em] text-white/80 mb-2">{t(`dashboard.${getGreetingKey()}`)}</p>
-        <h1 className="font-display text-3xl sm:text-4xl font-semibold mb-2">{t("dashboard.welcomeBackPrefix")} {user.name.split(" ")[0]} 👋</h1>
-        <p className="text-white/85 max-w-xl text-sm sm:text-[15px] leading-relaxed">
-          {t("dashboard.nextSundayPrefix")} <strong>{formatDate(toIsoDate(nextSunday), undefined, language)}</strong>
-          {upcomingLesson ? (
-            <>
-              {" "}
-              {t("dashboard.teachingIntro")} <strong>&ldquo;{upcomingLesson.title}&rdquo;</strong> {t("dashboard.teachingForClass")} {myClass?.name ?? t("dashboard.yourClassFallback")}.
-            </>
-          ) : (
-            <> {t("dashboard.defaultBanner")}</>
-          )}
-        </p>
-        <div className="flex flex-wrap gap-2.5 mt-5">
-          {upcomingLesson && (
-            <Link href={`/lessons/${upcomingLesson.id}`}>
-              <Button variant="primary" size="sm" className="!bg-white !text-[var(--color-gold-deep)] !shadow-none border-0">
-                {t("dashboard.viewLessonPlan")} <ArrowRight size={14} />
-              </Button>
-            </Link>
-          )}
-          <Link href="/my-class">
-            <Button variant="outline" size="sm" className="!border-white/40 !text-white hover:!bg-white/10">
-              <GraduationCap size={14} /> {t("dashboard.myClassLabel")}
-            </Button>
-          </Link>
+        <MotifCluster
+          className="w-[150px] sm:w-[260px] text-white/60 pointer-events-none"
+          style={{ position: "absolute", top: "-16px", right: "-16px" }}
+        />
+        <div className="grid lg:grid-cols-[1.3fr_1fr] gap-5 lg:gap-8 items-start">
+          {/* Left: greeting + lesson line + actions */}
+          <div>
+            <span className="inline-block text-[11px] font-bold uppercase tracking-[0.14em] px-3 py-1 rounded-full bg-[var(--color-gold)] text-[#151a2d] mb-3 sm:mb-4">
+              {t("dashboard.thisSundayPill")}
+              {myClass?.room && <> · {t("dashboard.roomPrefix")} {myClass.room}</>}
+            </span>
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-white/80 mb-2">{t(`dashboard.${getGreetingKey()}`)}</p>
+            <h1 className="font-display text-2xl sm:text-4xl font-semibold mb-2">{t("dashboard.welcomeBackPrefix")} {user.name.split(" ")[0]} 👋</h1>
+            <p className="text-white/85 max-w-xl text-sm sm:text-[15px] leading-relaxed">
+              {t("dashboard.nextSundayPrefix")} <strong>{formatDate(toIsoDate(nextSunday), undefined, language)}</strong>
+              {upcomingLesson ? (
+                <>
+                  {" "}
+                  {t("dashboard.teachingIntro")} <strong>&ldquo;{upcomingLesson.title}&rdquo;</strong> {t("dashboard.teachingForClass")} {myClass?.name ?? t("dashboard.yourClassFallback")}.
+                </>
+              ) : (
+                <> {t("dashboard.defaultBanner")}</>
+              )}
+            </p>
+            <div className="flex flex-wrap gap-2.5 mt-4 sm:mt-5">
+              {upcomingLesson && (
+                <Link href={`/lessons/${upcomingLesson.id}`}>
+                  <Button variant="primary" size="sm" className="!bg-white !text-[var(--color-blue-deep)] !shadow-none">
+                    {t("dashboard.viewLessonPlan")} <ArrowRight size={14} />
+                  </Button>
+                </Link>
+              )}
+              <Link href="/my-class">
+                <Button variant="outline" size="sm" className="!border-white/40 !text-white hover:!bg-white/10">
+                  <GraduationCap size={14} /> {t("dashboard.myClassLabel")}
+                </Button>
+              </Link>
+            </div>
+          </div>
+
+          {/* Right: memory verse + 2x2 metrics */}
+          <div className="space-y-3 sm:space-y-4">
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-white/[0.12]">
+              <p className="verse text-white text-[13px] sm:text-[15px]">
+                {upcomingLesson?.memoryVerse ? <>&ldquo;{upcomingLesson.memoryVerse}&rdquo;</> : t("dashboard.noMemoryVerseYet")}
+              </p>
+            </div>
+            <StaggerGrid className="grid grid-cols-2 gap-2.5 sm:gap-3">
+              <StaggerItem className="p-3 sm:p-3.5 rounded-2xl bg-white/[0.12]">
+                <Users size={16} className="text-white/80 mb-1.5 sm:mb-2" />
+                <p className="font-display text-lg sm:text-xl font-semibold leading-none">{myChildren.length}</p>
+                <p className="text-[10.5px] sm:text-[11px] text-white/75 mt-1">{t("dashboard.childrenInYourCare")}</p>
+              </StaggerItem>
+              <StaggerItem className="p-3 sm:p-3.5 rounded-2xl bg-white/[0.12]">
+                <BookOpen size={16} className="text-white/80 mb-1.5 sm:mb-2" />
+                <p className="font-display text-lg sm:text-xl font-semibold leading-none">{lessonPlans.filter((l) => l.status === "published").length}</p>
+                <p className="text-[10.5px] sm:text-[11px] text-white/75 mt-1">{t("dashboard.publishedLessons")}</p>
+              </StaggerItem>
+              <StaggerItem className="p-3 sm:p-3.5 rounded-2xl bg-white/[0.12]">
+                <CalendarDays size={16} className="text-white/80 mb-1.5 sm:mb-2" />
+                <p className="font-display text-lg sm:text-xl font-semibold leading-none">{upcomingEvents.length}</p>
+                <p className="text-[10.5px] sm:text-[11px] text-white/75 mt-1">{t("dashboard.upcomingEventsLabel")}</p>
+              </StaggerItem>
+              <StaggerItem className="p-3 sm:p-3.5 rounded-2xl bg-white/[0.12]">
+                <HeartHandshake size={16} className="text-white/80 mb-1.5 sm:mb-2" />
+                <p className="font-display text-lg sm:text-xl font-semibold leading-none">{prayerPosts.length}</p>
+                <p className="text-[10.5px] sm:text-[11px] text-white/75 mt-1">{t("dashboard.activePrayerRequests")}</p>
+              </StaggerItem>
+            </StaggerGrid>
+          </div>
         </div>
       </motion.div>
-
-      {/* Metric cards */}
-      <StaggerGrid className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard label={t("dashboard.childrenInYourCare")} value={myChildren.length} icon={Users} color="var(--color-gold-deep)" />
-        <MetricCard label={t("dashboard.publishedLessons")} value={lessonPlans.filter((l) => l.status === "published").length} icon={BookOpen} color="var(--color-blue-deep)" />
-        <MetricCard label={t("dashboard.upcomingEventsLabel")} value={upcomingEvents.length} icon={CalendarDays} color="var(--color-sage-deep)" />
-        <MetricCard label={t("dashboard.activePrayerRequests")} value={prayerEntries.length} icon={HeartHandshake} color="var(--color-gold-deep)" />
-      </StaggerGrid>
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Left column */}
@@ -177,7 +210,10 @@ export default function DashboardPage() {
               <StaggerGrid className="space-y-3">
                 {upcomingEvents.map((e) => (
                   <StaggerItem key={e.id} className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl flex flex-col items-center justify-center shrink-0 text-white" style={{ background: e.color }}>
+                    <div
+                      className="w-10 h-10 rounded-xl flex flex-col items-center justify-center shrink-0"
+                      style={{ background: `color-mix(in srgb, ${e.color} 16%, transparent)`, color: e.color }}
+                    >
                       <span className="text-[9px] font-bold leading-none">{formatDate(e.date, { month: "short", day: undefined, year: undefined }, language)}</span>
                       <span className="text-[13px] font-bold leading-none">{parseDate(e.date).getDate()}</span>
                     </div>
@@ -194,7 +230,7 @@ export default function DashboardPage() {
           <Card className="p-5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-display font-semibold">{t("dashboard.prayerAndEncouragement")}</h3>
-              <Link href="/prayer" className="text-[11px] font-semibold text-[var(--color-blue-deep)]">
+              <Link href="/updates" className="text-[11px] font-semibold text-[var(--color-blue-deep)]">
                 {t("common.seeAll")}
               </Link>
             </div>
@@ -210,7 +246,7 @@ export default function DashboardPage() {
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5 mb-0.5">
                           <p className="text-[12.5px] font-semibold">{author?.name}</p>
-                          <Badge tone="gold" className="!py-0.5 !px-1.5 !text-[9.5px]">{enumLabels.prayerType[language][p.type]}</Badge>
+                          <Badge tone={typeTone[p.type]} className="!py-0.5 !px-1.5 !text-[9.5px]">{enumLabels.postType[language][p.type]}</Badge>
                         </div>
                         <p className="text-[12.5px] text-[var(--text-secondary)] line-clamp-2">{p.content}</p>
                       </div>
