@@ -9,7 +9,7 @@ interface AuthContextValue {
   user: User | null;
   loading: boolean;
   needsSetup: boolean;
-  login: (identifier: string, password: string) => Promise<boolean>;
+  login: (identifier: string, password: string, keepSignedIn?: boolean) => Promise<boolean>;
   logout: () => void;
 }
 
@@ -59,8 +59,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const user = users.find((u) => u.id === currentUserId) ?? null;
 
   const login = useCallback(
-    async (identifier: string, password: string) => {
-      const loggedInUser = await useAppStore.getState().login(identifier, password);
+    async (identifier: string, password: string, keepSignedIn?: boolean) => {
+      const loggedInUser = await useAppStore.getState().login(identifier, password, keepSignedIn);
       if (loggedInUser) {
         router.push(loggedInUser.mustChangePassword ? "/change-password" : "/dashboard");
         return true;

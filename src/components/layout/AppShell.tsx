@@ -10,6 +10,7 @@ import { Topbar } from "./Topbar";
 import { GlobalSearch } from "./GlobalSearch";
 import { PageTransition } from "./PageTransition";
 import { FAB } from "./FAB";
+import { IdleLogout } from "./IdleLogout";
 import { YouVersionThemeProvider } from "@/components/bible/YouVersionThemeProvider";
 import { Cross } from "lucide-react";
 
@@ -56,6 +57,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <YouVersionThemeProvider>
+      <IdleLogout />
       <div className="flex min-h-dvh">
         <Sidebar
           collapsed={collapsed}

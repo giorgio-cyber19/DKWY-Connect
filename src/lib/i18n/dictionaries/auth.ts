@@ -23,6 +23,7 @@ const en = {
   signIn: "Sign in",
   signingIn: "Signing in…",
   loginFailed: "That email/username and password don't match an account.",
+  signedOutIdle: "You were signed out after 30 minutes of inactivity. Please sign in again.",
   loginFooter: "No public registration. Accounts are created by your Sunday School administrator.",
   marketingHeadline: "A joyful home for our Sunday School & Youth ministry.",
   marketingTagline:
@@ -87,6 +88,7 @@ const nl: typeof en = {
   signIn: "Inloggen",
   signingIn: "Bezig met inloggen…",
   loginFailed: "Dit e-mailadres/deze gebruikersnaam en dit wachtwoord komen niet overeen met een account.",
+  signedOutIdle: "Je bent uitgelogd na 30 minuten inactiviteit. Log opnieuw in.",
   loginFooter: "Geen openbare registratie. Accounts worden aangemaakt door de beheerder van je zondagsschool.",
   marketingHeadline: "Een fijne thuisbasis voor onze zondagsschool- en jeugdbediening.",
   marketingTagline:

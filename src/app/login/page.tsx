@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Eye, EyeOff, Lock, User as UserIcon } from "lucide-react";
@@ -11,12 +11,22 @@ import { Button } from "@/components/ui/Button";
 import { useLanguage } from "@/lib/language-context";
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-dvh" />}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const { login, needsSetup, loading } = useAuth();
   const router = useRouter();
   const { t } = useLanguage();
+  const signedOutIdle = useSearchParams().get("reason") === "idle";
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [keepSignedIn, setKeepSignedIn] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -28,7 +38,7 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     setSubmitting(true);
-    const ok = await login(identifier, password);
+    const ok = await login(identifier, password, keepSignedIn);
     if (!ok) {
       setError(t("auth.loginFailed"));
       setSubmitting(false);
@@ -115,11 +125,21 @@ export default function LoginPage() {
               </div>
             </div>
 
+            {signedOutIdle && !error && (
+              <p className="text-xs text-[var(--text-secondary)] bg-[var(--bg-elevated)] border border-[var(--border-soft)] rounded-lg px-3 py-2">
+                {t("auth.signedOutIdle")}
+              </p>
+            )}
             {error && <p className="text-xs text-red-500 font-medium">{error}</p>}
 
             <div className="flex items-center justify-between text-xs">
               <label className="flex items-center gap-2 text-[var(--text-secondary)] cursor-pointer">
-                <input type="checkbox" defaultChecked className="accent-[var(--color-gold)]" />
+                <input
+                  type="checkbox"
+                  checked={keepSignedIn}
+                  onChange={(e) => setKeepSignedIn(e.target.checked)}
+                  className="accent-[var(--color-gold)]"
+                />
                 {t("auth.keepSignedIn")}
               </label>
               <Link href="/forgot-password" className="font-semibold text-[var(--color-blue-deep)] hover:underline">

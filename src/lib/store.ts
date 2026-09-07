@@ -67,7 +67,7 @@ interface AppState {
 
   // auth
   createFirstAdmin: (input: { name: string; email: string; password: string }) => Promise<User>;
-  login: (identifier: string, password: string) => Promise<User | null>;
+  login: (identifier: string, password: string, keepSignedIn?: boolean) => Promise<User | null>;
   logout: () => void;
 
   // self-service account
@@ -144,6 +144,17 @@ interface AppState {
   togglePrayedFor: (postId: string, userId: string) => Promise<void>;
 }
 
+// Persisted separately from the session itself (always in localStorage — it's just a
+// preference, not a secret) so the storage adapter below can consult it before it knows
+// where the session data lives. "1" (default) = localStorage, survives closing the
+// browser. "0" = sessionStorage, cleared when the browser/tab closes — the actual fix for
+// "Keep me signed in" unchecked meaning what it says.
+const KEEP_SIGNED_IN_KEY = "dwky-connect-keep-signed-in";
+
+function activeSessionStorage(): Storage {
+  return window.localStorage.getItem(KEEP_SIGNED_IN_KEY) === "0" ? window.sessionStorage : window.localStorage;
+}
+
 export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
@@ -198,9 +209,14 @@ export const useAppStore = create<AppState>()(
         return user;
       },
 
-      login: async (identifier, password) => {
+      login: async (identifier, password, keepSignedIn = true) => {
         try {
           const { token, user } = await apiPost<{ token: string; user: User }>("/api/auth/login", { identifier, password });
+          // Set the preference — and clear any stale session left in the *other*
+          // storage — before the set() below triggers persist's write, so it lands
+          // in the right place.
+          window.localStorage.setItem(KEEP_SIGNED_IN_KEY, keepSignedIn ? "1" : "0");
+          (keepSignedIn ? window.sessionStorage : window.localStorage).removeItem("dwky-connect-data");
           set({ sessionToken: token, currentUserId: user.id });
           await get().bootstrap();
           return user;
@@ -471,12 +487,15 @@ export const useAppStore = create<AppState>()(
       // automatic hydration so the server and first client render both start
       // from the same empty state; app-shell.tsx triggers hydration manually.
       storage: createJSONStorage(() => ({
-        getItem: (name) => (typeof window === "undefined" ? null : window.localStorage.getItem(name)),
+        getItem: (name) => (typeof window === "undefined" ? null : activeSessionStorage().getItem(name)),
         setItem: (name, value) => {
-          if (typeof window !== "undefined") window.localStorage.setItem(name, value);
+          if (typeof window !== "undefined") activeSessionStorage().setItem(name, value);
         },
         removeItem: (name) => {
-          if (typeof window !== "undefined") window.localStorage.removeItem(name);
+          if (typeof window === "undefined") return;
+          // Clear both — logout should end the session regardless of which one it was in.
+          window.localStorage.removeItem(name);
+          window.sessionStorage.removeItem(name);
         },
       })),
       skipHydration: true,
