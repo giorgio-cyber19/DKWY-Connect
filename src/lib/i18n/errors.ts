@@ -30,6 +30,10 @@ const errorMessages: Record<string, Record<Language, string>> = {
     en: "You've reached the current AI usage limit. Please try again later.",
     nl: "Je hebt de huidige AI-gebruikslimiet bereikt. Probeer het later opnieuw.",
   },
+  auth_rate_limited: {
+    en: "Too many attempts. Please wait a few minutes and try again.",
+    nl: "Te veel pogingen. Wacht een paar minuten en probeer het opnieuw.",
+  },
   ai_busy: {
     en: "DWKY AI is temporarily unavailable. Please try again in a moment.",
     nl: "DWKY AI is tijdelijk niet beschikbaar. Probeer het over een moment opnieuw.",

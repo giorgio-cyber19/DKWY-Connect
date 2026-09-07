@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@google/genai": "^2.20.0",
+    "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.2",
     "@youversion/platform-core": "^2.6.3",
     "@youversion/platform-react-ui": "^2.6.3",

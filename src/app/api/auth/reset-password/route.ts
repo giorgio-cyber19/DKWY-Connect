@@ -2,9 +2,15 @@ import { NextResponse } from "next/server";
 import { getEntity, putEntity } from "@/lib/db";
 import { consumePasswordResetToken } from "@/lib/kv";
 import { hashPassword } from "@/lib/password";
+import { checkRateLimit, getClientIp, rateLimitedResponse } from "@/lib/rate-limit";
 import type { User } from "@/lib/types";
 
 export async function POST(request: Request) {
+  // Reset tokens are 256-bit random, so guessing one is infeasible regardless —
+  // this just caps abuse/load on the endpoint.
+  const ipCheck = await checkRateLimit("reset-password-ip", getClientIp(request), 10, "1 h");
+  if (!ipCheck.success) return rateLimitedResponse(ipCheck.retryAfterSeconds);
+
   const body = await request.json().catch(() => null);
   const token = typeof body?.token === "string" ? body.token : "";
   const newPassword = typeof body?.newPassword === "string" ? body.newPassword : "";

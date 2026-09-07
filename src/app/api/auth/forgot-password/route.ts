@@ -3,9 +3,16 @@ import { NextResponse, after } from "next/server";
 import { getCollection } from "@/lib/db";
 import { setPasswordResetToken } from "@/lib/kv";
 import { sendPasswordResetEmail } from "@/lib/email";
+import { checkRateLimit, getClientIp, rateLimitedResponse } from "@/lib/rate-limit";
 import type { User } from "@/lib/types";
 
 export async function POST(request: Request) {
+  // Bounds how many reset emails one IP can trigger — the response is already
+  // identical whether or not the account exists, so this is about abuse/volume,
+  // not enumeration.
+  const ipCheck = await checkRateLimit("forgot-password-ip", getClientIp(request), 5, "1 h");
+  if (!ipCheck.success) return rateLimitedResponse(ipCheck.retryAfterSeconds);
+
   const body = await request.json().catch(() => null);
   const identifier = typeof body?.identifier === "string" ? body.identifier.toLowerCase().trim() : "";
 

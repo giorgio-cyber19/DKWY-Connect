@@ -2,9 +2,16 @@ import { NextResponse } from "next/server";
 import { verifyPassword, toPublicUser } from "@/lib/password";
 import { mintSessionToken } from "@/lib/session";
 import { getCollection } from "@/lib/db";
+import { checkRateLimit, getClientIp, rateLimitedResponse } from "@/lib/rate-limit";
 import type { User } from "@/lib/types";
 
 export async function POST(request: Request) {
+  // Two limits, checked independently: one bounds how fast a single IP can
+  // try passwords at all, the other bounds how many attempts any one account
+  // can absorb even if they're spread across many IPs (distributed brute force).
+  const ipCheck = await checkRateLimit("login-ip", getClientIp(request), 20, "1 m");
+  if (!ipCheck.success) return rateLimitedResponse(ipCheck.retryAfterSeconds);
+
   const body = await request.json().catch(() => null);
   const identifier = body?.identifier;
   const password = body?.password;
@@ -14,6 +21,10 @@ export async function POST(request: Request) {
   }
 
   const normalized = identifier.toLowerCase().trim();
+
+  const accountCheck = await checkRateLimit("login-account", normalized, 8, "5 m");
+  if (!accountCheck.success) return rateLimitedResponse(accountCheck.retryAfterSeconds);
+
   const users = await getCollection<User>("users");
   const user = users.find((u) => u.email === normalized || u.username === normalized);
 
