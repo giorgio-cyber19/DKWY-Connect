@@ -59,11 +59,11 @@ const manualEventTypes = eventTypes.filter((et) => et !== "Sunday School & Youth
 
 const inputClass = "w-full text-sm px-3.5 py-2.5 rounded-xl border border-[var(--border-soft)] bg-transparent focus-ring focus:border-[var(--color-gold)] transition-colors";
 
-function NewEventModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+function NewEventModal({ open, onClose, initialDate }: { open: boolean; onClose: () => void; initialDate?: string }) {
   const { t, language } = useLanguage();
   const [title, setTitle] = useState("");
   const [type, setType] = useState<CalendarEvent["type"]>("Sunday Lesson");
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(initialDate ?? format(new Date(), "yyyy-MM-dd"));
   const [time, setTime] = useState("");
   const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
@@ -153,6 +153,15 @@ function CalendarPageContent() {
   const [selectedHoliday, setSelectedHoliday] = useState<Holiday | null>(null);
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [newEventOpen, setNewEventOpen] = useState(false);
+  // Date pre-filled into the new-event form (set when adding from a day), and a counter that remounts the form per open so it picks that date up.
+  const [newEventDate, setNewEventDate] = useState<string | undefined>(undefined);
+  const [newEventSession, setNewEventSession] = useState(0);
+
+  function openNewEvent(date?: string) {
+    setNewEventDate(date);
+    setNewEventSession((n) => n + 1);
+    setNewEventOpen(true);
+  }
 
   const eventIdParam = useSearchParams().get("event");
   useEffect(() => {
@@ -193,7 +202,7 @@ function CalendarPageContent() {
         description={t("calendar.description")}
         actions={
           view !== "holidays" && (
-            <Button size="md" onClick={() => setNewEventOpen(true)}>
+            <Button size="md" onClick={() => openNewEvent()}>
               <Plus size={15} /> {t("calendar.newEvent")}
             </Button>
           )
@@ -480,6 +489,15 @@ function CalendarPageContent() {
                 </button>
               ))
             )}
+            <Button
+              className="w-full mt-1"
+              onClick={() => {
+                openNewEvent(format(selectedDay, "yyyy-MM-dd"));
+                setSelectedDay(null);
+              }}
+            >
+              <Plus size={15} /> {t("calendar.newEvent")}
+            </Button>
           </div>
         )}
       </Modal>
@@ -514,7 +532,7 @@ function CalendarPageContent() {
         )}
       </Modal>
 
-      <NewEventModal open={newEventOpen} onClose={() => setNewEventOpen(false)} />
+      <NewEventModal key={newEventSession} open={newEventOpen} onClose={() => setNewEventOpen(false)} initialDate={newEventDate} />
     </div>
   );
 }
