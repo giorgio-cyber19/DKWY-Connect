@@ -254,9 +254,10 @@ export async function createResumableUpdateSession(fileId: string, mimeType: str
   return sessionUrl;
 }
 
+/** Moves the file to the Drive trash (recoverable from Drive for ~30 days) rather than deleting it permanently. */
 export async function deleteFileFromDrive(fileId: string): Promise<void> {
   const auth = await getAuthorizedClient();
-  await getDrive(auth).files.delete({ fileId });
+  await getDrive(auth).files.update({ fileId, requestBody: { trashed: true }, fields: "id" });
 }
 
 export async function renameFileInDrive(fileId: string, newName: string): Promise<DriveFile> {
