@@ -228,7 +228,7 @@ export default function DocumentsPage() {
   const showFolders = !currentFolderId && !query.trim();
 
   return (
-    <div>
+    <div className="bg-[var(--bg-elevated)] border border-[var(--border-soft)] rounded-[20px] p-5 sm:p-6">
       <PageHeader
         eyebrow={t("documents.eyebrow")}
         title={t("documents.title")}
