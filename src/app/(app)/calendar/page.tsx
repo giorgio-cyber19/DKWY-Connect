@@ -247,7 +247,8 @@ function CalendarPageContent() {
               const dayHolidays = holidaysOnDay(holidays, day);
               const vacation = dayHolidays.find((h) => h.type === "school_vacation");
               const nationalHolidays = dayHolidays.filter((h) => h.type === "national_holiday");
-              const showVacationLabel = vacation && isVacationLabelDay(vacation, day, gridStart);
+              // Name label on the range's first day and again at the start of each week row, so a vacation stays identifiable across wrapped weeks.
+              const showVacationLabel = vacation && (isVacationLabelDay(vacation, day, gridStart) || day.getDay() === 0);
               const chips = [
                 ...nationalHolidays.map((h) => ({ kind: "holiday" as const, holiday: h })),
                 ...dayEvents.slice(0, 2).map((e) => ({ kind: "event" as const, event: e })),
@@ -260,7 +261,14 @@ function CalendarPageContent() {
                   key={i}
                   onClick={() => setSelectedDay(day)}
                   whileHover={{ scale: 1.03 }}
-                  style={vacation ? { boxShadow: `inset 0 -3px 0 0 ${HOLIDAY_COLORS.school_vacation}` } : undefined}
+                  style={
+                    vacation && !isToday(day)
+                      ? {
+                          background: `color-mix(in srgb, ${HOLIDAY_COLORS.school_vacation} 20%, transparent)`,
+                          borderColor: `color-mix(in srgb, ${HOLIDAY_COLORS.school_vacation} 55%, transparent)`,
+                        }
+                      : undefined
+                  }
                   className={cn(
                     "aspect-square sm:aspect-[4/3] rounded-xl p-1.5 sm:p-2 text-left flex flex-col transition-colors border",
                     inMonth ? "border-[var(--border-soft)]" : "border-transparent opacity-40",
@@ -270,8 +278,11 @@ function CalendarPageContent() {
                   <span className={cn("text-[11px] sm:text-xs font-semibold", isToday(day) && "text-[var(--color-gold-deep)]")}>{format(day, "d", { locale: dateFnsLocale })}</span>
                   <div className="flex-1 flex flex-col gap-0.5 mt-1 overflow-hidden">
                     {showVacationLabel && (
-                      <span className="text-[8px] sm:text-[9px] font-semibold truncate flex items-center gap-0.5" style={{ color: HOLIDAY_COLORS.school_vacation }}>
-                        <Palmtree size={8} className="shrink-0" /> {vacation.name}
+                      <span
+                        className="text-[9px] sm:text-[10.5px] font-bold px-1 py-0.5 rounded truncate text-white flex items-center gap-1"
+                        style={{ background: HOLIDAY_COLORS.school_vacation }}
+                      >
+                        <Palmtree size={10} className="shrink-0 hidden sm:block" /> <span className="truncate">{vacation.name}</span>
                       </span>
                     )}
                     {visibleChips.map((c) =>
@@ -363,7 +374,13 @@ function CalendarPageContent() {
             </div>
           ))}
           <div className="flex items-center gap-1.5 text-[11.5px] text-[var(--text-secondary)]">
-            <span className="w-2.5 h-2.5 rounded-full" style={{ background: HOLIDAY_COLORS.school_vacation }} />
+            <span
+              className="w-4 h-3 rounded-[4px] border"
+              style={{
+                background: `color-mix(in srgb, ${HOLIDAY_COLORS.school_vacation} 20%, transparent)`,
+                borderColor: HOLIDAY_COLORS.school_vacation,
+              }}
+            />
             {t("calendar.legendSchoolVacation")}
           </div>
           <div className="flex items-center gap-1.5 text-[11.5px] text-[var(--text-secondary)]">
