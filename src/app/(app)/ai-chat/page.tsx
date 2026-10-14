@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import Markdown, { type ExtraProps } from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Sparkles, Send, Plus, History, Pencil, Trash2, Check, X, Info } from "lucide-react";
+import { Sparkles, Send, Plus, History, Pencil, Trash2, Check, X, Info, CircleCheck, CircleAlert } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -12,6 +13,7 @@ import { Modal } from "@/components/ui/Modal";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { AiDisclaimerModal } from "@/components/ai/AiDisclaimerModal";
 import { useAuth } from "@/lib/auth-context";
+import { useAppStore } from "@/lib/store";
 import { useLanguage } from "@/lib/language-context";
 import { apiGet, apiPost, apiPatch, apiDelete } from "@/lib/api-client";
 import { translateApiError } from "@/lib/i18n/errors";
@@ -52,9 +54,14 @@ const markdownComponents = {
   td: ({ node, ...props }: React.TdHTMLAttributes<HTMLTableCellElement> & ExtraProps) => (
     <td className="border border-[var(--border-soft)] px-2 py-1" {...props} />
   ),
-  a: ({ node, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & ExtraProps) => (
-    <a className="underline hover:no-underline" target="_blank" rel="noopener noreferrer" {...props} />
-  ),
+  a: ({ node, href, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & ExtraProps) =>
+    href && href.startsWith("/") ? (
+      <Link href={href} className="underline hover:no-underline">
+        {props.children}
+      </Link>
+    ) : (
+      <a className="underline hover:no-underline" target="_blank" rel="noopener noreferrer" href={href} {...props} />
+    ),
 };
 
 function AiAvatar({ size = 32 }: { size?: number }) {
@@ -86,18 +93,55 @@ function TypingBubble() {
   );
 }
 
-function MessageBubble({ message }: { message: AiChatMessage }) {
+function MessageBubble({
+  message,
+  decidingId,
+  onDecision,
+}: {
+  message: AiChatMessage;
+  decidingId: string | null;
+  onDecision: (actionId: string, decision: "confirm" | "cancel") => void;
+}) {
+  const { t } = useLanguage();
   const isUser = message.role === "user";
   return (
     <div className={cn("flex items-start gap-2.5", isUser && "flex-row-reverse")}>
       {!isUser && <AiAvatar />}
-      <div
-        className={cn(
-          "max-w-[85%] sm:max-w-[75%] px-4 py-3 rounded-2xl text-[14px] leading-relaxed break-words",
-          isUser ? "bg-[var(--color-blue)] text-white rounded-tr-sm whitespace-pre-wrap" : "bg-[var(--bg-elevated)] border border-[var(--border-soft)] rounded-tl-sm"
+      <div className={cn("max-w-[85%] sm:max-w-[75%] min-w-0", isUser && "flex flex-col items-end")}>
+        <div
+          className={cn(
+            "px-4 py-3 rounded-2xl text-[14px] leading-relaxed break-words",
+            isUser ? "bg-[var(--color-blue)] text-white rounded-tr-sm whitespace-pre-wrap" : "bg-[var(--bg-elevated)] border border-[var(--border-soft)] rounded-tl-sm"
+          )}
+        >
+          {isUser ? message.content : <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{message.content}</Markdown>}
+        </div>
+
+        {message.actions && message.actions.length > 0 && (
+          <ul className="mt-2 space-y-1">
+            {message.actions.map((a, i) => (
+              <li key={i} className={cn("flex items-start gap-1.5 text-[12px]", a.ok ? "text-[var(--color-sage-deep)]" : "text-red-500")}>
+                {a.ok ? <CircleCheck size={14} className="mt-0.5 shrink-0" /> : <CircleAlert size={14} className="mt-0.5 shrink-0" />}
+                <span>{a.summary}</span>
+              </li>
+            ))}
+          </ul>
         )}
-      >
-        {isUser ? message.content : <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{message.content}</Markdown>}
+
+        {message.pending && (
+          <div className="mt-2 p-3 rounded-xl border border-[var(--color-gold)] bg-[color-mix(in_srgb,var(--color-gold)_8%,transparent)]">
+            <p className="text-[11px] font-bold uppercase tracking-wide text-[var(--text-secondary)] mb-1">{t("aiChat.pendingHeading")}</p>
+            <p className="text-[13px] font-semibold mb-2.5">{message.pending.summary}</p>
+            <div className="flex gap-2">
+              <Button size="sm" loading={decidingId === message.pending.id} disabled={decidingId !== null} onClick={() => onDecision(message.pending!.id, "confirm")}>
+                {t("aiChat.confirmAction")}
+              </Button>
+              <Button size="sm" variant="outline" disabled={decidingId !== null} onClick={() => onDecision(message.pending!.id, "cancel")}>
+                {t("aiChat.cancelAction")}
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -245,6 +289,7 @@ export default function AiChatPage() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [decidingId, setDecidingId] = useState<string | null>(null);
   // Tracked in sessionStorage (not localStorage/a profile field) — cleared automatically when the
   // tab or browser closes, so the disclaimer reappears next session but not on every navigation
   // within the same one. Defaults to true so server-rendered markup matches the pre-hydration DOM.
@@ -313,6 +358,8 @@ export default function AiChatPage() {
         message: content,
       });
       setMessages((prev) => [...prev, data.message]);
+      // The AI may have changed app data — pull the fresh state so every page reflects it.
+      if (data.message.actions?.some((a) => a.ok)) void useAppStore.getState().bootstrap();
       setConversations((prev) => {
         const existing = prev.find((c) => c.id === data.conversationId);
         const summary: AiConversationSummary = {
@@ -331,6 +378,26 @@ export default function AiChatPage() {
     }
   }
 
+  async function decide(actionId: string, decision: "confirm" | "cancel") {
+    if (!conversationId || decidingId) return;
+    setError(null);
+    setDecidingId(actionId);
+    try {
+      const data = await apiPost<{ message: AiChatMessage }>("/api/ai/confirm", { conversationId, actionId, decision });
+      setMessages((prev) => [
+        ...prev.map((m) => {
+          return m.pending?.id === actionId ? { ...m, pending: undefined } : m;
+        }),
+        data.message,
+      ]);
+      if (data.message.actions?.some((a) => a.ok)) void useAppStore.getState().bootstrap();
+    } catch (err) {
+      setError(translateApiError(err, language));
+    } finally {
+      setDecidingId(null);
+    }
+  }
+
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -340,7 +407,7 @@ export default function AiChatPage() {
 
   if (!user) return null;
 
-  const suggestions = [t("aiChat.suggestion1"), t("aiChat.suggestion2"), t("aiChat.suggestion3"), t("aiChat.suggestion4")];
+  const suggestions = [t("aiChat.suggestion1"), t("aiChat.suggestion5"), t("aiChat.suggestion6"), t("aiChat.suggestion4")];
 
   const historyList = (
     <div className="space-y-1">
@@ -429,7 +496,7 @@ export default function AiChatPage() {
             ) : (
               <>
                 {messages.map((m, i) => (
-                  <MessageBubble key={i} message={m} />
+                  <MessageBubble key={i} message={m} decidingId={decidingId} onDecision={decide} />
                 ))}
                 {sending && <TypingBubble />}
               </>

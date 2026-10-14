@@ -47,6 +47,12 @@ const en = {
   disclaimerClosingBody:
     "Let DWKY AI help you think, prepare, organize, and create — but always take the time to study and verify God's Word before sharing it with others.",
   disclaimerButton: "I Understand & Continue",
+  pendingHeading: "Waiting for your confirmation",
+  confirmAction: "Confirm",
+  cancelAction: "Cancel",
+  actionAlreadyHandled: "That action was already handled.",
+  suggestion5: "Add a Teacher Meeting to the calendar next Friday at 19:30.",
+  suggestion6: "What is on the calendar this month?",
 };
 
 const nl: typeof en = {
@@ -98,6 +104,12 @@ const nl: typeof en = {
   disclaimerClosingBody:
     "Laat DWKY AI je helpen denken, voorbereiden, organiseren en creëren — maar neem altijd de tijd om Gods Woord te bestuderen en te verifiëren voordat je het met anderen deelt.",
   disclaimerButton: "Ik begrijp het & ga verder",
+  pendingHeading: "Wacht op jouw bevestiging",
+  confirmAction: "Bevestigen",
+  cancelAction: "Annuleren",
+  actionAlreadyHandled: "Die actie is al afgehandeld.",
+  suggestion5: "Zet volgende week vrijdag om 19:30 een lerarenvergadering in de agenda.",
+  suggestion6: "Wat staat er deze maand in de agenda?",
 };
 
 export const aiChat = { en, nl };

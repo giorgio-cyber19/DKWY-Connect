@@ -299,10 +299,27 @@ export interface AuditLogEntry {
   date: string;
 }
 
+/** One change DWKY AI made on the user's behalf — shown under its reply and fed back as context on later turns. */
+export interface AiActionLog {
+  tool: string;
+  summary: string;
+  ok: boolean;
+}
+
+/** A destructive action the AI wants to run — held server-side until the user presses Confirm. */
+export interface AiPendingAction {
+  id: string;
+  tool: string;
+  args: Record<string, unknown>;
+  summary: string;
+}
+
 export interface AiChatMessage {
   role: "user" | "assistant";
   content: string;
   timestamp: string;
+  actions?: AiActionLog[];
+  pending?: AiPendingAction;
 }
 
 export interface AiConversation {

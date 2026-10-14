@@ -55,6 +55,13 @@ export async function appendMessage(conversation: AiConversation, message: AiCha
   return updated;
 }
 
+/** Replaces a conversation's whole message list (used when a pending AI action is confirmed or cancelled). */
+export async function saveMessages(conversation: AiConversation, messages: AiChatMessage[]): Promise<AiConversation> {
+  const updated: AiConversation = { ...conversation, messages: messages.slice(-MAX_STORED_MESSAGES), updatedAt: newMessageTimestamp() };
+  await getRedisClient().set(conversationKey(updated.id), updated);
+  return updated;
+}
+
 /** Cheap listing for the sidebar — fetches full records (conversations are small) but strips messages before returning, so the response payload itself stays lightweight. */
 export async function listConversationSummaries(userId: string): Promise<AiConversationSummary[]> {
   if (!isKvConfigured()) return [];
