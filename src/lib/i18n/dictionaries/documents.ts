@@ -1,7 +1,7 @@
 const en = {
   eyebrow: "Records",
   title: "Documents",
-  description: "Permission forms, evaluations, progress reports, and attendance records — organized and easy to find.",
+  description: "A centralized place for all DWKY documents — organized and easy to find.",
   searchPlaceholder: "Search documents…",
   noDocumentsYetTitle: "No documents yet",
   noDocumentsFoundTitle: "No documents found",
@@ -25,7 +25,7 @@ const en = {
 const nl: typeof en = {
   eyebrow: "Documenten",
   title: "Documenten",
-  description: "Toestemmingsformulieren, evaluaties, voortgangsrapporten en aanwezigheidsgegevens — overzichtelijk en makkelijk te vinden.",
+  description: "Een centrale plek voor alle DWKY-documenten — overzichtelijk en makkelijk te vinden.",
   searchPlaceholder: "Zoek documenten…",
   noDocumentsYetTitle: "Nog geen documenten",
   noDocumentsFoundTitle: "Geen documenten gevonden",
