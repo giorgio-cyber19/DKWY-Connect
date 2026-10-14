@@ -185,7 +185,7 @@ export function HolidaysManager() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 bg-[var(--bg-elevated)] border border-[var(--border-soft)] rounded-[20px] p-5 sm:p-6">
       <div className="flex items-center justify-between">
         <p className="text-sm text-[var(--text-secondary)]">{t("calendar.holidaysSchoolYearHeading")}: <span className="font-semibold text-[var(--text-primary)]">{DEFAULT_SCHOOL_YEAR}</span></p>
         <Button size="sm" onClick={() => setModal({ mode: "add" })}>
