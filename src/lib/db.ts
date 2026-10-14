@@ -64,6 +64,13 @@ export async function markFeedItemsRead(userId: string, ids: string[]): Promise<
   await redis.sadd(`${PREFIX}:notifications:${userId}:read`, ids[0], ...ids.slice(1));
 }
 
+/** Per-user set of cleared (dismissed) notification ids — the feed itself is shared, so clearing only hides items for this user. */
+export async function clearFeedItems(userId: string, ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+  const redis = getRedisClient();
+  await redis.sadd(`${PREFIX}:notifications:${userId}:cleared`, ids[0], ...ids.slice(1));
+}
+
 export async function getReadNotificationIds(userId: string): Promise<Set<string>> {
   if (!isKvConfigured()) return new Set();
   const redis = getRedisClient();

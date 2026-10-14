@@ -80,6 +80,7 @@ interface AppState {
   // notifications
   markNotificationRead: (id: string) => Promise<void>;
   markAllNotificationsRead: () => Promise<void>;
+  clearNotifications: () => Promise<void>;
 
   // teachers / users
   createTeacher: (input: { name: string; email: string; classId: string | null; title: string; username?: string }) => Promise<{ user: User; tempPassword: string }>;
@@ -275,6 +276,11 @@ export const useAppStore = create<AppState>()(
       markAllNotificationsRead: async () => {
         await apiPatch("/api/notifications");
         set((s) => ({ notifications: s.notifications.map((n) => ({ ...n, read: true })) }));
+      },
+
+      clearNotifications: async () => {
+        await apiDelete("/api/notifications");
+        set({ notifications: [] });
       },
 
       createTeacher: async (input) => {

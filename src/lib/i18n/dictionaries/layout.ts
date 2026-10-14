@@ -20,6 +20,7 @@ const en = {
   // NotificationCenter.tsx
   notifications: "Notifications",
   markAllRead: "Mark all read",
+  clearNotifications: "Clear all",
   noNotificationsYet: "No notifications yet.",
 
   // GlobalSearch.tsx
@@ -65,6 +66,7 @@ const nl: typeof en = {
   // NotificationCenter.tsx
   notifications: "Meldingen",
   markAllRead: "Alles als gelezen markeren",
+  clearNotifications: "Alles wissen",
   noNotificationsYet: "Nog geen meldingen.",
 
   // GlobalSearch.tsx

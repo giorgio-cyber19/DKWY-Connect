@@ -61,14 +61,24 @@ export function NotificationCenter() {
           >
             <div className="flex items-center justify-between px-4 py-3.5 border-b border-[var(--border-soft)]">
               <h4 className="font-display font-semibold text-sm">{t("layout.notifications")}</h4>
-              {unread > 0 && (
-                <button
-                  onClick={() => useAppStore.getState().markAllNotificationsRead()}
-                  className="text-[11px] font-semibold text-[var(--color-blue-deep)] hover:underline"
-                >
-                  {t("layout.markAllRead")}
-                </button>
-              )}
+              <div className="flex items-center gap-3">
+                {unread > 0 && (
+                  <button
+                    onClick={() => useAppStore.getState().markAllNotificationsRead()}
+                    className="text-[11px] font-semibold text-[var(--color-blue-deep)] hover:underline"
+                  >
+                    {t("layout.markAllRead")}
+                  </button>
+                )}
+                {items.length > 0 && (
+                  <button
+                    onClick={() => useAppStore.getState().clearNotifications()}
+                    className="text-[11px] font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:underline"
+                  >
+                    {t("layout.clearNotifications")}
+                  </button>
+                )}
+              </div>
             </div>
             {items.length === 0 && <p className="text-sm text-[var(--text-secondary)] text-center py-10">{t("layout.noNotificationsYet")}</p>}
             <div className="divide-y divide-[var(--border-softer)]">

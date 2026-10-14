@@ -54,6 +54,7 @@ export async function GET(request: Request) {
   idsPipeline.lrange(`${PREFIX}:auditLog`, 0, -1);
   idsPipeline.lrange(`${PREFIX}:notifications`, 0, -1);
   idsPipeline.smembers(`${PREFIX}:notifications:${claims.userId}:read`);
+  idsPipeline.smembers(`${PREFIX}:notifications:${claims.userId}:cleared`);
   const idsResults = (await idsPipeline.exec()) as unknown[];
 
   const idsByEntity = new Map<(typeof ENTITIES)[number], string[]>();
@@ -61,6 +62,7 @@ export async function GET(request: Request) {
   const auditLog = (idsResults[ENTITIES.length] as AuditLogEntry[]) ?? [];
   const notificationFeed = (idsResults[ENTITIES.length + 1] as Notification[]) ?? [];
   const readIds = new Set((idsResults[ENTITIES.length + 2] as string[]) ?? []);
+  const clearedIds = new Set((idsResults[ENTITIES.length + 3] as string[]) ?? []);
 
   // Round trip 2: MGET every collection's records using the ids just fetched.
   const nonEmpty = ENTITIES.filter((entity) => (idsByEntity.get(entity) ?? []).length > 0);
@@ -90,7 +92,9 @@ export async function GET(request: Request) {
     childCount: children.filter((child) => child.classId === c.id).length,
   }));
 
-  const notifications: Notification[] = notificationFeed.map((n) => ({ ...n, read: readIds.has(n.id) }));
+  const notifications: Notification[] = notificationFeed
+    .filter((n) => !clearedIds.has(n.id))
+    .map((n) => ({ ...n, read: readIds.has(n.id) }));
 
   return NextResponse.json({
     currentUser: toPublicUser(currentUserRaw),
