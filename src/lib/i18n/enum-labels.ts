@@ -1,4 +1,4 @@
-import type { Post, CalendarEvent, Holiday, ArtworkItem, VideoItem, ChildDocument, SpiritualMilestone, DocumentItem, MediaItem, LessonPlan } from "@/lib/types";
+import type { Post, CalendarEvent, Holiday, ArtworkItem, VideoItem, ChildDocument, SpiritualMilestone, MediaItem, LessonPlan } from "@/lib/types";
 
 /**
  * These map persisted English literals (stored in Redis, used as TypeScript
@@ -108,21 +108,6 @@ const milestoneCategoryNl: LabelMap<SpiritualMilestone["category"]> = {
   Achievement: "Prestatie",
 };
 
-const documentCategoryEn: LabelMap<DocumentItem["category"]> = {
-  "Permission Forms": "Permission Forms",
-  Evaluations: "Evaluations",
-  "Progress Reports": "Progress Reports",
-  "Attendance Notes": "Attendance Notes",
-  Policies: "Policies",
-};
-const documentCategoryNl: LabelMap<DocumentItem["category"]> = {
-  "Permission Forms": "Toestemmingsformulieren",
-  Evaluations: "Evaluaties",
-  "Progress Reports": "Voortgangsrapporten",
-  "Attendance Notes": "Aanwezigheidsnotities",
-  Policies: "Beleid",
-};
-
 const mediaTypeEn: LabelMap<MediaItem["type"]> = {
   image: "Image",
   video: "Video",
@@ -157,7 +142,6 @@ export const enumLabels = {
   videoCategory: { en: videoCategoryEn, nl: videoCategoryNl },
   childDocumentType: { en: childDocumentTypeEn, nl: childDocumentTypeNl },
   milestoneCategory: { en: milestoneCategoryEn, nl: milestoneCategoryNl },
-  documentCategory: { en: documentCategoryEn, nl: documentCategoryNl },
   mediaType: { en: mediaTypeEn, nl: mediaTypeNl },
   lessonStatus: { en: lessonStatusEn, nl: lessonStatusNl },
 };

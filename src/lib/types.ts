@@ -190,7 +190,7 @@ export interface Post {
 export interface MediaItem {
   id: string;
   name: string;
-  folder: string;
+  folderId: string | null;
   type: "image" | "video" | "audio" | "pdf" | "doc" | "ppt";
   size: string;
   uploadedAt: string;
@@ -204,13 +204,25 @@ export interface MediaItem {
 export interface DocumentItem {
   id: string;
   name: string;
-  category: "Permission Forms" | "Evaluations" | "Progress Reports" | "Attendance Notes" | "Policies";
+  folderId: string | null;
   fileType: "pdf" | "docx" | "xlsx";
   size: string;
   uploadedAt: string;
   uploadedBy: string;
   driveFileId?: string;
   driveViewUrl?: string;
+}
+
+/** A user-created folder in the Documents or Media library — flat (no nesting). */
+export interface LibraryFolder {
+  id: string;
+  name: string;
+  library: "documents" | "media";
+  /** The matching Drive subfolder, created alongside this folder — undefined if Drive
+   * wasn't connected at creation time, in which case uploads fall back to the library root. */
+  driveFolderId?: string;
+  createdBy: string;
+  createdAt: string;
 }
 
 export interface CalendarEvent {

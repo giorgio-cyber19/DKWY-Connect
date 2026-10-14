@@ -14,6 +14,7 @@ import { admin } from "./dictionaries/admin";
 import { auth } from "./dictionaries/auth";
 import { layout } from "./dictionaries/layout";
 import { aiChat } from "./dictionaries/aiChat";
+import { library } from "./dictionaries/library";
 
 export type Language = "en" | "nl";
 
@@ -35,6 +36,7 @@ const dictionaries = {
     auth: auth.en,
     layout: layout.en,
     aiChat: aiChat.en,
+    library: library.en,
   },
   nl: {
     common: common.nl,
@@ -53,6 +55,7 @@ const dictionaries = {
     auth: auth.nl,
     layout: layout.nl,
     aiChat: aiChat.nl,
+    library: library.nl,
   },
 } as const;
 

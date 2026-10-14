@@ -23,13 +23,14 @@ export async function POST(request: Request) {
   const size = typeof body?.size === "number" ? body.size : 0;
   const category = body?.category;
   const childId = typeof body?.childId === "string" && body.childId ? body.childId : undefined;
+  const parentFolderId = typeof body?.parentFolderId === "string" && body.parentFolderId ? body.parentFolderId : undefined;
 
   if (!filename || !VALID_CATEGORIES.includes(category as DriveCategory)) {
     return NextResponse.json({ error: "bad_request", message: "Missing or invalid file name or category." }, { status: 400 });
   }
 
   try {
-    const uploadUrl = await createResumableUploadSession(filename, mimeType, size, category as DriveCategory, childId);
+    const uploadUrl = await createResumableUploadSession(filename, mimeType, size, category as DriveCategory, childId, parentFolderId);
     return NextResponse.json({ uploadUrl });
   } catch (err) {
     if (err instanceof DriveNotConnectedError) {

@@ -37,12 +37,20 @@ const CHUNK_SIZE = 4 * 1024 * 1024;
 export async function uploadToDrive(
   file: File,
   category: "media" | "documents" | "lessons" | "children" | "encouragements",
-  childId?: string
+  childId?: string,
+  parentFolderId?: string
 ): Promise<DriveUploadResult> {
   const sessionRes = await fetch("/api/drive/upload-session", {
     method: "POST",
     headers: { ...authHeaders(), "Content-Type": "application/json" },
-    body: JSON.stringify({ filename: file.name, mimeType: file.type || "application/octet-stream", size: file.size, category, childId }),
+    body: JSON.stringify({
+      filename: file.name,
+      mimeType: file.type || "application/octet-stream",
+      size: file.size,
+      category,
+      childId,
+      parentFolderId,
+    }),
   });
   const sessionData = await sessionRes.json().catch(() => ({}));
 

@@ -142,6 +142,23 @@ async function resolveCategoryFolder(drive: ReturnType<typeof getDrive>, categor
   return categoryFolderId;
 }
 
+/** Creates (or reuses) a named subfolder directly under a library category's Drive
+ * folder — the Drive-side counterpart of a user-created LibraryFolder. */
+export async function createCategorySubfolder(category: DriveCategory, name: string): Promise<string> {
+  const auth = await getAuthorizedClient();
+  const drive = getDrive(auth);
+  const root = await rootFolderId();
+  const categoryFolderId = await findOrCreateFolder(drive, SUBFOLDERS[category], root);
+  return findOrCreateFolder(drive, name, categoryFolderId);
+}
+
+/** Renames a Drive folder in place — folders are just files with a folder mimeType,
+ * so this is the same operation as renameFileInDrive, kept separate for clarity. */
+export async function renameFolderInDrive(folderId: string, newName: string): Promise<void> {
+  const auth = await getAuthorizedClient();
+  await getDrive(auth).files.update({ fileId: folderId, requestBody: { name: newName } });
+}
+
 export interface DriveFile {
   fileId: string;
   name: string;
@@ -166,11 +183,14 @@ export async function createResumableUploadSession(
   mimeType: string,
   fileSize: number,
   category: DriveCategory,
-  childId?: string
+  childId?: string,
+  /** A specific Drive folder id to upload into directly — e.g. a user-created
+   * LibraryFolder's driveFolderId — bypassing the category/childId resolution below. */
+  parentFolderOverride?: string
 ): Promise<string> {
   const auth = await getAuthorizedClient();
   const drive = getDrive(auth);
-  const parentId = await resolveCategoryFolder(drive, category, childId);
+  const parentId = parentFolderOverride ?? (await resolveCategoryFolder(drive, category, childId));
 
   const { token } = await auth.getAccessToken();
   if (!token) throw new Error("Failed to obtain a Google Drive access token.");

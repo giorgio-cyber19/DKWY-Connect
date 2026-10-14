@@ -18,6 +18,7 @@ const errorMessages: Record<string, Record<Language, string>> = {
   list_failed: { en: "Couldn't load files from Google Drive.", nl: "Kon bestanden niet laden vanuit Google Drive." },
   storage_unavailable: { en: "Couldn't retrieve storage details from Google Drive.", nl: "Kon opslaggegevens niet ophalen van Google Drive." },
   invalid_reset_token: { en: "This reset link is invalid or has expired. Request a new one.", nl: "Deze resetlink is ongeldig of verlopen. Vraag een nieuwe aan." },
+  folder_exists: { en: "A folder with that name already exists.", nl: "Er bestaat al een map met die naam." },
   in_use: {
     en: "This is still being used elsewhere. Reassign or remove those items first.",
     nl: "Dit wordt nog ergens anders gebruikt. Wijs eerst iets anders toe of verwijder die items.",

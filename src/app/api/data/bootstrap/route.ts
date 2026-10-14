@@ -16,6 +16,7 @@ import type {
   RosterEntry,
   Notification,
   AuditLogEntry,
+  LibraryFolder,
 } from "@/lib/types";
 
 const ENTITIES = [
@@ -30,6 +31,7 @@ const ENTITIES = [
   "calendarEvents",
   "holidays",
   "rosterEntries",
+  "libraryFolders",
 ] as const;
 
 const PREFIX = "dwky-connect";
@@ -105,5 +107,6 @@ export async function GET(request: Request) {
     rosterEntries: records.rosterEntries as RosterEntry[],
     notifications,
     auditLog,
+    libraryFolders: records.libraryFolders as LibraryFolder[],
   });
 }

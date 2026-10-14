@@ -22,6 +22,7 @@ import type {
   RosterEntry,
   Notification,
   AuditLogEntry,
+  LibraryFolder,
 } from "./types";
 
 export { pickColor };
@@ -41,6 +42,7 @@ interface BootstrapResponse {
   rosterEntries: RosterEntry[];
   notifications: Notification[];
   auditLog: AuditLogEntry[];
+  libraryFolders: LibraryFolder[];
 }
 
 interface AppState {
@@ -57,6 +59,7 @@ interface AppState {
   rosterEntries: RosterEntry[];
   notifications: Notification[];
   auditLog: AuditLogEntry[];
+  libraryFolders: LibraryFolder[];
   currentUserId: string | null;
   hydrated: boolean;
   sessionToken: string | null;
@@ -126,6 +129,11 @@ interface AppState {
   // media / documents
   createMediaItem: (item: Omit<MediaItem, "id" | "uploadedAt">) => Promise<MediaItem>;
   createDocumentItem: (item: Omit<DocumentItem, "id" | "uploadedAt">) => Promise<DocumentItem>;
+  removeMediaItem: (id: string) => Promise<void>;
+  removeDocumentItem: (id: string) => Promise<void>;
+  createLibraryFolder: (name: string, library: LibraryFolder["library"]) => Promise<LibraryFolder>;
+  renameLibraryFolder: (id: string, name: string) => Promise<void>;
+  removeLibraryFolder: (id: string) => Promise<void>;
 
   // calendar
   createEvent: (item: Omit<CalendarEvent, "id">) => Promise<CalendarEvent>;
@@ -171,6 +179,7 @@ export const useAppStore = create<AppState>()(
       rosterEntries: [],
       notifications: [],
       auditLog: [],
+      libraryFolders: [],
       currentUserId: null,
       hydrated: false,
       sessionToken: null,
@@ -194,6 +203,7 @@ export const useAppStore = create<AppState>()(
             rosterEntries: data.rosterEntries,
             notifications: data.notifications,
             auditLog: data.auditLog,
+            libraryFolders: data.libraryFolders,
           });
         } catch (err) {
           // 401s are already handled globally by api-client (redirects to /login).
@@ -242,6 +252,7 @@ export const useAppStore = create<AppState>()(
           rosterEntries: [],
           notifications: [],
           auditLog: [],
+          libraryFolders: [],
         }),
 
       changeOwnPassword: async (currentPassword, newPassword) => {
@@ -417,6 +428,36 @@ export const useAppStore = create<AppState>()(
         const doc = await apiPost<DocumentItem>("/api/documents", item);
         set((s) => ({ documentItems: [doc, ...s.documentItems] }));
         return doc;
+      },
+
+      removeMediaItem: async (id) => {
+        await apiDelete(`/api/media/${id}`);
+        set((s) => ({ mediaItems: s.mediaItems.filter((m) => m.id !== id) }));
+      },
+
+      removeDocumentItem: async (id) => {
+        await apiDelete(`/api/documents/${id}`);
+        set((s) => ({ documentItems: s.documentItems.filter((d) => d.id !== id) }));
+      },
+
+      createLibraryFolder: async (name, library) => {
+        const folder = await apiPost<LibraryFolder>("/api/library-folders", { name, library });
+        set((s) => ({ libraryFolders: [...s.libraryFolders, folder] }));
+        return folder;
+      },
+
+      renameLibraryFolder: async (id, name) => {
+        const folder = await apiPatch<LibraryFolder>(`/api/library-folders/${id}`, { name });
+        set((s) => ({ libraryFolders: s.libraryFolders.map((f) => (f.id === id ? folder : f)) }));
+      },
+
+      removeLibraryFolder: async (id) => {
+        await apiDelete(`/api/library-folders/${id}`);
+        set((s) => ({
+          libraryFolders: s.libraryFolders.filter((f) => f.id !== id),
+          documentItems: s.documentItems.map((d) => (d.folderId === id ? { ...d, folderId: null } : d)),
+          mediaItems: s.mediaItems.map((m) => (m.folderId === id ? { ...m, folderId: null } : m)),
+        }));
       },
 
       createEvent: async (item) => {

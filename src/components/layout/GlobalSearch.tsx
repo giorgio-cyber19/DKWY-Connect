@@ -25,6 +25,7 @@ export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => 
   const posts = useAppStore((s) => s.posts);
   const documentItems = useAppStore((s) => s.documentItems);
   const mediaItems = useAppStore((s) => s.mediaItems);
+  const libraryFolders = useAppStore((s) => s.libraryFolders);
   const users = useAppStore((s) => s.users);
 
   useEffect(() => {
@@ -53,12 +54,14 @@ export function GlobalSearch({ open, onClose }: { open: boolean; onClose: () => 
     });
     documentItems.forEach((d) => {
       if (d.name.toLowerCase().includes(q)) {
-        out.push({ id: d.id, title: d.name, subtitle: d.category, href: "/documents", icon: FileText, category: t("layout.searchCategoryDocuments") });
+        const folderName = libraryFolders.find((f) => f.id === d.folderId)?.name ?? t("library.backToAllFiles");
+        out.push({ id: d.id, title: d.name, subtitle: folderName, href: "/documents", icon: FileText, category: t("layout.searchCategoryDocuments") });
       }
     });
     mediaItems.forEach((m) => {
       if (m.name.toLowerCase().includes(q) || m.tags.some((tag) => tag.includes(q))) {
-        out.push({ id: m.id, title: m.name, subtitle: m.folder, href: "/media", icon: ImageIcon, category: t("layout.searchCategoryMedia") });
+        const folderName = libraryFolders.find((f) => f.id === m.folderId)?.name ?? t("library.backToAllFiles");
+        out.push({ id: m.id, title: m.name, subtitle: folderName, href: "/media", icon: ImageIcon, category: t("layout.searchCategoryMedia") });
       }
     });
     users.forEach((u) => {
