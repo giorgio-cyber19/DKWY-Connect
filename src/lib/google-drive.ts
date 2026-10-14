@@ -277,6 +277,26 @@ export async function renameFileInDrive(fileId: string, newName: string): Promis
   };
 }
 
+/**
+ * Grants "anyone with the link" access so a file can be opened directly in Google
+ * Sheets/Docs by someone signed into a *different* Google account than the one
+ * connected from Settings — otherwise they'd hit Google's own access-denied page.
+ * Deliberately not scoped narrower (e.g. to specific emails): teachers don't have
+ * Google accounts tracked anywhere in this app to share with individually.
+ */
+export async function ensureFileShareable(fileId: string, role: "reader" | "writer"): Promise<void> {
+  const auth = await getAuthorizedClient();
+  const drive = getDrive(auth);
+  try {
+    await drive.permissions.create({ fileId, requestBody: { type: "anyone", role }, sendNotificationEmail: false });
+  } catch (err) {
+    // A permission for "anyone" may already exist (e.g. from an earlier open) — Drive
+    // is fine with that; anything else just means the link may land on a request-access
+    // page instead of the file, which the caller can't do much more about anyway.
+    console.error("Failed to set Drive sharing permission:", err);
+  }
+}
+
 export async function listFolderFiles(category: DriveCategory, childId?: string): Promise<DriveFile[]> {
   const auth = await getAuthorizedClient();
   const drive = getDrive(auth);

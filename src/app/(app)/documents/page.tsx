@@ -12,6 +12,7 @@ import {
   Download,
   Folder,
   Eye,
+  ExternalLink,
   Pencil,
   Trash2,
   ChevronLeft,
@@ -29,7 +30,7 @@ import { DocumentViewer } from "@/components/documents/DocumentViewer";
 import { getUser, useAppStore } from "@/lib/store";
 import { useAuth } from "@/lib/auth-context";
 import { formatDate, cn } from "@/lib/utils";
-import { uploadToDrive, driveDownloadUrl } from "@/lib/upload";
+import { uploadToDrive, driveDownloadUrl, openInGoogleEditor } from "@/lib/upload";
 import { useLanguage } from "@/lib/language-context";
 import { translateApiError } from "@/lib/i18n/errors";
 import type { DocumentItem, LibraryFolder } from "@/lib/types";
@@ -72,6 +73,7 @@ export default function DocumentsPage() {
   const [deleting, setDeleting] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [openError, setOpenError] = useState<string | null>(null);
   const filesInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
 
@@ -215,11 +217,31 @@ export default function DocumentsPage() {
     ];
   }
 
+  async function handleOpenInGoogle(fileId: string) {
+    setOpenError(null);
+    // Opened synchronously (before the await) so browsers don't treat it as an
+    // unrequested popup — its destination is filled in once the share link is ready.
+    const newTab = window.open("", "_blank");
+    try {
+      const url = await openInGoogleEditor(fileId);
+      if (newTab) newTab.location.href = url;
+    } catch (err) {
+      newTab?.close();
+      setOpenError(translateApiError(err, language));
+    }
+  }
+
   function fileMenuItems(item: DocumentItem): ContextMenuItem[] {
     const items: ContextMenuItem[] = [];
     const canPreview = item.fileType === "docx" || item.fileType === "xlsx";
     if (canPreview && item.driveFileId) {
       items.push({ label: t("library.open"), icon: <Eye size={15} />, onClick: () => setViewingDoc(item) });
+    }
+    if (item.fileType === "xlsx" && item.driveFileId) {
+      items.push({ label: t("documents.openInGoogleSheets"), icon: <ExternalLink size={15} />, onClick: () => handleOpenInGoogle(item.driveFileId!) });
+    }
+    if (item.fileType === "docx" && item.driveFileId) {
+      items.push({ label: t("documents.openInGoogleDocs"), icon: <ExternalLink size={15} />, onClick: () => handleOpenInGoogle(item.driveFileId!) });
     }
     if (item.driveFileId) {
       items.push({
@@ -268,6 +290,7 @@ export default function DocumentsPage() {
       </div>
 
       {uploadError && <p className="text-xs text-red-500 font-medium mb-4">{uploadError}</p>}
+      {openError && <p className="text-xs text-red-500 font-medium mb-4">{openError}</p>}
       {uploading && <p className="text-xs text-[var(--text-secondary)] mb-4">{t("documents.uploadingToDrive")}</p>}
 
       <input
