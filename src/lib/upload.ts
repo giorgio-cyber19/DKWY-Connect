@@ -34,6 +34,35 @@ const CHUNK_SIZE = 4 * 1024 * 1024;
  * file-size limit: total size is no longer bounded by any single request's
  * body, only by how many chunks get sent.
  */
+async function chunkedUpload(file: File | Blob, filename: string, uploadUrl: string): Promise<Record<string, unknown>> {
+  let start = 0;
+  let driveFile: Record<string, unknown> | null = null;
+
+  while (start < file.size || file.size === 0) {
+    const chunk = file.slice(start, start + CHUNK_SIZE);
+    const params = new URLSearchParams({ sessionUrl: uploadUrl, start: String(start), total: String(file.size) });
+    const chunkRes = await fetch(`/api/drive/upload-chunk?${params}`, {
+      method: "PUT",
+      headers: authHeaders(),
+      body: chunk,
+    });
+    const chunkData = await chunkRes.json().catch(() => ({}));
+
+    if (!chunkRes.ok) {
+      if (chunkRes.status === 401) throw new NotSignedInError(chunkData.message || "Please sign in again.");
+      throw new Error(chunkData.message || "Upload to Google Drive failed. Please try again.");
+    }
+    if (chunkData.done) {
+      driveFile = chunkData.file;
+      break;
+    }
+    start += chunk.size;
+  }
+
+  if (!driveFile) throw new Error("Upload to Google Drive failed. Please try again.");
+  return driveFile;
+}
+
 export async function uploadToDrive(
   file: File,
   category: "media" | "documents" | "lessons" | "children" | "encouragements",
@@ -60,32 +89,7 @@ export async function uploadToDrive(
     throw new Error(sessionData.message || "Upload failed. Please try again.");
   }
 
-  const uploadUrl: string = sessionData.uploadUrl;
-  let start = 0;
-  let driveFile: Record<string, unknown> | null = null;
-
-  while (start < file.size || file.size === 0) {
-    const chunk = file.slice(start, start + CHUNK_SIZE);
-    const params = new URLSearchParams({ sessionUrl: uploadUrl, start: String(start), total: String(file.size) });
-    const chunkRes = await fetch(`/api/drive/upload-chunk?${params}`, {
-      method: "PUT",
-      headers: authHeaders(),
-      body: chunk,
-    });
-    const chunkData = await chunkRes.json().catch(() => ({}));
-
-    if (!chunkRes.ok) {
-      if (chunkRes.status === 401) throw new NotSignedInError(chunkData.message || "Please sign in again.");
-      throw new Error(chunkData.message || "Upload to Google Drive failed. Please try again.");
-    }
-    if (chunkData.done) {
-      driveFile = chunkData.file;
-      break;
-    }
-    start += chunk.size;
-  }
-
-  if (!driveFile) throw new Error("Upload to Google Drive failed. Please try again.");
+  const driveFile = await chunkedUpload(file, file.name, sessionData.uploadUrl);
 
   return {
     fileId: driveFile.id as string,
@@ -93,6 +97,33 @@ export async function uploadToDrive(
     viewUrl: (driveFile.webViewLink as string) ?? `https://drive.google.com/file/d/${driveFile.id}/view`,
     size: driveFile.size ? formatFileBytes(Number(driveFile.size)) : formatFileBytes(file.size),
     mimeType: (driveFile.mimeType as string) ?? file.type,
+  };
+}
+
+/** Saves new bytes over an existing Drive file (same fileId, same name/location) —
+ * used to save edits (e.g. a spreadsheet) back to the file they were opened from. */
+export async function updateFileInDrive(fileId: string, blob: Blob, mimeType: string): Promise<DriveUploadResult> {
+  const sessionRes = await fetch("/api/drive/update-session", {
+    method: "POST",
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify({ fileId, mimeType, size: blob.size }),
+  });
+  const sessionData = await sessionRes.json().catch(() => ({}));
+
+  if (!sessionRes.ok) {
+    if (sessionData.error === "not_configured") throw new DriveNotConfiguredError(sessionData.message);
+    if (sessionRes.status === 401) throw new NotSignedInError(sessionData.message || "Please sign in again.");
+    throw new Error(sessionData.message || "Save failed. Please try again.");
+  }
+
+  const driveFile = await chunkedUpload(blob, fileId, sessionData.uploadUrl);
+
+  return {
+    fileId: (driveFile.id as string) ?? fileId,
+    name: driveFile.name as string,
+    viewUrl: (driveFile.webViewLink as string) ?? `https://drive.google.com/file/d/${fileId}/view`,
+    size: driveFile.size ? formatFileBytes(Number(driveFile.size)) : formatFileBytes(blob.size),
+    mimeType: (driveFile.mimeType as string) ?? mimeType,
   };
 }
 

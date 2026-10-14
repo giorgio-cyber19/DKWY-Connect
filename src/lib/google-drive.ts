@@ -219,6 +219,41 @@ export async function createResumableUploadSession(
   return sessionUrl;
 }
 
+/**
+ * Same resumable-upload protocol as createResumableUploadSession, but PATCHes an
+ * existing file's content in place (same fileId, same name/parents) instead of
+ * creating a new one — used to save edits back to a Drive file, e.g. after
+ * editing a spreadsheet in the browser.
+ */
+export async function createResumableUpdateSession(fileId: string, mimeType: string, fileSize: number): Promise<string> {
+  const auth = await getAuthorizedClient();
+  const { token } = await auth.getAccessToken();
+  if (!token) throw new Error("Failed to obtain a Google Drive access token.");
+
+  const res = await fetch(
+    `https://www.googleapis.com/upload/drive/v3/files/${encodeURIComponent(fileId)}?uploadType=resumable&fields=id,name,webViewLink,size,mimeType,modifiedTime`,
+    {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json; charset=UTF-8",
+        "X-Upload-Content-Type": mimeType,
+        "X-Upload-Content-Length": String(fileSize),
+      },
+      body: "{}",
+    }
+  );
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Failed to start a Drive update session (${res.status}): ${text}`);
+  }
+
+  const sessionUrl = res.headers.get("Location");
+  if (!sessionUrl) throw new Error("Google Drive didn't return an upload session URL.");
+  return sessionUrl;
+}
+
 export async function deleteFileFromDrive(fileId: string): Promise<void> {
   const auth = await getAuthorizedClient();
   await getDrive(auth).files.delete({ fileId });

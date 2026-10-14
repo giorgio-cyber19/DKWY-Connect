@@ -9,6 +9,15 @@ const en = {
   downloadTitle: "Download",
   addedBeforeDrive: "Added before Google Drive was connected",
   uploadingToDrive: "Uploading to Google Drive…",
+  openingDocument: "Opening…",
+  couldNotOpenFile: "Couldn't open this file.",
+  viewOnlyWordNotice: "Word documents open as view-only.",
+  saveChanges: "Save changes",
+  savingToDrive: "Saving to Google Drive…",
+  allChangesSaved: "All changes saved",
+  addRow: "Add row",
+  addColumn: "Add column",
+  unsavedChangesConfirm: "You have unsaved changes. Close anyway?",
 };
 
 const nl: typeof en = {
@@ -22,6 +31,15 @@ const nl: typeof en = {
   downloadTitle: "Downloaden",
   addedBeforeDrive: "Toegevoegd voordat Google Drive verbonden was",
   uploadingToDrive: "Uploaden naar Google Drive…",
+  openingDocument: "Openen…",
+  couldNotOpenFile: "Kon dit bestand niet openen.",
+  viewOnlyWordNotice: "Word-documenten openen alleen-lezen.",
+  saveChanges: "Wijzigingen opslaan",
+  savingToDrive: "Opslaan naar Google Drive…",
+  allChangesSaved: "Alles opgeslagen",
+  addRow: "Rij toevoegen",
+  addColumn: "Kolom toevoegen",
+  unsavedChangesConfirm: "Je hebt niet-opgeslagen wijzigingen. Toch sluiten?",
 };
 
 export const documents = { en, nl };

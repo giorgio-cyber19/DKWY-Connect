@@ -11,6 +11,7 @@ import {
   FileType2,
   Download,
   Folder,
+  Eye,
   Pencil,
   Trash2,
   ChevronLeft,
@@ -24,9 +25,10 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { ContextMenu, useContextMenu, type ContextMenuItem } from "@/components/ui/ContextMenu";
 import { StaggerGrid } from "@/components/ui/Stagger";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { DocumentViewer } from "@/components/documents/DocumentViewer";
 import { getUser, useAppStore } from "@/lib/store";
 import { useAuth } from "@/lib/auth-context";
-import { formatDate } from "@/lib/utils";
+import { formatDate, cn } from "@/lib/utils";
 import { uploadToDrive, driveDownloadUrl } from "@/lib/upload";
 import { useLanguage } from "@/lib/language-context";
 import { translateApiError } from "@/lib/i18n/errors";
@@ -66,6 +68,7 @@ export default function DocumentsPage() {
   const [folderError, setFolderError] = useState<string | null>(null);
   const [deleteFolder, setDeleteFolder] = useState<LibraryFolder | null>(null);
   const [deleteFile, setDeleteFile] = useState<DocumentItem | null>(null);
+  const [viewingDoc, setViewingDoc] = useState<DocumentItem | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -214,6 +217,10 @@ export default function DocumentsPage() {
 
   function fileMenuItems(item: DocumentItem): ContextMenuItem[] {
     const items: ContextMenuItem[] = [];
+    const canPreview = item.fileType === "docx" || item.fileType === "xlsx";
+    if (canPreview && item.driveFileId) {
+      items.push({ label: t("library.open"), icon: <Eye size={15} />, onClick: () => setViewingDoc(item) });
+    }
     if (item.driveFileId) {
       items.push({
         label: t("library.download"),
@@ -335,8 +342,14 @@ export default function DocumentsPage() {
               const color = fileColors[d.fileType];
               const uploader = getUser(d.uploadedBy);
               const folder = query.trim() ? folders.find((f) => f.id === d.folderId) : null;
+              const canPreview = (d.fileType === "docx" || d.fileType === "xlsx") && d.driveFileId;
               return (
-                <Card key={d.id} className="p-4 flex items-center gap-4" onContextMenu={(e) => menu.open(e, fileMenuItems(d))}>
+                <Card
+                  key={d.id}
+                  className={cn("p-4 flex items-center gap-4", canPreview && "cursor-pointer")}
+                  onClick={canPreview ? () => setViewingDoc(d) : undefined}
+                  onContextMenu={(e) => menu.open(e, fileMenuItems(d))}
+                >
                   <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style={{ background: `color-mix(in srgb, ${color} 16%, transparent)`, color }}>
                     <Icon size={19} />
                   </div>
@@ -352,6 +365,7 @@ export default function DocumentsPage() {
                       href={driveDownloadUrl(d.driveFileId)}
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
                       className="p-2 rounded-lg hover:bg-black/5 text-[var(--text-secondary)] shrink-0"
                       title={t("documents.downloadTitle")}
                     >
@@ -407,6 +421,8 @@ export default function DocumentsPage() {
         message={t("library.deleteFileMessage")}
         confirming={deleting}
       />
+
+      {viewingDoc && <DocumentViewer doc={viewingDoc} onClose={() => setViewingDoc(null)} />}
     </div>
   );
 }

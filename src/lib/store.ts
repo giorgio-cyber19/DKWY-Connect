@@ -131,6 +131,7 @@ interface AppState {
   createDocumentItem: (item: Omit<DocumentItem, "id" | "uploadedAt">) => Promise<DocumentItem>;
   removeMediaItem: (id: string) => Promise<void>;
   removeDocumentItem: (id: string) => Promise<void>;
+  updateDocumentItemSize: (id: string, size: string) => Promise<void>;
   createLibraryFolder: (name: string, library: LibraryFolder["library"]) => Promise<LibraryFolder>;
   renameLibraryFolder: (id: string, name: string) => Promise<void>;
   removeLibraryFolder: (id: string) => Promise<void>;
@@ -438,6 +439,11 @@ export const useAppStore = create<AppState>()(
       removeDocumentItem: async (id) => {
         await apiDelete(`/api/documents/${id}`);
         set((s) => ({ documentItems: s.documentItems.filter((d) => d.id !== id) }));
+      },
+
+      updateDocumentItemSize: async (id, size) => {
+        const doc = await apiPatch<DocumentItem>(`/api/documents/${id}`, { size });
+        set((s) => ({ documentItems: s.documentItems.map((d) => (d.id === id ? doc : d)) }));
       },
 
       createLibraryFolder: async (name, library) => {
