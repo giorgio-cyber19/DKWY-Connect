@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Database, Download, RotateCcw, TriangleAlert, CircleCheck, Lock } from "lucide-react";
+import { Database, Download, RotateCcw, TriangleAlert, CircleCheck, FolderLock } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -26,7 +26,6 @@ interface BackupsResponse {
   backups: BackupFile[];
   driveError: string | null;
   cronConfigured: boolean;
-  keySource: "dedicated" | "auth-secret";
   retention: { dailyDays: number; monthlyMonths: number };
 }
 
@@ -380,7 +379,6 @@ export function AdminBackups() {
   if (data?.driveError) warnings.push(data.driveError);
   if (status?.lastError) warnings.push(`${t("admin.backupsLastFailed")}: ${status.lastError}`);
   if (data && !data.cronConfigured) warnings.push(t("admin.backupsCronWarning"));
-  if (data?.keySource === "auth-secret") warnings.push(t("admin.backupsKeyWarning"));
 
   return (
     <div className="space-y-6 max-w-3xl">
@@ -418,7 +416,7 @@ export function AdminBackups() {
       </Card>
 
       <p className="text-[12px] text-[var(--text-secondary)] flex items-center gap-1.5">
-        <Lock size={12} /> {t("admin.backupsEncryptedNote")}
+        <FolderLock size={12} /> {t("admin.backupsStorageNote")}
       </p>
 
       <div>

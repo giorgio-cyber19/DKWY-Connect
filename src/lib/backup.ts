@@ -1,5 +1,5 @@
 import "server-only";
-import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from "node:crypto";
+import { createDecipheriv, scryptSync } from "node:crypto";
 import { gzipSync, gunzipSync } from "node:zlib";
 import { getRedisClient } from "./kv";
 import { uploadBackupFile, listBackupFiles, downloadBackupFile, deleteBackupFile, type DriveBackupFile } from "./google-drive";
@@ -8,8 +8,8 @@ import { uploadBackupFile, listBackupFiles, downloadBackupFile, deleteBackupFile
  * Nightly full-database snapshots.
  *
  * A snapshot is every Redis key under the app prefix (strings / sets / lists — the only
- * types the app uses), serialised to JSON, gzip-compressed and encrypted with AES-256-GCM
- * before it is written to the private "Backups" folder in Google Drive.
+ * types the app uses), serialised to JSON and gzip-compressed before it is written to the
+ * private "Backups" folder in Google Drive.
  */
 
 const PREFIX = "dwky-connect";
@@ -52,43 +52,48 @@ export interface BackupStatus {
   lastError?: string | null;
 }
 
-// ---------------------------------------------------------------- encryption
+// ---------------------------------------------------------------- file format
 
-/** Prefers a dedicated BACKUP_ENCRYPTION_KEY so rotating AUTH_SECRET (e.g. after an incident) never strands old backups. */
-export function encryptionKeySource(): "dedicated" | "auth-secret" {
-  return process.env.BACKUP_ENCRYPTION_KEY ? "dedicated" : "auth-secret";
+/**
+ * New backups are plain gzip-compressed JSON (no encryption — a deliberate choice; they sit in a
+ * private Drive folder). Older backups made while encryption was on start with MAGIC and are still
+ * readable, so switching modes never strands existing files.
+ */
+export function packSnapshot(snapshot: Snapshot): Buffer {
+  return gzipSync(Buffer.from(JSON.stringify(snapshot), "utf8"));
 }
 
-function backupKey(): Buffer {
-  const secret = process.env.BACKUP_ENCRYPTION_KEY || process.env.AUTH_SECRET;
-  if (!secret) throw new Error("Neither BACKUP_ENCRYPTION_KEY nor AUTH_SECRET is set.");
-  return scryptSync(secret, "dwky-connect::backup-v1", 32);
+function legacyKeys(): Buffer[] {
+  const secrets = [process.env.BACKUP_ENCRYPTION_KEY, process.env.AUTH_SECRET].filter((v): v is string => !!v);
+  return secrets.map((secret) => scryptSync(secret, "dwky-connect::backup-v1", 32));
 }
 
-export function encryptSnapshot(snapshot: Snapshot): Buffer {
-  const compressed = gzipSync(Buffer.from(JSON.stringify(snapshot), "utf8"));
-  const iv = randomBytes(12);
-  const cipher = createCipheriv("aes-256-gcm", backupKey(), iv);
-  const ciphertext = Buffer.concat([cipher.update(compressed), cipher.final()]);
-  return Buffer.concat([MAGIC, iv, cipher.getAuthTag(), ciphertext]);
-}
-
-export function decryptSnapshot(file: Buffer): Snapshot {
-  if (file.length < MAGIC.length + 28 || !file.subarray(0, MAGIC.length).equals(MAGIC)) {
-    throw new Error("This isn't a DWKY Connect backup file.");
-  }
+function decryptLegacy(file: Buffer): Buffer {
   const iv = file.subarray(MAGIC.length, MAGIC.length + 12);
   const tag = file.subarray(MAGIC.length + 12, MAGIC.length + 28);
   const ciphertext = file.subarray(MAGIC.length + 28);
-  let plain: Buffer;
-  try {
-    const decipher = createDecipheriv("aes-256-gcm", backupKey(), iv);
-    decipher.setAuthTag(tag);
-    plain = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
-  } catch {
-    throw new Error("This backup couldn't be decrypted — the encryption key has changed since it was made.");
+  for (const key of legacyKeys()) {
+    try {
+      const decipher = createDecipheriv("aes-256-gcm", key, iv);
+      decipher.setAuthTag(tag);
+      return Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+    } catch {
+      // try the next candidate key
+    }
   }
-  const snapshot = JSON.parse(gunzipSync(plain).toString("utf8")) as Snapshot;
+  throw new Error("This older, encrypted backup couldn't be opened — the key it was encrypted with is no longer available.");
+}
+
+export function unpackSnapshot(file: Buffer): Snapshot {
+  let compressed: Buffer;
+  if (file.length > 2 && file[0] === 0x1f && file[1] === 0x8b) {
+    compressed = file;
+  } else if (file.length >= MAGIC.length + 28 && file.subarray(0, MAGIC.length).equals(MAGIC)) {
+    compressed = decryptLegacy(file);
+  } else {
+    throw new Error("This isn't a DWKY Connect backup file.");
+  }
+  const snapshot = JSON.parse(gunzipSync(compressed).toString("utf8")) as Snapshot;
   if (snapshot.format !== SNAPSHOT_FORMAT || snapshot.version !== SNAPSHOT_VERSION || !Array.isArray(snapshot.entries)) {
     throw new Error("This backup was made by an unsupported version of DWKY Connect.");
   }
@@ -247,14 +252,14 @@ export interface BackupResult {
   deleted: number;
 }
 
-/** Snapshot → encrypt → upload → (only then) prune. A failed run never deletes older backups. */
+/** Snapshot → compress → upload → (only then) prune. A failed run never deletes older backups. */
 export async function runBackup(kind: BackupKind = "daily"): Promise<BackupResult> {
   const attemptedAt = new Date().toISOString();
   try {
     const snapshot = await collectSnapshot();
     const fileName = backupFileName(kind);
-    const encrypted = encryptSnapshot(snapshot);
-    const uploaded = await uploadBackupFile(fileName, encrypted);
+    const packed = packSnapshot(snapshot);
+    const uploaded = await uploadBackupFile(fileName, packed);
 
     let deleted = 0;
     try {
@@ -297,7 +302,7 @@ export async function listBackups(): Promise<(DriveBackupFile & { kind: BackupKi
 }
 
 export async function loadBackup(fileId: string): Promise<Snapshot> {
-  return decryptSnapshot(await downloadBackupFile(fileId));
+  return unpackSnapshot(await downloadBackupFile(fileId));
 }
 
 // ---------------------------------------------------------------- restoring

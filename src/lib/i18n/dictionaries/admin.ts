@@ -13,7 +13,7 @@ const en = {
 
   // AdminBackups.tsx
   backupsHeading: "Backups",
-  backupsIntro: "A full, encrypted copy of all DWKY Connect data is saved to a private Backups folder in Google Drive every night.",
+  backupsIntro: "A full copy of all DWKY Connect data is saved to a private Backups folder in Google Drive every night.",
   backupsRetentionPrefix: "Kept:",
   backupsRetentionDays: "days, plus one per month for",
   backupsRetentionMonths: "months.",
@@ -23,7 +23,7 @@ const en = {
   backupsLastFailed: "The last backup failed",
   backupsRecords: "stored items",
   backupsRunNow: "Back up now",
-  backupsEncryptedNote: "Backup files are compressed and encrypted (AES-256). They can only be read by this app.",
+  backupsStorageNote: "Backup files are compressed and stored in a private Drive folder. They contain personal data — don't share that folder.",
   backupsListHeading: "Available backups",
   backupsNone: "No backups yet — press “Back up now”, or wait for tonight's automatic backup.",
   backupsKindDaily: "Backup",
@@ -31,7 +31,6 @@ const en = {
   backupsDownload: "Download",
   backupsRestore: "Restore…",
   backupsCronWarning: "The nightly schedule isn't active yet: CRON_SECRET is not set in Vercel. You can still back up manually.",
-  backupsKeyWarning: "Backups are encrypted with the login secret (AUTH_SECRET). Add a separate BACKUP_ENCRYPTION_KEY in Vercel so old backups stay readable if that secret is ever changed.",
   backupsRestoreTitle: "Restore from backup",
   backupsReading: "Reading the backup…",
   backupsMadeAt: "This backup was made on",
@@ -187,7 +186,7 @@ const nl: typeof en = {
 
   // AdminBackups.tsx
   backupsHeading: "Back-ups",
-  backupsIntro: "Elke nacht wordt een volledige, versleutelde kopie van alle DWKY Connect-gegevens opgeslagen in een privémap Backups in Google Drive.",
+  backupsIntro: "Elke nacht wordt een volledige kopie van alle DWKY Connect-gegevens opgeslagen in een privémap Backups in Google Drive.",
   backupsRetentionPrefix: "Bewaard:",
   backupsRetentionDays: "dagen, plus één per maand gedurende",
   backupsRetentionMonths: "maanden.",
@@ -197,7 +196,7 @@ const nl: typeof en = {
   backupsLastFailed: "De laatste back-up is mislukt",
   backupsRecords: "opgeslagen items",
   backupsRunNow: "Nu back-up maken",
-  backupsEncryptedNote: "Back-upbestanden zijn gecomprimeerd en versleuteld (AES-256). Alleen deze app kan ze lezen.",
+  backupsStorageNote: "Back-upbestanden zijn gecomprimeerd en staan in een privémap in Drive. Ze bevatten persoonsgegevens — deel die map niet.",
   backupsListHeading: "Beschikbare back-ups",
   backupsNone: "Nog geen back-ups — druk op “Nu back-up maken”, of wacht op de automatische back-up van vannacht.",
   backupsKindDaily: "Back-up",
@@ -205,7 +204,6 @@ const nl: typeof en = {
   backupsDownload: "Downloaden",
   backupsRestore: "Herstellen…",
   backupsCronWarning: "Het nachtelijke schema is nog niet actief: CRON_SECRET is niet ingesteld in Vercel. Je kunt nog wel handmatig een back-up maken.",
-  backupsKeyWarning: "Back-ups zijn versleuteld met het inlog-geheim (AUTH_SECRET). Voeg in Vercel een aparte BACKUP_ENCRYPTION_KEY toe, zodat oude back-ups leesbaar blijven als dat geheim ooit wijzigt.",
   backupsRestoreTitle: "Herstellen uit back-up",
   backupsReading: "Back-up wordt gelezen…",
   backupsMadeAt: "Deze back-up is gemaakt op",

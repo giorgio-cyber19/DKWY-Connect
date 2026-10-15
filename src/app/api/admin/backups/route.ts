@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getBearerToken, verifySessionToken } from "@/lib/session";
 import { DriveNotConnectedError } from "@/lib/google-drive";
-import { listBackups, getBackupStatus, runBackup, encryptionKeySource, DAILY_RETENTION_DAYS, MONTHLY_RETENTION_MONTHS } from "@/lib/backup";
+import { listBackups, getBackupStatus, runBackup, DAILY_RETENTION_DAYS, MONTHLY_RETENTION_MONTHS } from "@/lib/backup";
 
 export const maxDuration = 60;
 
@@ -33,7 +33,6 @@ export async function GET(request: Request) {
     backups,
     driveError,
     cronConfigured: !!process.env.CRON_SECRET,
-    keySource: encryptionKeySource(),
     retention: { dailyDays: DAILY_RETENTION_DAYS, monthlyMonths: MONTHLY_RETENTION_MONTHS },
   });
 }
