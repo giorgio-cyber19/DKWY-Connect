@@ -18,7 +18,11 @@ export function IdleLogout() {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    let lastReset = 0;
     function resetTimer() {
+      const now = Date.now();
+      if (timeoutRef.current && now - lastReset < 1000) return;
+      lastReset = now;
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       timeoutRef.current = setTimeout(() => {
         useAppStore.getState().logout();

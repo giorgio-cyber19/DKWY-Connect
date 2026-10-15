@@ -21,7 +21,7 @@ function BackupAlert({ onOpen }: { onOpen: () => void }) {
   const [problem, setProblem] = useState(false);
 
   useEffect(() => {
-    apiGet<{ status: { lastSuccessAt?: string; lastError?: string | null }; driveError: string | null; cronConfigured: boolean }>("/api/admin/backups")
+    apiGet<{ status: { lastSuccessAt?: string; lastError?: string | null }; driveError: string | null; cronConfigured: boolean }>("/api/admin/backups?summary=1")
       .then((d) => {
         const ageHours = d.status.lastSuccessAt ? (Date.now() - new Date(d.status.lastSuccessAt).getTime()) / 3_600_000 : Infinity;
         setProblem(!!d.status.lastError || !!d.driveError || (d.cronConfigured && ageHours > 48));

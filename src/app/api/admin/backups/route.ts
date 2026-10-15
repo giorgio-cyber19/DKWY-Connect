@@ -19,10 +19,11 @@ export async function GET(request: Request) {
   if (auth.error) return auth.error;
 
   const status = await getBackupStatus();
+  const summaryOnly = new URL(request.url).searchParams.get("summary") === "1";
   let backups: Awaited<ReturnType<typeof listBackups>> = [];
   let driveError: string | null = null;
   try {
-    backups = await listBackups();
+    if (!summaryOnly) backups = await listBackups();
   } catch (err) {
     driveError = err instanceof DriveNotConnectedError ? err.message : "Couldn't read the Backups folder in Google Drive.";
     if (!(err instanceof DriveNotConnectedError)) console.error("Listing backups failed:", err);

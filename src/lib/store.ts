@@ -192,8 +192,11 @@ export const useAppStore = create<AppState>()(
       bootstrap: async () => {
         try {
           const data = await apiGet<BootstrapResponse>("/api/data/bootstrap");
-          set({
-            currentUserId: data.currentUser.id,
+          // Every poll returns freshly parsed arrays. Replacing them all would re-render every
+          // subscribed component on every sync even when nothing changed, so only the slices whose
+          // content actually differs are swapped in — unchanged slices keep their identity.
+          const current = get();
+          const fresh = {
             users: data.users,
             ageGroups: data.ageGroups,
             classes: data.classes,
@@ -208,7 +211,13 @@ export const useAppStore = create<AppState>()(
             notifications: data.notifications,
             auditLog: data.auditLog,
             libraryFolders: data.libraryFolders,
-          });
+          };
+          const patch: Record<string, unknown> = {};
+          for (const key of Object.keys(fresh) as (keyof typeof fresh)[]) {
+            if (JSON.stringify(current[key]) !== JSON.stringify(fresh[key])) patch[key] = fresh[key];
+          }
+          if (current.currentUserId !== data.currentUser.id) patch.currentUserId = data.currentUser.id;
+          if (Object.keys(patch).length > 0) set(patch);
         } catch (err) {
           // 401s are already handled globally by api-client (redirects to /login).
           // Anything else (network blip) is left for the next poll to retry.

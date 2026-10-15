@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAppStore } from "./store";
 import type { User } from "./types";
@@ -18,8 +18,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [needsSetup, setNeedsSetup] = useState(false);
-  const currentUserId = useAppStore((s) => s.currentUserId);
-  const users = useAppStore((s) => s.users);
+  const user = useAppStore((s) => (s.currentUserId ? (s.users.find((u) => u.id === s.currentUserId) ?? null) : null));
   const hydrated = useAppStore((s) => s.hydrated);
   const router = useRouter();
   const initialized = useRef(false);
@@ -56,8 +55,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })();
   }, [hydrated]);
 
-  const user = users.find((u) => u.id === currentUserId) ?? null;
-
   const login = useCallback(
     async (identifier: string, password: string, keepSignedIn?: boolean) => {
       const loggedInUser = await useAppStore.getState().login(identifier, password, keepSignedIn);
@@ -75,7 +72,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.push("/login");
   }, [router]);
 
-  return <AuthContext.Provider value={{ user, loading, needsSetup, login, logout }}>{children}</AuthContext.Provider>;
+  const value = useMemo(() => ({ user, loading, needsSetup, login, logout }), [user, loading, needsSetup, login, logout]);
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
