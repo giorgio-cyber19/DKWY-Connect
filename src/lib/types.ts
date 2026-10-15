@@ -293,6 +293,25 @@ export interface Notification {
   href: string;
 }
 
+export type AttendanceStatus = "present" | "absent" | "excused";
+
+/** One class's register for one date. Id is deterministic (att-{classId}-{date}) so re-saving updates in place. */
+export interface AttendanceRecord {
+  id: string;
+  classId: string;
+  /** "YYYY-MM-DD" */
+  date: string;
+  /** childId -> status, for the children in the class when it was saved. */
+  marks: Record<string, AttendanceStatus>;
+  /** Children present who aren't on the class list. */
+  visitors: number;
+  note?: string;
+  takenBy: string;
+  takenAt: string;
+  updatedBy?: string;
+  updatedAt?: string;
+}
+
 export interface AuditLogEntry {
   id: string;
   actor: string;

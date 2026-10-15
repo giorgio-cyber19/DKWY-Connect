@@ -39,6 +39,7 @@ import { driveDownloadUrl } from "@/lib/upload";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { enumLabels } from "@/lib/i18n/enum-labels";
 import { translateApiError } from "@/lib/i18n/errors";
+import { ChildAttendance } from "@/components/attendance/ChildAttendance";
 import { AddArtworkButton, AddAlbumButton, AddVideoButton, AddChildDocumentButton, AddMilestoneButton } from "@/components/children/ChildRecordModals";
 import type { Child, SpiritualMilestone } from "@/lib/types";
 
@@ -91,6 +92,7 @@ export function ChildDetail({ child }: { child: Child }) {
     { id: "documents", label: t("children.tabDocuments") },
     { id: "growth", label: t("children.tabGrowth") },
     { id: "observations", label: t("children.tabObservations") },
+    { id: "attendance", label: t("children.tabAttendance") },
   ];
 
   return (
@@ -347,6 +349,8 @@ export function ChildDetail({ child }: { child: Child }) {
           )}
         </div>
       )}
+
+      {tab === "attendance" && <ChildAttendance childId={child.id} />}
 
       {tab === "observations" && (
         <div>

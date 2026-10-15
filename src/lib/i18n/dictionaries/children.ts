@@ -80,6 +80,7 @@ const en = {
   tabDocuments: "Documents",
   tabGrowth: "Spiritual Growth",
   tabObservations: "Observations",
+  tabAttendance: "Attendance",
 
   // ChildDetail.tsx — header
   taughtByLabel: "Taught by",
@@ -204,6 +205,7 @@ const nl: typeof en = {
   tabDocuments: "Documenten",
   tabGrowth: "Geestelijke Groei",
   tabObservations: "Observaties",
+  tabAttendance: "Aanwezigheid",
 
   // ChildDetail.tsx — header
   taughtByLabel: "Lesgegeven door",

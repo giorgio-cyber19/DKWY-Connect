@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/Badge";
 import { StaggerGrid } from "@/components/ui/Stagger";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ChildCard } from "@/components/children/ChildCard";
+import { useState } from "react";
+import { AttendanceTaker } from "@/components/attendance/AttendanceTaker";
 import { useAuth } from "@/lib/auth-context";
 import { getAgeGroup, useAppStore } from "@/lib/store";
 import { useLanguage } from "@/lib/language-context";
@@ -19,6 +21,7 @@ export default function MyClassPage() {
   const children = useAppStore((s) => s.children);
   const classes = useAppStore((s) => s.classes);
   const lessonPlans = useAppStore((s) => s.lessonPlans);
+  const [attendanceClassId, setAttendanceClassId] = useState("");
   if (!user) return null;
 
   const myClass = classes.find((c) => c.id === user.classId);
@@ -27,6 +30,28 @@ export default function MyClassPage() {
     return (
       <div>
         <PageHeader eyebrow={t("myClass.allClassesEyebrow")} title={t("myClass.allClassesTitle")} description={t("myClass.allClassesDescription")} />
+        {classes.length > 0 && (
+          <div className="mb-8">
+            <div className="mb-3 max-w-xs">
+              <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">{t("attendance.classLabel")}</label>
+              <select
+                value={attendanceClassId}
+                onChange={(e) => setAttendanceClassId(e.target.value)}
+                className="w-full text-sm px-3.5 py-2.5 rounded-xl border border-[var(--border-soft)] bg-transparent focus-ring"
+              >
+                <option value="">{t("attendance.chooseClass")}</option>
+                {classes.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {attendanceClassId && (
+              <AttendanceTaker key={attendanceClassId} classId={attendanceClassId} pupils={children.filter((c) => c.classId === attendanceClassId)} />
+            )}
+          </div>
+        )}
         {classes.length === 0 ? (
           <EmptyState icon={Users} title={t("myClass.noClassesTitle")} description={t("myClass.noClassesDescription")} />
         ) : (
@@ -87,6 +112,10 @@ export default function MyClassPage() {
           </div>
         </Card>
       </div>
+
+      <section className="mb-8">
+        <AttendanceTaker classId={myClass.id} pupils={myChildren} />
+      </section>
 
       <section className="mb-8">
         <div className="flex items-center justify-between mb-4">

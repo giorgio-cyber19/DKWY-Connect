@@ -25,6 +25,18 @@ export async function getCollection<T>(entity: string): Promise<T[]> {
   return values.filter((v): v is T => v != null);
 }
 
+/** Just the id index — cheap, and lets callers filter by id before loading any records. */
+export async function getEntityIds(entity: string): Promise<string[]> {
+  if (!isKvConfigured()) return [];
+  return getRedisClient().smembers(idsKey(entity));
+}
+
+export async function getEntitiesByIds<T>(entity: string, ids: string[]): Promise<T[]> {
+  if (!isKvConfigured() || ids.length === 0) return [];
+  const values = await getRedisClient().mget<T[]>(...ids.map((id) => entityKey(entity, id)));
+  return values.filter((v): v is T => v != null);
+}
+
 export async function getEntity<T>(entity: string, id: string): Promise<T | null> {
   if (!isKvConfigured()) return null;
   const redis = getRedisClient();
