@@ -1,6 +1,7 @@
 import "server-only";
 import { GET as bootstrapGET } from "@/app/api/data/bootstrap/route";
 import { POST as eventsPOST } from "@/app/api/events/route";
+import { PATCH as eventPATCH, DELETE as eventDELETE } from "@/app/api/events/[id]/route";
 import { POST as lessonsPOST } from "@/app/api/lessons/route";
 import { PATCH as lessonPATCH } from "@/app/api/lessons/[id]/route";
 import { POST as postsPOST, DELETE as postsDELETE } from "@/app/api/posts/route";
@@ -536,6 +537,59 @@ const tools: ToolDef[] = [
       };
       const event = await call<CalendarEvent>(eventsPOST, rt.token, "POST", "/api/events", body);
       return { summary: `Added event "${event.title}" on ${event.date}`, result: { id: event.id } };
+    },
+  },
+  {
+    name: "update_event",
+    description:
+      "Edit a calendar event's title, date, time, type, location or description. Only the fields you pass change; pass an empty string to clear time, endDate, location or description. Only administrators or the event's creator may edit it, and roster events must be changed on the Roster page.",
+    parameters: schema(
+      {
+        event: s("Event title or id (use list_events to find it)."),
+        title: s("New title."),
+        date: s("New date, YYYY-MM-DD."),
+        type: { type: "string", enum: [...EVENT_TYPES], description: "New event type." },
+        time: s("New time HH:MM, or empty string to clear."),
+        endDate: s("New end date YYYY-MM-DD, or empty string to clear."),
+        location: s("New location, or empty string to clear."),
+        description: s("New description, or empty string to clear."),
+      },
+      ["event"]
+    ),
+    write: true,
+    async run(args, rt) {
+      const snap = await rt.snapshot();
+      const event = pick(snap.calendarEvents, needStr(args, "event"), (e) => e.title, "event");
+      const body: Record<string, unknown> = {};
+      if (str(args, "title")) body.title = str(args, "title");
+      if (str(args, "date")) body.date = assertIsoDate(str(args, "date")!, "date");
+      if (str(args, "type")) {
+        if (!EVENT_TYPES.includes(args.type as (typeof EVENT_TYPES)[number])) throw new ToolError(`"type" must be one of: ${EVENT_TYPES.join(", ")}.`);
+        body.type = args.type;
+      }
+      for (const key of ["time", "endDate", "location", "description"] as const) {
+        if (typeof args[key] === "string") body[key] = key === "endDate" && args[key] ? assertIsoDate(args[key] as string, key) : args[key];
+      }
+      if (Object.keys(body).length === 0) throw new ToolError("Nothing to change — pass at least one field to update.");
+      const updated = await call<CalendarEvent>(eventPATCH, rt.token, "PATCH", `/api/events/${event.id}`, body, { id: event.id });
+      return { summary: `Updated event "${updated.title}" (${updated.date})`, result: { id: updated.id } };
+    },
+  },
+  {
+    name: "delete_event",
+    description:
+      "Delete a calendar event. Only administrators or the event's creator may delete it; roster events must be removed on the Roster page. The user must confirm before this runs.",
+    parameters: schema({ event: s("Event title or id (use list_events to find it).") }, ["event"]),
+    write: true,
+    destructive: true,
+    async describe(args, rt) {
+      const e = pick((await rt.snapshot()).calendarEvents, needStr(args, "event"), (x) => x.title, "event");
+      return `Delete the event "${e.title}" on ${e.date}`;
+    },
+    async run(args, rt) {
+      const e = pick((await rt.snapshot()).calendarEvents, needStr(args, "event"), (x) => x.title, "event");
+      await call(eventDELETE, rt.token, "DELETE", `/api/events/${e.id}`, undefined, { id: e.id });
+      return { summary: `Deleted event "${e.title}" on ${e.date}`, result: { ok: true } };
     },
   },
   {

@@ -18,7 +18,7 @@ import {
 } from "date-fns";
 import { nl as nlLocale } from "date-fns/locale";
 import { motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, Plus, MapPin, Clock, ClipboardList, Palmtree, Flag, CircleAlert } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, MapPin, Clock, ClipboardList, Palmtree, Flag, CircleAlert, Pencil, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -26,6 +26,7 @@ import { Tabs } from "@/components/ui/Tabs";
 import { Modal } from "@/components/ui/Modal";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useAppStore } from "@/lib/store";
 import { useAuth } from "@/lib/auth-context";
 import { parseDate, formatDate, cn } from "@/lib/utils";
@@ -59,14 +60,25 @@ const manualEventTypes = eventTypes.filter((et) => et !== "Sunday School & Youth
 
 const inputClass = "w-full text-sm px-3.5 py-2.5 rounded-xl border border-[var(--border-soft)] bg-transparent focus-ring focus:border-[var(--color-gold)] transition-colors";
 
-function NewEventModal({ open, onClose, initialDate }: { open: boolean; onClose: () => void; initialDate?: string }) {
+function NewEventModal({
+  open,
+  onClose,
+  initialDate,
+  editing,
+}: {
+  open: boolean;
+  onClose: () => void;
+  initialDate?: string;
+  /** When set, the form edits this event instead of creating a new one. */
+  editing?: CalendarEvent | null;
+}) {
   const { t, language } = useLanguage();
-  const [title, setTitle] = useState("");
-  const [type, setType] = useState<CalendarEvent["type"]>("Sunday Lesson");
-  const [date, setDate] = useState(initialDate ?? format(new Date(), "yyyy-MM-dd"));
-  const [time, setTime] = useState("");
-  const [location, setLocation] = useState("");
-  const [description, setDescription] = useState("");
+  const [title, setTitle] = useState(editing?.title ?? "");
+  const [type, setType] = useState<CalendarEvent["type"]>(editing?.type ?? "Sunday Lesson");
+  const [date, setDate] = useState(editing?.date ?? initialDate ?? format(new Date(), "yyyy-MM-dd"));
+  const [time, setTime] = useState(editing?.time ?? "");
+  const [location, setLocation] = useState(editing?.location ?? "");
+  const [description, setDescription] = useState(editing?.description ?? "");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -75,15 +87,20 @@ function NewEventModal({ open, onClose, initialDate }: { open: boolean; onClose:
     setSubmitting(true);
     setError("");
     try {
-      await useAppStore.getState().createEvent({
-        title: title.trim(),
-        type,
-        date,
-        time: time || undefined,
-        location: location || undefined,
-        description: description || undefined,
-        color: eventTypeColors[type],
-      });
+      if (editing) {
+        // Empty strings clear an optional field server-side.
+        await useAppStore.getState().updateEvent(editing.id, { title: title.trim(), type, date, time, location, description });
+      } else {
+        await useAppStore.getState().createEvent({
+          title: title.trim(),
+          type,
+          date,
+          time: time || undefined,
+          location: location || undefined,
+          description: description || undefined,
+          color: eventTypeColors[type],
+        });
+      }
       setTitle("");
       setTime("");
       setLocation("");
@@ -97,7 +114,7 @@ function NewEventModal({ open, onClose, initialDate }: { open: boolean; onClose:
   }
 
   return (
-    <Modal open={open} onClose={onClose} title={t("calendar.newEventModalTitle")} size="sm">
+    <Modal open={open} onClose={onClose} title={editing ? t("calendar.editEventModalTitle") : t("calendar.newEventModalTitle")} size="sm">
       <div className="space-y-4">
         <div>
           <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">{t("calendar.eventTitleLabel")}</label>
@@ -133,7 +150,7 @@ function NewEventModal({ open, onClose, initialDate }: { open: boolean; onClose:
         </div>
         {error && <p className="text-xs text-red-500 font-medium">{error}</p>}
         <Button className="w-full" onClick={submit} loading={submitting} disabled={!title.trim() || submitting}>
-          {t("calendar.addEventButton")}
+          {editing ? t("calendar.saveEventButton") : t("calendar.addEventButton")}
         </Button>
       </div>
     </Modal>
@@ -156,8 +173,13 @@ function CalendarPageContent() {
   // Date pre-filled into the new-event form (set when adding from a day), and a counter that remounts the form per open so it picks that date up.
   const [newEventDate, setNewEventDate] = useState<string | undefined>(undefined);
   const [newEventSession, setNewEventSession] = useState(0);
+  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<CalendarEvent | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   function openNewEvent(date?: string) {
+    setEditingEvent(null);
     setNewEventDate(date);
     setNewEventSession((n) => n + 1);
     setNewEventOpen(true);
@@ -169,6 +191,29 @@ function CalendarPageContent() {
     const match = calendarEvents.find((e) => e.id === eventIdParam);
     if (match) setSelectedEvent(match);
   }, [eventIdParam, calendarEvents]);
+
+  function openEditEvent(event: CalendarEvent) {
+    setEditingEvent(event);
+    setNewEventDate(undefined);
+    setNewEventSession((n) => n + 1);
+    setSelectedEvent(null);
+    setNewEventOpen(true);
+  }
+
+  async function confirmDeleteEvent() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await useAppStore.getState().removeEvent(deleteTarget.id);
+      setDeleteTarget(null);
+      setSelectedEvent(null);
+    } catch (err) {
+      setDeleteError(translateApiError(err, language));
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   const selectedRosterEntry = selectedEvent?.rosterId ? rosterEntries.find((r) => r.id === selectedEvent.rosterId) : undefined;
   const isAssignedToSelected =
@@ -430,11 +475,31 @@ function CalendarPageContent() {
                 </Badge>
               )}
               {selectedEvent.rosterId && (
-                <Link href={`/roster?highlight=${selectedEvent.rosterId}`} className="block mt-4">
-                  <Button variant="outline" className="w-full">
-                    <ClipboardList size={15} /> {t("roster.viewRoster")}
+                <>
+                  <p className="text-[12px] text-[var(--text-secondary)] mt-4">{t("calendar.rosterEventManagedNote")}</p>
+                  <Link href={`/roster?highlight=${selectedEvent.rosterId}`} className="block mt-3">
+                    <Button variant="outline" className="w-full">
+                      <ClipboardList size={15} /> {t("roster.viewRoster")}
+                    </Button>
+                  </Link>
+                </>
+              )}
+              {!selectedEvent.rosterId && !!user && (user.role === "admin" || selectedEvent.createdBy === user.id) && (
+                <div className="flex gap-2 mt-5">
+                  <Button variant="outline" className="flex-1" onClick={() => openEditEvent(selectedEvent)}>
+                    <Pencil size={14} /> {t("calendar.editEventButton")}
                   </Button>
-                </Link>
+                  <Button
+                    variant="outline"
+                    className="flex-1 !text-red-500"
+                    onClick={() => {
+                      setDeleteError(null);
+                      setDeleteTarget(selectedEvent);
+                    }}
+                  >
+                    <Trash2 size={14} /> {t("calendar.deleteEventButton")}
+                  </Button>
+                </div>
               )}
             </div>
           </div>
@@ -532,7 +597,23 @@ function CalendarPageContent() {
         )}
       </Modal>
 
-      <NewEventModal key={newEventSession} open={newEventOpen} onClose={() => setNewEventOpen(false)} initialDate={newEventDate} />
+      <NewEventModal
+        key={newEventSession}
+        open={newEventOpen}
+        onClose={() => setNewEventOpen(false)}
+        initialDate={newEventDate}
+        editing={editingEvent}
+      />
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDeleteEvent}
+        title={t("calendar.deleteEventConfirmTitle")}
+        message={t("calendar.deleteEventConfirmMessage")}
+        confirming={deleting}
+        error={deleteError}
+      />
     </div>
   );
 }

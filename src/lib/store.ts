@@ -139,6 +139,8 @@ interface AppState {
 
   // calendar
   createEvent: (item: Omit<CalendarEvent, "id">) => Promise<CalendarEvent>;
+  updateEvent: (id: string, data: Partial<Omit<CalendarEvent, "id">>) => Promise<CalendarEvent>;
+  removeEvent: (id: string) => Promise<void>;
 
   // holidays
   createHoliday: (input: Omit<Holiday, "id">) => Promise<Holiday>;
@@ -476,6 +478,17 @@ export const useAppStore = create<AppState>()(
         const event = await apiPost<CalendarEvent>("/api/events", item);
         set((s) => ({ calendarEvents: [...s.calendarEvents, event] }));
         return event;
+      },
+
+      updateEvent: async (id, data) => {
+        const event = await apiPatch<CalendarEvent>(`/api/events/${id}`, data);
+        set((s) => ({ calendarEvents: s.calendarEvents.map((e) => (e.id === id ? event : e)) }));
+        return event;
+      },
+
+      removeEvent: async (id) => {
+        await apiDelete(`/api/events/${id}`);
+        set((s) => ({ calendarEvents: s.calendarEvents.filter((e) => e.id !== id) }));
       },
 
       createHoliday: async (item) => {

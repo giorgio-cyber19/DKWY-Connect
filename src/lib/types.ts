@@ -245,6 +245,8 @@ export interface CalendarEvent {
   color: string;
   /** Set only for events created from a RosterEntry — the backward link. */
   rosterId?: string;
+  /** User who created the event — they (and administrators) may edit or delete it. Absent on older events. */
+  createdBy?: string;
 }
 
 export interface Holiday {
