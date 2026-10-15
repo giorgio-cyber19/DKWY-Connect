@@ -1,5 +1,6 @@
 import "server-only";
 import { google, type Auth } from "googleapis";
+import { Readable } from "node:stream";
 import { encryptSecret, decryptSecret } from "./crypto";
 import { formatFileBytes } from "./format-bytes";
 import {
@@ -357,4 +358,66 @@ export async function getDriveStorageInfo(): Promise<DriveStorageInfo> {
     usageBytes: quota.usage ? Number(quota.usage) : 0,
     usageInDriveBytes: quota.usageInDrive ? Number(quota.usageInDrive) : 0,
   };
+}
+
+// ---------------------------------------------------------------- backups
+
+const BACKUPS_FOLDER_NAME = "Backups";
+
+export interface DriveBackupFile {
+  id: string;
+  name: string;
+  size: number;
+  createdTime: string;
+}
+
+async function backupsFolderId(drive: ReturnType<typeof getDrive>): Promise<string> {
+  return findOrCreateFolder(drive, BACKUPS_FOLDER_NAME, await rootFolderId());
+}
+
+/** Uploads an (already encrypted) backup file into the private "Backups" folder — never link-shared. */
+export async function uploadBackupFile(name: string, data: Buffer): Promise<DriveBackupFile> {
+  const auth = await getAuthorizedClient();
+  const drive = getDrive(auth);
+  const parent = await backupsFolderId(drive);
+  const res = await drive.files.create({
+    requestBody: { name, parents: [parent] },
+    media: { mimeType: "application/octet-stream", body: Readable.from(data) },
+    fields: "id, name, size, createdTime",
+  });
+  return { id: res.data.id!, name: res.data.name ?? name, size: Number(res.data.size ?? data.length), createdTime: res.data.createdTime ?? new Date().toISOString() };
+}
+
+export async function listBackupFiles(): Promise<DriveBackupFile[]> {
+  const auth = await getAuthorizedClient();
+  const drive = getDrive(auth);
+  const parent = await backupsFolderId(drive);
+  const files: DriveBackupFile[] = [];
+  let pageToken: string | undefined;
+  do {
+    const res = await drive.files.list({
+      q: `'${parent}' in parents and trashed = false`,
+      fields: "nextPageToken, files(id, name, size, createdTime)",
+      pageSize: 200,
+      pageToken,
+      spaces: "drive",
+    });
+    for (const f of res.data.files ?? []) {
+      if (f.id && f.name) files.push({ id: f.id, name: f.name, size: Number(f.size ?? 0), createdTime: f.createdTime ?? "" });
+    }
+    pageToken = res.data.nextPageToken ?? undefined;
+  } while (pageToken);
+  return files;
+}
+
+export async function downloadBackupFile(fileId: string): Promise<Buffer> {
+  const auth = await getAuthorizedClient();
+  const res = await getDrive(auth).files.get({ fileId, alt: "media" }, { responseType: "arraybuffer" });
+  return Buffer.from(res.data as ArrayBuffer);
+}
+
+/** Permanent delete (not trash) — expired backups contain personal data and shouldn't linger. */
+export async function deleteBackupFile(fileId: string): Promise<void> {
+  const auth = await getAuthorizedClient();
+  await getDrive(auth).files.delete({ fileId });
 }
