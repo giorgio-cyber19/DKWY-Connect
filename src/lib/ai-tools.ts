@@ -22,12 +22,17 @@ import { DELETE as documentDELETE } from "@/app/api/documents/[id]/route";
 import { DELETE as mediaDELETE } from "@/app/api/media/[id]/route";
 import { PATCH as notificationsPATCH, DELETE as notificationsDELETE } from "@/app/api/notifications/route";
 import { PATCH as profilePATCH } from "@/app/api/users/me/route";
+import { GET as attendanceGET, PUT as attendancePUT } from "@/app/api/attendance/route";
+import { matchNames, splitNameList } from "@/lib/name-match";
+import { addDays, summarizeChild } from "@/lib/attendance-stats";
 import { eventTypeColors } from "@/lib/calendar-colors";
 import { pickColor } from "@/lib/colors";
 import type { PublicUser } from "@/lib/password";
 import type { SessionClaims } from "@/lib/session";
 import type {
   AgeGroup,
+  AttendanceRecord,
+  AttendanceStatus,
   CalendarEvent,
   Child,
   Holiday,
@@ -94,7 +99,7 @@ type RouteFn = (request: Request, ctx: unknown) => Promise<Response>;
 async function call<T = Record<string, unknown>>(
   handler: unknown,
   token: string,
-  method: "GET" | "POST" | "PATCH" | "DELETE",
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
   path: string,
   body?: unknown,
   params?: Record<string, string>
@@ -212,6 +217,57 @@ function lessonFieldsFrom(args: Args): Record<string, unknown> {
   }
   if (str(args, "date")) out.date = assertIsoDate(str(args, "date")!, "date");
   return out;
+}
+
+// ---------------------------------------------------------------- attendance helpers
+
+/** The class the user means: the one they named, else their own; admins without a class must say which. */
+function attendanceClassFor(args: Args, snap: Snapshot): SchoolClass {
+  const asked = str(args, "class");
+  if (asked) return pick(snap.classes, asked, (c) => c.name, "class");
+  const mine = snap.currentUser.classId ? snap.classes.find((c) => c.id === snap.currentUser.classId) : undefined;
+  if (mine) return mine;
+  throw new ToolError(`Which class? You are not assigned to one. Classes: ${snap.classes.map((c) => c.name).join(", ") || "none yet"}.`);
+}
+
+function attendanceDateFrom(args: Args): string {
+  const given = str(args, "date");
+  return given ? assertIsoDate(given, "date") : todayIso();
+}
+
+/** Resolves typed names to children of one class; refuses (with a precise message) rather than guessing. */
+function resolveChildNames(lists: Record<string, string[]>, kids: Child[], className: string): Record<string, Set<string>> {
+  const people = kids.map((k) => ({ id: k.id, name: k.name }));
+  const problems: string[] = [];
+  const out: Record<string, Set<string>> = {};
+  for (const [label, names] of Object.entries(lists)) {
+    const result = matchNames(splitNameList(names), people);
+    out[label] = new Set(result.matched.keys());
+    for (const a of result.ambiguous) problems.push(`"${a.query}" could be ${a.candidates.join(" or ")}`);
+    if (result.unmatched.length > 0) {
+      problems.push(`no child in ${className} matches ${result.unmatched.map((n) => `"${n}"`).join(", ")}`);
+    }
+  }
+  if (problems.length > 0) {
+    throw new ToolError(
+      `Nothing was saved. ${problems.join("; ")}. Ask the user to clarify (a name that isn't in the class may be a visitor — pass it in visitorNames). Children in ${className}: ${kids.map((k) => k.name).join(", ")}.`
+    );
+  }
+  const seen = new Map<string, string>();
+  for (const [label, ids] of Object.entries(out)) {
+    for (const id of ids) {
+      const earlier = seen.get(id);
+      if (earlier && earlier !== label) {
+        throw new ToolError(`${kids.find((k) => k.id === id)?.name} is listed as both ${earlier} and ${label}. Nothing was saved.`);
+      }
+      seen.set(id, label);
+    }
+  }
+  return out;
+}
+
+function namesOf(kids: Child[], ids: string[]): string[] {
+  return ids.map((id) => kids.find((k) => k.id === id)?.name).filter((n): n is string => !!n);
 }
 
 const tools: ToolDef[] = [
@@ -1123,6 +1179,222 @@ const tools: ToolDef[] = [
       const m = pick((await rt.snapshot()).mediaItems, needStr(args, "item"), (x) => x.name, "media file");
       await call(mediaDELETE, rt.token, "DELETE", `/api/media/${m.id}`, undefined, { id: m.id });
       return { summary: `Deleted media file "${m.name}"`, result: { ok: true } };
+    },
+  },
+
+  // ------------------------------------------------------------ attendance
+  {
+    name: "record_attendance",
+    description:
+      "Save a class's attendance register for a date. Give EITHER presentChildren (everyone in the class who is NOT listed is marked absent) OR absentChildren (everyone not listed is marked present). Use for messages like 'aanwezig vandaag: Anna, Ben, Chloë' or 'afwezig: Daan'. Names can be first names; ambiguous or unknown names make it stop without saving. Replaces any register already saved for that class and date.",
+    parameters: schema({
+      class: s("Class name or id. Omit to use the user's own class."),
+      date: s("YYYY-MM-DD. Omit for today."),
+      presentChildren: sList("Names of the children who were present — one name per item."),
+      absentChildren: sList("Names of the children who were absent — one name per item."),
+      excusedChildren: sList("Names of absent children whose absence was reported in advance (verontschuldigd/afgemeld/gemeld)."),
+      visitors: { type: "number", description: "Number of visitors (children not on the class list)." },
+      visitorNames: sList("Names of visitors, if the user gave them (counted, not stored as children)."),
+      note: s("Optional note about the day."),
+      confirmMostlyAbsent: { type: "boolean", description: "Set true only after the user confirmed that most of the class really was absent." },
+    }),
+    write: true,
+    async run(args, rt) {
+      const snap = await rt.snapshot();
+      const cls = attendanceClassFor(args, snap);
+      const date = attendanceDateFrom(args);
+      const kids = snap.children.filter((c) => c.classId === cls.id);
+      if (kids.length === 0) throw new ToolError(`${cls.name} has no children yet.`);
+
+      const present = strList(args, "presentChildren") ?? [];
+      const absent = strList(args, "absentChildren") ?? [];
+      const excused = strList(args, "excusedChildren") ?? [];
+      if (present.length > 0 && absent.length > 0) throw new ToolError("Give either who was present or who was absent, not both.");
+      if (present.length === 0 && absent.length === 0) throw new ToolError("Tell me who was present, or who was absent.");
+
+      const resolved = resolveChildNames({ present, absent, excused }, kids, cls.name);
+      const presentMode = present.length > 0;
+      const marks: Record<string, AttendanceStatus> = {};
+      for (const kid of kids) marks[kid.id] = presentMode ? "absent" : "present";
+      for (const id of resolved.present) marks[id] = "present";
+      for (const id of resolved.absent) marks[id] = "absent";
+      for (const id of resolved.excused) marks[id] = "excused";
+
+      const away = Object.values(marks).filter((m) => m !== "present").length;
+      if (kids.length >= 4 && away / kids.length >= 0.75 && args.confirmMostlyAbsent !== true) {
+        throw new ToolError(
+          `Nothing was saved: that would mark ${away} of ${kids.length} children in ${cls.name} as not present. Ask the user to confirm this is right, then call again with confirmMostlyAbsent=true.`
+        );
+      }
+
+      const visitorNames = strList(args, "visitorNames") ?? [];
+      const visitors = visitorNames.length > 0 ? visitorNames.length : typeof args.visitors === "number" ? Math.max(0, Math.floor(args.visitors)) : 0;
+
+      const before = await call<{ record: AttendanceRecord | null }>(attendanceGET, rt.token, "GET", `/api/attendance?classId=${encodeURIComponent(cls.id)}&date=${date}`);
+      const { record } = await call<{ record: AttendanceRecord }>(attendancePUT, rt.token, "PUT", "/api/attendance", {
+        classId: cls.id,
+        date,
+        marks,
+        visitors,
+        note: str(args, "note"),
+      });
+
+      const ids = (status: AttendanceStatus) => Object.entries(record.marks).filter(([, m]) => m === status).map(([id]) => id);
+      const result = {
+        class: cls.name,
+        date,
+        present: namesOf(kids, ids("present")),
+        absent: namesOf(kids, ids("absent")),
+        excused: namesOf(kids, ids("excused")),
+        visitors: record.visitors,
+        replacedExistingRegister: !!before.record,
+      };
+      const parts = [`${result.present.length} present`, `${result.absent.length} absent`];
+      if (result.excused.length > 0) parts.push(`${result.excused.length} excused`);
+      if (result.visitors > 0) parts.push(`${result.visitors} visitor${result.visitors === 1 ? "" : "s"}`);
+      return { summary: `Recorded attendance for ${cls.name} on ${date}: ${parts.join(", ")}`, result };
+    },
+  },
+  {
+    name: "update_attendance",
+    description:
+      "Correct an attendance register that is already saved, changing only the children named (e.g. 'Hanna was toch aanwezig', 'Gijs is verontschuldigd'). Also updates the visitor count or note.",
+    parameters: schema({
+      class: s("Class name or id. Omit to use the user's own class."),
+      date: s("YYYY-MM-DD. Omit for today."),
+      present: sList("Children to mark present."),
+      absent: sList("Children to mark absent."),
+      excused: sList("Children to mark excused."),
+      visitors: { type: "number", description: "New visitor count." },
+      note: s("New note."),
+    }),
+    write: true,
+    async run(args, rt) {
+      const snap = await rt.snapshot();
+      const cls = attendanceClassFor(args, snap);
+      const date = attendanceDateFrom(args);
+      const kids = snap.children.filter((c) => c.classId === cls.id);
+
+      const { record } = await call<{ record: AttendanceRecord | null }>(attendanceGET, rt.token, "GET", `/api/attendance?classId=${encodeURIComponent(cls.id)}&date=${date}`);
+      if (!record) throw new ToolError(`No register has been saved for ${cls.name} on ${date} yet — use record_attendance first.`);
+
+      const resolved = resolveChildNames(
+        { present: strList(args, "present") ?? [], absent: strList(args, "absent") ?? [], excused: strList(args, "excused") ?? [] },
+        kids,
+        cls.name
+      );
+      const marks: Record<string, AttendanceStatus> = { ...record.marks };
+      for (const id of resolved.present) marks[id] = "present";
+      for (const id of resolved.absent) marks[id] = "absent";
+      for (const id of resolved.excused) marks[id] = "excused";
+
+      const changedKids = resolved.present.size + resolved.absent.size + resolved.excused.size;
+      const visitors = typeof args.visitors === "number" ? Math.max(0, Math.floor(args.visitors)) : record.visitors;
+      const note = typeof args.note === "string" ? args.note : record.note;
+      if (changedKids === 0 && visitors === record.visitors && note === record.note) throw new ToolError("Nothing to change — name at least one child, or give a new visitor count or note.");
+
+      await call(attendancePUT, rt.token, "PUT", "/api/attendance", { classId: cls.id, date, marks, visitors, note });
+      const bits: string[] = [];
+      if (resolved.present.size) bits.push(`${namesOf(kids, [...resolved.present]).join(", ")} → present`);
+      if (resolved.absent.size) bits.push(`${namesOf(kids, [...resolved.absent]).join(", ")} → absent`);
+      if (resolved.excused.size) bits.push(`${namesOf(kids, [...resolved.excused]).join(", ")} → excused`);
+      if (visitors !== record.visitors) bits.push(`visitors → ${visitors}`);
+      return { summary: `Updated attendance for ${cls.name} on ${date}${bits.length ? ` (${bits.join("; ")})` : ""}`, result: { ok: true } };
+    },
+  },
+  {
+    name: "get_attendance",
+    description: "Read the saved attendance register for a class on a date: who was present, absent, excused, plus visitors.",
+    parameters: schema({ class: s("Class name or id. Omit to use the user's own class."), date: s("YYYY-MM-DD. Omit for today.") }),
+    write: false,
+    async run(args, rt) {
+      const snap = await rt.snapshot();
+      const cls = attendanceClassFor(args, snap);
+      const date = attendanceDateFrom(args);
+      const kids = snap.children.filter((c) => c.classId === cls.id);
+      const { record } = await call<{ record: AttendanceRecord | null }>(attendanceGET, rt.token, "GET", `/api/attendance?classId=${encodeURIComponent(cls.id)}&date=${date}`);
+      if (!record) return { summary: `Read attendance for ${cls.name}`, result: { class: cls.name, date, recorded: false } };
+      const ids = (status: AttendanceStatus) => Object.entries(record.marks).filter(([, m]) => m === status).map(([id]) => id);
+      return {
+        summary: `Read attendance for ${cls.name}`,
+        result: {
+          class: cls.name,
+          date,
+          recorded: true,
+          present: namesOf(kids, ids("present")),
+          absent: namesOf(kids, ids("absent")),
+          excused: namesOf(kids, ids("excused")),
+          visitors: record.visitors,
+          note: record.note ?? null,
+          savedBy: userName(snap, record.updatedBy ?? record.takenBy),
+        },
+      };
+    },
+  },
+  {
+    name: "get_child_attendance",
+    description: "Read one child's attendance history: rate, counts of present/absent/excused, how many sessions in a row they have missed, and recent sessions.",
+    parameters: schema({ child: s("Child's name or id.") }, ["child"]),
+    write: false,
+    async run(args, rt) {
+      const snap = await rt.snapshot();
+      const child = pick(snap.children, needStr(args, "child"), (c) => c.name, "child");
+      const { records } = await call<{ records: AttendanceRecord[] }>(attendanceGET, rt.token, "GET", `/api/attendance?childId=${encodeURIComponent(child.id)}&weeks=52`);
+      const s = summarizeChild(records, child.id);
+      return {
+        summary: `Read ${child.name}'s attendance`,
+        result: {
+          child: child.name,
+          sessionsRecorded: s.total,
+          ratePercent: s.rate,
+          present: s.present,
+          absent: s.absent,
+          excused: s.excused,
+          missedInARow: s.missedInARow,
+          recent: s.sessions.slice(0, 8).map((x) => ({ date: x.date, status: x.status })),
+        },
+      };
+    },
+  },
+  {
+    name: "list_absentees",
+    description:
+      "Find children who have missed several sessions in a row (absent or excused) — for pastoral follow-up. Looks at the recent weeks of one class, or of all classes for administrators.",
+    parameters: schema({
+      class: s("Class name or id. Omit for the user's own class (administrators without a class get every class)."),
+      minInARow: { type: "number", description: "Minimum consecutive sessions missed (default 2)." },
+      weeks: { type: "number", description: "How many recent weeks to look at (default 12, max 52)." },
+    }),
+    write: false,
+    async run(args, rt) {
+      const snap = await rt.snapshot();
+      const minInARow = typeof args.minInARow === "number" ? Math.max(1, Math.floor(args.minInARow)) : 2;
+      const weeks = typeof args.weeks === "number" ? Math.min(52, Math.max(1, Math.floor(args.weeks))) : 12;
+      const today = todayIso();
+      const from = addDays(today, -7 * weeks);
+
+      let classes: SchoolClass[];
+      if (str(args, "class")) classes = [pick(snap.classes, str(args, "class")!, (c) => c.name, "class")];
+      else if (snap.currentUser.classId && snap.classes.some((c) => c.id === snap.currentUser.classId)) classes = snap.classes.filter((c) => c.id === snap.currentUser.classId);
+      else classes = snap.classes;
+
+      const found: { child: string; class: string; missedInARow: number; ratePercent: number | null; lastPresent: string | null }[] = [];
+      for (const cls of classes) {
+        const { records } = await call<{ records: AttendanceRecord[] }>(
+          attendanceGET,
+          rt.token,
+          "GET",
+          `/api/attendance?classId=${encodeURIComponent(cls.id)}&from=${from}&to=${today}`
+        );
+        for (const kid of snap.children.filter((c) => c.classId === cls.id)) {
+          const s = summarizeChild(records, kid.id);
+          if (s.missedInARow >= minInARow) {
+            found.push({ child: kid.name, class: cls.name, missedInARow: s.missedInARow, ratePercent: s.rate, lastPresent: s.sessions.find((x) => x.status === "present")?.date ?? null });
+          }
+        }
+      }
+      found.sort((a, b) => b.missedInARow - a.missedInARow);
+      return { summary: "Listed children with repeated absences", result: { lookedBackWeeks: weeks, minInARow, children: found } };
     },
   },
 
