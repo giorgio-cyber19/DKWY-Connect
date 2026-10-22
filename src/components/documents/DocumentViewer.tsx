@@ -51,11 +51,23 @@ export function DocumentViewer({ doc, onClose }: { doc: DocumentItem; onClose: (
         setLoading(false);
         return;
       }
+      // Which step failed decides what we tell the user.
+      let step: "download" | "read" = "download";
+      let failedStatus = 0;
+      let failedCode = "";
       try {
         const res = await fetch(driveDownloadUrl(doc.driveFileId));
-        if (!res.ok) throw new Error("download_failed");
+        if (!res.ok) {
+          failedStatus = res.status;
+          failedCode = String((await res.json().catch(() => ({}))).error ?? "");
+          throw new Error("download_failed");
+        }
         const buffer = await res.arrayBuffer();
         if (cancelled) return;
+        step = "read";
+        // .xlsx and .docx are zip archives ("PK"). Anything else would be parsed as plain text and silently show up blank.
+        const magic = new Uint8Array(buffer.slice(0, 2));
+        if (magic[0] !== 0x50 || magic[1] !== 0x4b) throw new Error("not_an_office_file");
 
         if (doc.fileType === "xlsx") {
           const XLSX = await import("xlsx");
@@ -75,8 +87,22 @@ export function DocumentViewer({ doc, onClose }: { doc: DocumentItem; onClose: (
           const result = await mammoth.convertToHtml({ arrayBuffer: buffer });
           if (!cancelled) setHtml(result.value);
         }
-      } catch {
-        if (!cancelled) setLoadError(t("documents.couldNotOpenFile"));
+      } catch (err) {
+        if (!cancelled) {
+          const text = err instanceof Error ? err.message : "";
+          if (step === "download") {
+            if (failedStatus === 401) setLoadError(t("documents.errorSignedOut"));
+            else if (failedStatus === 404 || failedCode === "file_not_found") setLoadError(t("documents.errorFileMissing"));
+            else if (failedCode === "not_configured" || failedCode === "drive_auth") setLoadError(t("documents.errorDriveConnection"));
+            else if (failedStatus === 0 && !text.includes("download_failed")) setLoadError(t("documents.errorOffline"));
+            else setLoadError(t("documents.couldNotOpenFile"));
+          } else if (/dynamically imported module|Loading chunk|ChunkLoadError/i.test(text)) {
+            // The app was updated while this page was open, so its lazy-loaded parts are gone.
+            setLoadError(t("documents.errorRefreshNeeded"));
+          } else {
+            setLoadError(t("documents.errorUnreadable"));
+          }
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
