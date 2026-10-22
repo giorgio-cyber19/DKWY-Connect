@@ -155,6 +155,15 @@ function LoginForm() {
           <p className="text-center text-[11px] text-[var(--text-secondary)] mt-6 leading-relaxed">
             {t("auth.loginFooter")}
           </p>
+          <p className="text-center text-[11px] text-[var(--text-secondary)] mt-2">
+            <Link href="/privacy" className="underline hover:no-underline">
+              {t("auth.privacyLink")}
+            </Link>
+            {" · "}
+            <Link href="/terms" className="underline hover:no-underline">
+              {t("auth.termsLink")}
+            </Link>
+          </p>
         </div>
       </motion.div>
     </div>

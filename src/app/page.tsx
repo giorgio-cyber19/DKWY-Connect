@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Cross } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
@@ -24,6 +25,16 @@ export default function RootPage() {
           <Cross size={22} />
         </div>
         <p className="text-sm text-[var(--text-secondary)]">{t("layout.loadingBrandPrefix")} DWKY Connect…</p>
+        <p className="max-w-sm text-center text-xs text-[var(--text-secondary)] leading-relaxed">{t("auth.homeDescription")}</p>
+        <p className="text-[11px] text-[var(--text-secondary)]">
+          <Link href="/privacy" className="underline">
+            {t("auth.privacyLink")}
+          </Link>
+          {" · "}
+          <Link href="/terms" className="underline">
+            {t("auth.termsLink")}
+          </Link>
+        </p>
       </div>
     </div>
   );

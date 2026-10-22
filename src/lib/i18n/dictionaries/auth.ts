@@ -25,6 +25,9 @@ const en = {
   loginFailed: "That email/username and password don't match an account.",
   signedOutIdle: "You were signed out after 30 minutes of inactivity. Please sign in again.",
   loginFooter: "No public registration. Accounts are created by your Sunday School administrator.",
+  homeDescription: "DWKY Connect is the private Sunday School and youth ministry tool of the Duta Watjana Kids & Youth Committee: lesson plans, class attendance, child portfolios, documents, calendar and team updates.",
+  privacyLink: "Privacy Policy",
+  termsLink: "Terms of Service",
   marketingHeadline: "A joyful home for our Sunday School & Youth ministry.",
   marketingTagline:
     "Lesson plans, portfolios, resources, and community — all in one place for the Duta Watjana Kids & Youth Committee.",
@@ -90,6 +93,9 @@ const nl: typeof en = {
   loginFailed: "Dit e-mailadres/deze gebruikersnaam en dit wachtwoord komen niet overeen met een account.",
   signedOutIdle: "Je bent uitgelogd na 30 minuten inactiviteit. Log opnieuw in.",
   loginFooter: "Geen openbare registratie. Accounts worden aangemaakt door de beheerder van je zondagsschool.",
+  homeDescription: "DWKY Connect is de besloten zondagsschool- en jeugdwerktool van het Duta Watjana Kids & Youth Committee: lesplannen, aanwezigheid, kinderportfolio's, documenten, agenda en teamnieuws.",
+  privacyLink: "Privacybeleid",
+  termsLink: "Gebruiksvoorwaarden",
   marketingHeadline: "Een fijne thuisbasis voor onze zondagsschool- en jeugdbediening.",
   marketingTagline:
     "Lesplannen, portfolio's, hulpmiddelen en gemeenschap — allemaal op één plek voor het Duta Watjana Kids & Youth Committee.",
