@@ -421,3 +421,24 @@ export async function deleteBackupFile(fileId: string): Promise<void> {
   const auth = await getAuthorizedClient();
   await getDrive(auth).files.delete({ fileId });
 }
+
+export type DriveHealth = "ok" | "not_connected" | "expired" | "unknown";
+
+/**
+ * Actually asks Google for an access token, so a revoked or expired refresh token is detected
+ * right away. (isDriveConnected() only says a token is stored, not that Google still honours it.)
+ */
+export async function checkDriveHealth(): Promise<DriveHealth> {
+  if (!(await isDriveConnected())) return "not_connected";
+  try {
+    const auth = await getAuthorizedClient();
+    await auth.getAccessToken();
+    return "ok";
+  } catch (err) {
+    const e = err as { message?: string; response?: { data?: unknown } };
+    const detail = `${e.message ?? ""} ${JSON.stringify(e.response?.data ?? "")}`;
+    if (/invalid_grant|unauthorized_client|invalid_token|Token has been expired or revoked/i.test(detail)) return "expired";
+    console.error("Drive health check inconclusive:", e.message);
+    return "unknown";
+  }
+}

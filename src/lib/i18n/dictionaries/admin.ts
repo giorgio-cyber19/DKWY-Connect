@@ -54,6 +54,8 @@ const en = {
   backupsSafetyNote: "The state before this restore was saved as:",
   backupsAlertTitle: "Backups need attention",
   backupsAlertAction: "Open Backups",
+  driveExpiredAlertTitle: "Google Drive needs to be reconnected — files and backups won't work until it is.",
+  driveExpiredAlertAction: "Reconnect Google Drive",
 
   // admin/connect-google-drive/page.tsx
   driveAccessDeniedDescription: "Only administrators can connect Google Drive.",
@@ -227,6 +229,8 @@ const nl: typeof en = {
   backupsSafetyNote: "De situatie vóór dit herstel is opgeslagen als:",
   backupsAlertTitle: "Back-ups hebben aandacht nodig",
   backupsAlertAction: "Back-ups openen",
+  driveExpiredAlertTitle: "Google Drive moet opnieuw worden gekoppeld — bestanden en back-ups werken pas weer daarna.",
+  driveExpiredAlertAction: "Google Drive opnieuw koppelen",
 
   // admin/connect-google-drive/page.tsx
   driveAccessDeniedDescription: "Alleen beheerders kunnen Google Drive verbinden.",
