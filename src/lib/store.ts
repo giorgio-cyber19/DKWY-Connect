@@ -462,12 +462,12 @@ export const useAppStore = create<AppState>()(
 
       renameDocumentItem: async (id, name) => {
         const updated = await apiPatch<DocumentItem>(`/api/documents/${id}`, { name });
-        set((s) => ({ documentItems: s.documentItems.map((d) => (d.id === id ? { ...d, name: updated.name } : d)) }));
+        set((s) => ({ documentItems: s.documentItems.map((d) => (d.id === id ? { ...d, name: updated.name, modifiedAt: updated.modifiedAt } : d)) }));
       },
 
       renameMediaItem: async (id, name) => {
         const updated = await apiPatch<MediaItem>(`/api/media/${id}`, { name });
-        set((s) => ({ mediaItems: s.mediaItems.map((m) => (m.id === id ? { ...m, name: updated.name } : m)) }));
+        set((s) => ({ mediaItems: s.mediaItems.map((m) => (m.id === id ? { ...m, name: updated.name, modifiedAt: updated.modifiedAt } : m)) }));
       },
 
       updateDocumentItemSize: async (id, size) => {

@@ -19,19 +19,20 @@ import {
   Plus,
 } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { ContextMenu, useContextMenu, type ContextMenuItem } from "@/components/ui/ContextMenu";
-import { StaggerGrid } from "@/components/ui/Stagger";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { DocumentViewer } from "@/components/documents/DocumentViewer";
 import { getUser, useAppStore } from "@/lib/store";
 import { useAuth } from "@/lib/auth-context";
-import { formatDate, cn } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { hasDraggedFiles, readDroppedContent } from "@/lib/dropped-files";
 import { splitFileName } from "@/lib/file-name";
+import { applyLibraryView, hasActiveFilters, parseSizeToBytes, DEFAULT_VIEW_STATE, type LibraryEntry, type LibraryViewState } from "@/lib/library-view";
+import { LibraryToolbar, type LibraryLayout } from "@/components/library/LibraryToolbar";
+import { LibraryList, LibraryGrid, FolderTiles, type LibraryRow } from "@/components/library/LibraryFiles";
 import { uploadToDrive, driveDownloadUrl, openInGoogleEditor } from "@/lib/upload";
 import { useLanguage } from "@/lib/language-context";
 import { translateApiError } from "@/lib/i18n/errors";
@@ -48,6 +49,10 @@ const fileColors: Record<DocumentItem["fileType"], string> = {
   docx: "var(--color-blue-deep)",
   xlsx: "var(--color-sage-deep)",
 };
+
+function documentEntry(d: DocumentItem): LibraryEntry {
+  return { name: d.name, kind: d.fileType, sizeBytes: parseSizeToBytes(d.size), modified: d.modifiedAt ?? d.uploadedAt, ownerId: d.uploadedBy };
+}
 
 const extToFileType: Record<string, DocumentItem["fileType"]> = {
   pdf: "pdf",
@@ -77,6 +82,8 @@ export default function DocumentsPage() {
   // What the cursor is over while dragging files in: the page ("canvas") or a folder's id.
   const [dragTarget, setDragTarget] = useState<string | null>(null);
   const [dropNotice, setDropNotice] = useState<string | null>(null);
+  const [viewState, setViewState] = useState<LibraryViewState>(DEFAULT_VIEW_STATE);
+  const [layout, setLayout] = useState<LibraryLayout>("list");
   const [renameTarget, setRenameTarget] = useState<DocumentItem | null>(null);
   const [renameBase, setRenameBase] = useState("");
   const [renaming, setRenaming] = useState(false);
@@ -331,6 +338,59 @@ export default function DocumentsPage() {
     return items;
   }
 
+  function patchView(patch: Partial<LibraryViewState>) {
+    setViewState((v) => ({ ...v, ...patch }));
+  }
+
+  // Click a column header to sort by it; clicking the active one flips the direction (like Drive).
+  function sortBy(key: LibraryViewState["sortKey"]) {
+    setViewState((v) => (v.sortKey === key ? { ...v, sortDir: v.sortDir === "asc" ? "desc" : "asc" } : { ...v, sortKey: key, sortDir: key === "name" ? "asc" : "desc" }));
+  }
+
+  const visibleItems = useMemo(() => applyLibraryView(filtered, documentEntry, viewState), [filtered, viewState]);
+
+  const people = useMemo(() => {
+    const ids = Array.from(new Set(documentItems.map((x) => x.uploadedBy)));
+    return ids.map((id) => ({ id, name: getUser(id)?.name ?? "—" })).sort((a, b) => a.name.localeCompare(b.name));
+  }, [documentItems]);
+
+  const typeOptions = [
+    { value: "pdf", label: t("library.kindPdf") },
+    { value: "docx", label: t("library.kindWord") },
+    { value: "xlsx", label: t("library.kindExcel") },
+  ];
+
+  const rows: LibraryRow[] = visibleItems.map((item) => {
+    const uploader = getUser(item.uploadedBy);
+    return {
+      id: item.id,
+      name: item.name,
+      Icon: fileIcons[item.fileType],
+      color: fileColors[item.fileType],
+      sizeText: item.size,
+      modified: item.modifiedAt ?? item.uploadedAt,
+      ownerName: uploader?.name ?? "",
+      ownerColor: uploader?.avatarColor,
+      location: query.trim() ? folders.find((f) => f.id === item.folderId)?.name : undefined,
+      canOpen: (item.fileType === "docx" || item.fileType === "xlsx") && !!item.driveFileId,
+    };
+  });
+
+  function openRow(id: string) {
+    const item = documentItems.find((x) => x.id === id);
+    if (item) setViewingDoc(item);
+  }
+
+  function rowMenu(e: React.MouseEvent, id: string) {
+    const item = documentItems.find((x) => x.id === id);
+    if (item) menu.open(e, fileMenuItems(item));
+  }
+
+  function folderMenu(e: React.MouseEvent, id: string) {
+    const folder = folders.find((f) => f.id === id);
+    if (folder) menu.open(e, folderMenuItems(folder));
+  }
+
   const showFolders = !currentFolderId && !query.trim();
 
   return (
@@ -365,6 +425,8 @@ export default function DocumentsPage() {
           </button>
         )}
       </div>
+
+      <LibraryToolbar state={viewState} onChange={patchView} typeOptions={typeOptions} people={people} layout={layout} onLayoutChange={setLayout} />
 
       {uploadError && <p className="text-xs text-red-500 font-medium mb-4">{uploadError}</p>}
       {openError && <p className="text-xs text-red-500 font-medium mb-4">{openError}</p>}
@@ -418,100 +480,65 @@ export default function DocumentsPage() {
           </div>
         )}
         {showFolders && folders.length > 0 && (
-          <div className="mb-6">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)] mb-3">{t("library.foldersLabel")}</h3>
-            <StaggerGrid className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-              {folders.map((f) => {
-                const count = documentItems.filter((d) => d.folderId === f.id).length;
-                return (
-                  <Card
-                    key={f.id}
-                    className={cn("p-4 flex items-center gap-3 cursor-pointer", dragTarget === f.id && "ring-2 ring-[var(--color-blue)]")}
-                    onClick={() => setCurrentFolderId(f.id)}
-                    onContextMenu={(e) => menu.open(e, folderMenuItems(f))}
-                    onDragOver={(e) => {
-                      if (!hasDraggedFiles(e.dataTransfer)) return;
-                      e.preventDefault();
-                      e.stopPropagation();
-                      e.dataTransfer.dropEffect = "copy";
-                      setDragTarget(f.id);
-                    }}
-                    onDragLeave={(e) => {
-                      if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragTarget(null);
-                    }}
-                    onDrop={(e) => handleDrop(e, f)}
-                  >
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-[color-mix(in_srgb,var(--color-gold)_16%,transparent)] text-[var(--color-gold-deep)]">
-                      <Folder size={18} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold truncate">{f.name}</p>
-                      <p className="text-[11px] text-[var(--text-secondary)]">{count} {t("library.itemCount")}</p>
-                    </div>
-                  </Card>
-                );
-              })}
-            </StaggerGrid>
+          <div className="mb-5">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)] mb-2.5">{t("library.foldersLabel")}</h3>
+            <FolderTiles
+              folders={folders}
+              dragTarget={dragTarget}
+              onOpen={setCurrentFolderId}
+              onMenu={folderMenu}
+              onDragOver={(e, id) => {
+                if (!hasDraggedFiles(e.dataTransfer)) return;
+                e.preventDefault();
+                e.stopPropagation();
+                e.dataTransfer.dropEffect = "copy";
+                setDragTarget(id);
+              }}
+              onDragLeave={(e) => {
+                if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragTarget(null);
+              }}
+              onDrop={(e, id) => {
+                const folder = folders.find((f) => f.id === id);
+                if (folder) handleDrop(e, folder);
+              }}
+            />
           </div>
         )}
 
-        {filtered.length === 0 ? (
-          <EmptyState
-            icon={Folder}
-            title={currentFolderId ? t("library.emptyFolderTitle") : documentItems.length === 0 ? t("documents.noDocumentsYetTitle") : t("documents.noDocumentsFoundTitle")}
-            description={
-              currentFolderId
-                ? t("library.emptyFolderDescription")
-                : documentItems.length === 0
-                  ? t("library.rightClickHint")
-                  : t("documents.noDocumentsFoundDescription")
-            }
-          />
+        {rows.length === 0 ? (
+          filtered.length > 0 && hasActiveFilters(viewState) ? (
+            <EmptyState
+              icon={Folder}
+              title={t("library.noMatchTitle")}
+              description={t("library.noMatchDescription")}
+              action={
+                <Button size="sm" variant="outline" onClick={() => patchView({ type: "all", modified: "any", from: "", to: "", size: "any", person: "all" })}>
+                  {t("library.clearFilters")}
+                </Button>
+              }
+            />
+          ) : (
+            <EmptyState
+              icon={Folder}
+              title={currentFolderId ? t("library.emptyFolderTitle") : documentItems.length === 0 ? t("documents.noDocumentsYetTitle") : t("documents.noDocumentsFoundTitle")}
+              description={
+                currentFolderId
+                  ? t("library.emptyFolderDescription")
+                  : documentItems.length === 0
+                    ? t("library.rightClickHint")
+                    : t("documents.noDocumentsFoundDescription")
+              }
+            />
+          )
         ) : (
-          <StaggerGrid className="space-y-2.5">
-            {filtered.map((d) => {
-              const Icon = fileIcons[d.fileType];
-              const color = fileColors[d.fileType];
-              const uploader = getUser(d.uploadedBy);
-              const folder = query.trim() ? folders.find((f) => f.id === d.folderId) : null;
-              const canPreview = (d.fileType === "docx" || d.fileType === "xlsx") && d.driveFileId;
-              return (
-                <Card
-                  key={d.id}
-                  className={cn("p-4 flex items-center gap-4", canPreview && "cursor-pointer")}
-                  onClick={canPreview ? () => setViewingDoc(d) : undefined}
-                  onContextMenu={(e) => menu.open(e, fileMenuItems(d))}
-                >
-                  <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style={{ background: `color-mix(in srgb, ${color} 16%, transparent)`, color }}>
-                    <Icon size={19} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold truncate">{d.name}</p>
-                    <p className="text-[11.5px] text-[var(--text-secondary)]">
-                      {uploader?.name} · {formatDate(d.uploadedAt, undefined, language)} · {d.size}
-                      {folder && <> · {folder.name}</>}
-                    </p>
-                  </div>
-                  {d.driveFileId ? (
-                    <a
-                      href={driveDownloadUrl(d.driveFileId)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      className="p-2 rounded-lg hover:bg-black/5 text-[var(--text-secondary)] shrink-0"
-                      title={t("documents.downloadTitle")}
-                    >
-                      <Download size={16} />
-                    </a>
-                  ) : (
-                    <button className="p-2 rounded-lg hover:bg-black/5 text-[var(--text-secondary)] shrink-0" title={t("documents.addedBeforeDrive")} disabled>
-                      <Download size={16} />
-                    </button>
-                  )}
-                </Card>
-              );
-            })}
-          </StaggerGrid>
+          <>
+            {showFolders && folders.length > 0 && <h3 className="text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)] mb-2.5">{t("library.filesLabel")}</h3>}
+            {layout === "list" ? (
+              <LibraryList rows={rows} sortKey={viewState.sortKey} sortDir={viewState.sortDir} onSort={sortBy} onOpen={openRow} onMenu={rowMenu} />
+            ) : (
+              <LibraryGrid rows={rows} onOpen={openRow} onMenu={rowMenu}  />
+            )}
+          </>
         )}
       </div>
 

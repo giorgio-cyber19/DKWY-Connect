@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "bad_request", message: "A file name is required." }, { status: 400 });
   }
 
-  const media: MediaItem = { ...body, id: newId("med"), uploadedAt: new Date().toISOString().slice(0, 10) };
+  const media: MediaItem = { ...body, id: newId("med"), uploadedAt: new Date().toISOString().slice(0, 10), modifiedAt: new Date().toISOString() };
   await putEntity("mediaItems", media);
   return NextResponse.json(media);
 }

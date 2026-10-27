@@ -31,9 +31,11 @@ export async function PATCH(request: Request, ctx: RouteContext<"/api/media/[id]
         return driveRenameFailure(err);
       }
     }
-    await putEntity("mediaItems", { ...item, name: finalName });
+    const renamed: MediaItem = { ...item, name: finalName, modifiedAt: new Date().toISOString() };
+    await putEntity("mediaItems", renamed);
+    return NextResponse.json(renamed);
   }
-  return NextResponse.json({ ...item, name: finalName });
+  return NextResponse.json(item);
 }
 
 export async function DELETE(request: Request, ctx: RouteContext<"/api/media/[id]">) {

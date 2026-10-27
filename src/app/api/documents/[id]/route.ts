@@ -36,14 +36,16 @@ export async function PATCH(request: Request, ctx: RouteContext<"/api/documents/
           return driveRenameFailure(err);
         }
       }
-      await putEntity("documentItems", { ...doc, name: finalName });
+      const renamed: DocumentItem = { ...doc, name: finalName, modifiedAt: new Date().toISOString() };
+      await putEntity("documentItems", renamed);
+      return NextResponse.json(renamed);
     }
-    return NextResponse.json({ ...doc, name: finalName });
+    return NextResponse.json(doc);
   }
 
   const size = typeof body?.size === "string" ? body.size : doc.size;
 
-  const updated: DocumentItem = { ...doc, size };
+  const updated: DocumentItem = { ...doc, size, modifiedAt: new Date().toISOString() };
   await putEntity("documentItems", updated);
   return NextResponse.json(updated);
 }

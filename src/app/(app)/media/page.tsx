@@ -15,8 +15,6 @@ import {
   Download,
   Tag,
   X,
-  Grid3x3,
-  List,
   Pencil,
   Trash2,
   ChevronLeft,
@@ -24,12 +22,10 @@ import {
 } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { ContextMenu, useContextMenu, type ContextMenuItem } from "@/components/ui/ContextMenu";
-import { StaggerGrid, StaggerItem } from "@/components/ui/Stagger";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { getUser, useAppStore } from "@/lib/store";
 import { useAuth } from "@/lib/auth-context";
@@ -38,6 +34,9 @@ import { translateApiError } from "@/lib/i18n/errors";
 import { formatDate, cn } from "@/lib/utils";
 import { hasDraggedFiles, readDroppedContent } from "@/lib/dropped-files";
 import { splitFileName } from "@/lib/file-name";
+import { applyLibraryView, hasActiveFilters, parseSizeToBytes, DEFAULT_VIEW_STATE, type LibraryEntry, type LibraryViewState } from "@/lib/library-view";
+import { LibraryToolbar, type LibraryLayout } from "@/components/library/LibraryToolbar";
+import { LibraryList, LibraryGrid, FolderTiles, type LibraryRow } from "@/components/library/LibraryFiles";
 import { uploadToDrive, driveDownloadUrl } from "@/lib/upload";
 import type { MediaItem, LibraryFolder } from "@/lib/types";
 
@@ -49,6 +48,10 @@ const typeIcons: Record<MediaItem["type"], typeof ImageIcon> = {
   doc: FileText,
   ppt: Presentation,
 };
+
+function mediaEntry(m: MediaItem): LibraryEntry {
+  return { name: m.name, kind: m.type, sizeBytes: parseSizeToBytes(m.size), modified: m.modifiedAt ?? m.uploadedAt, ownerId: m.uploadedBy };
+}
 
 const extToType: Record<string, MediaItem["type"]> = {
   png: "image",
@@ -88,7 +91,6 @@ export default function MediaPage() {
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
   const [preview, setPreview] = useState<MediaItem | null>(null);
-  const [view, setView] = useState<"grid" | "list">("grid");
   const [folderModal, setFolderModal] = useState<{ mode: "create" | "rename"; folder?: LibraryFolder } | null>(null);
   const [folderName, setFolderName] = useState("");
   const [folderSaving, setFolderSaving] = useState(false);
@@ -100,6 +102,8 @@ export default function MediaPage() {
   // What the cursor is over while dragging files in: the page ("canvas") or a folder's id.
   const [dragTarget, setDragTarget] = useState<string | null>(null);
   const [dropNotice, setDropNotice] = useState<string | null>(null);
+  const [viewState, setViewState] = useState<LibraryViewState>(DEFAULT_VIEW_STATE);
+  const [layout, setLayout] = useState<LibraryLayout>("grid");
   const [renameTarget, setRenameTarget] = useState<MediaItem | null>(null);
   const [renameBase, setRenameBase] = useState("");
   const [renaming, setRenaming] = useState(false);
@@ -337,6 +341,62 @@ export default function MediaPage() {
     return items;
   }
 
+  function patchView(patch: Partial<LibraryViewState>) {
+    setViewState((v) => ({ ...v, ...patch }));
+  }
+
+  // Click a column header to sort by it; clicking the active one flips the direction (like Drive).
+  function sortBy(key: LibraryViewState["sortKey"]) {
+    setViewState((v) => (v.sortKey === key ? { ...v, sortDir: v.sortDir === "asc" ? "desc" : "asc" } : { ...v, sortKey: key, sortDir: key === "name" ? "asc" : "desc" }));
+  }
+
+  const visibleItems = useMemo(() => applyLibraryView(filtered, mediaEntry, viewState), [filtered, viewState]);
+
+  const people = useMemo(() => {
+    const ids = Array.from(new Set(mediaItems.map((x) => x.uploadedBy)));
+    return ids.map((id) => ({ id, name: getUser(id)?.name ?? "—" })).sort((a, b) => a.name.localeCompare(b.name));
+  }, [mediaItems]);
+
+  const typeOptions = [
+    { value: "image", label: t("library.kindImage") },
+    { value: "video", label: t("library.kindVideo") },
+    { value: "audio", label: t("library.kindAudio") },
+    { value: "pdf", label: t("library.kindPdf") },
+    { value: "doc", label: t("library.kindDocument") },
+    { value: "ppt", label: t("library.kindPresentation") },
+  ];
+
+  const rows: LibraryRow[] = visibleItems.map((item) => {
+    const uploader = getUser(item.uploadedBy);
+    return {
+      id: item.id,
+      name: item.name,
+      Icon: typeIcons[item.type],
+      color: item.color,
+      sizeText: item.size,
+      modified: item.modifiedAt ?? item.uploadedAt,
+      ownerName: uploader?.name ?? "",
+      ownerColor: uploader?.avatarColor,
+      location: query.trim() ? folders.find((f) => f.id === item.folderId)?.name : undefined,
+      canOpen: true,
+    };
+  });
+
+  function openRow(id: string) {
+    const item = mediaItems.find((x) => x.id === id);
+    if (item) setPreview(item);
+  }
+
+  function rowMenu(e: React.MouseEvent, id: string) {
+    const item = mediaItems.find((x) => x.id === id);
+    if (item) menu.open(e, fileMenuItems(item));
+  }
+
+  function folderMenu(e: React.MouseEvent, id: string) {
+    const folder = folders.find((f) => f.id === id);
+    if (folder) menu.open(e, folderMenuItems(folder));
+  }
+
   const showFolders = !currentFolderId && !query.trim();
 
   return (
@@ -370,15 +430,9 @@ export default function MediaPage() {
             <ChevronLeft size={15} /> {t("library.backToAllFiles")} <span className="text-[var(--color-ink-faint)]">/</span> {currentFolder.name}
           </button>
         )}
-        <div className="flex items-center gap-1 p-1 rounded-xl glass shrink-0">
-          <button onClick={() => setView("grid")} className={cn("p-1.5 rounded-lg", view === "grid" ? "bg-[var(--color-gold)] text-white" : "text-[var(--text-secondary)]")}>
-            <Grid3x3 size={15} />
-          </button>
-          <button onClick={() => setView("list")} className={cn("p-1.5 rounded-lg", view === "list" ? "bg-[var(--color-gold)] text-white" : "text-[var(--text-secondary)]")}>
-            <List size={15} />
-          </button>
-        </div>
       </div>
+
+      <LibraryToolbar state={viewState} onChange={patchView} typeOptions={typeOptions} people={people} layout={layout} onLayoutChange={setLayout} />
 
       {uploadError && <p className="text-xs text-red-500 font-medium mb-4">{uploadError}</p>}
       {uploading && <p className="text-xs text-[var(--text-secondary)] mb-4">{t("media.uploadingToDrive")}</p>}
@@ -442,117 +496,65 @@ export default function MediaPage() {
           </div>
         )}
         {showFolders && folders.length > 0 && (
-          <div className="mb-6">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)] mb-3">{t("library.foldersLabel")}</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
-              {folders.map((f) => {
-                const count = mediaItems.filter((m) => m.folderId === f.id).length;
-                return (
-                  <Card
-                    key={f.id}
-                    className={cn("p-4 flex items-center gap-3 cursor-pointer", dragTarget === f.id && "ring-2 ring-[var(--color-blue)]")}
-                    onClick={() => setCurrentFolderId(f.id)}
-                    onContextMenu={(e) => menu.open(e, folderMenuItems(f))}
-                    onDragOver={(e) => {
-                      if (!hasDraggedFiles(e.dataTransfer)) return;
-                      e.preventDefault();
-                      e.stopPropagation();
-                      e.dataTransfer.dropEffect = "copy";
-                      setDragTarget(f.id);
-                    }}
-                    onDragLeave={(e) => {
-                      if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragTarget(null);
-                    }}
-                    onDrop={(e) => handleDrop(e, f)}
-                  >
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-[color-mix(in_srgb,var(--color-gold)_16%,transparent)] text-[var(--color-gold-deep)]">
-                      <Folder size={18} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold truncate">{f.name}</p>
-                      <p className="text-[11px] text-[var(--text-secondary)]">{count} {t("library.itemCount")}</p>
-                    </div>
-                  </Card>
-                );
-              })}
-            </div>
+          <div className="mb-5">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)] mb-2.5">{t("library.foldersLabel")}</h3>
+            <FolderTiles
+              folders={folders}
+              dragTarget={dragTarget}
+              onOpen={setCurrentFolderId}
+              onMenu={folderMenu}
+              onDragOver={(e, id) => {
+                if (!hasDraggedFiles(e.dataTransfer)) return;
+                e.preventDefault();
+                e.stopPropagation();
+                e.dataTransfer.dropEffect = "copy";
+                setDragTarget(id);
+              }}
+              onDragLeave={(e) => {
+                if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragTarget(null);
+              }}
+              onDrop={(e, id) => {
+                const folder = folders.find((f) => f.id === id);
+                if (folder) handleDrop(e, folder);
+              }}
+            />
           </div>
         )}
 
-        {filtered.length === 0 ? (
-          <EmptyState
-            icon={Folder}
-            title={currentFolderId ? t("library.emptyFolderTitle") : mediaItems.length === 0 ? t("media.noFilesYetTitle") : t("media.noFilesFoundTitle")}
-            description={
-              currentFolderId
-                ? t("library.emptyFolderDescription")
-                : mediaItems.length === 0
-                  ? t("library.rightClickHint")
-                  : t("media.noFilesFoundDescription")
-            }
-          />
-        ) : view === "grid" ? (
-          <StaggerGrid className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filtered.map((m) => {
-              const Icon = typeIcons[m.type];
-              const isSelected = selected.includes(m.id);
-              return (
-                <StaggerItem key={m.id}>
-                  <Card
-                    className={cn("overflow-hidden cursor-pointer relative", isSelected && "ring-2 ring-[var(--color-gold)]")}
-                    onClick={() => setPreview(m)}
-                    onContextMenu={(e) => menu.open(e, fileMenuItems(m))}
-                  >
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleSelect(m.id);
-                      }}
-                      className={cn(
-                        "absolute top-2.5 left-2.5 z-10 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors",
-                        isSelected ? "bg-[var(--color-gold)] border-[var(--color-gold)]" : "border-white/70 bg-black/10"
-                      )}
-                    >
-                      {isSelected && <span className="w-2 h-2 rounded-sm bg-white" />}
-                    </button>
-                    <div
-                      className="h-28 flex items-center justify-center"
-                      style={{ background: `linear-gradient(135deg, ${m.color}, color-mix(in srgb, ${m.color} 45%, white))` }}
-                    >
-                      <Icon size={32} className="text-white/90" />
-                    </div>
-                    <div className="p-3.5">
-                      <p className="text-[12.5px] font-semibold truncate">{m.name}</p>
-                      <p className="text-[10.5px] text-[var(--text-secondary)] mt-0.5">{m.size} · {formatDate(m.uploadedAt, undefined, language)}</p>
-                    </div>
-                  </Card>
-                </StaggerItem>
-              );
-            })}
-          </StaggerGrid>
+        {rows.length === 0 ? (
+          filtered.length > 0 && hasActiveFilters(viewState) ? (
+            <EmptyState
+              icon={Folder}
+              title={t("library.noMatchTitle")}
+              description={t("library.noMatchDescription")}
+              action={
+                <Button size="sm" variant="outline" onClick={() => patchView({ type: "all", modified: "any", from: "", to: "", size: "any", person: "all" })}>
+                  {t("library.clearFilters")}
+                </Button>
+              }
+            />
+          ) : (
+            <EmptyState
+              icon={Folder}
+              title={currentFolderId ? t("library.emptyFolderTitle") : mediaItems.length === 0 ? t("media.noFilesYetTitle") : t("media.noFilesFoundTitle")}
+              description={
+                currentFolderId
+                  ? t("library.emptyFolderDescription")
+                  : mediaItems.length === 0
+                    ? t("library.rightClickHint")
+                    : t("media.noFilesFoundDescription")
+              }
+            />
+          )
         ) : (
-          <StaggerGrid className="space-y-2">
-            {filtered.map((m) => {
-              const Icon = typeIcons[m.type];
-              const uploader = getUser(m.uploadedBy);
-              const folder = query.trim() ? folders.find((f) => f.id === m.folderId) : null;
-              return (
-                <StaggerItem key={m.id}>
-                  <Card className="p-3.5 flex items-center gap-3.5 cursor-pointer" onClick={() => setPreview(m)} onContextMenu={(e) => menu.open(e, fileMenuItems(m))}>
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: `color-mix(in srgb, ${m.color} 18%, transparent)`, color: m.color }}>
-                      <Icon size={17} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[13px] font-semibold truncate">{m.name}</p>
-                      <p className="text-[11px] text-[var(--text-secondary)]">{uploader?.name}{folder && <> · {folder.name}</>}</p>
-                    </div>
-                    <span className="text-[11px] text-[var(--text-secondary)] shrink-0 hidden sm:block">{formatDate(m.uploadedAt, undefined, language)}</span>
-                    <span className="text-[11px] text-[var(--text-secondary)] shrink-0">{m.size}</span>
-                  </Card>
-                </StaggerItem>
-              );
-            })}
-          </StaggerGrid>
+          <>
+            {showFolders && folders.length > 0 && <h3 className="text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)] mb-2.5">{t("library.filesLabel")}</h3>}
+            {layout === "list" ? (
+              <LibraryList rows={rows} sortKey={viewState.sortKey} sortDir={viewState.sortDir} onSort={sortBy} onOpen={openRow} onMenu={rowMenu} />
+            ) : (
+              <LibraryGrid rows={rows} onOpen={openRow} onMenu={rowMenu} selectedIds={selected} onToggleSelect={toggleSelect} />
+            )}
+          </>
         )}
       </div>
 

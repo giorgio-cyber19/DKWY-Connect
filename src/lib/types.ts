@@ -194,6 +194,8 @@ export interface MediaItem {
   type: "image" | "video" | "audio" | "pdf" | "doc" | "ppt";
   size: string;
   uploadedAt: string;
+  /** ISO time of the last change (upload, rename, edit). Older records don't have it — fall back to uploadedAt. */
+  modifiedAt?: string;
   uploadedBy: string;
   tags: string[];
   color: string;
@@ -208,6 +210,8 @@ export interface DocumentItem {
   fileType: "pdf" | "docx" | "xlsx";
   size: string;
   uploadedAt: string;
+  /** ISO time of the last change (upload, rename, edit). Older records don't have it — fall back to uploadedAt. */
+  modifiedAt?: string;
   uploadedBy: string;
   driveFileId?: string;
   driveViewUrl?: string;
