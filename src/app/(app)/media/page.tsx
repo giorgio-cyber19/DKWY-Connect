@@ -37,6 +37,7 @@ import { useLanguage } from "@/lib/language-context";
 import { translateApiError } from "@/lib/i18n/errors";
 import { formatDate, cn } from "@/lib/utils";
 import { hasDraggedFiles, readDroppedContent } from "@/lib/dropped-files";
+import { splitFileName } from "@/lib/file-name";
 import { uploadToDrive, driveDownloadUrl } from "@/lib/upload";
 import type { MediaItem, LibraryFolder } from "@/lib/types";
 
@@ -99,6 +100,10 @@ export default function MediaPage() {
   // What the cursor is over while dragging files in: the page ("canvas") or a folder's id.
   const [dragTarget, setDragTarget] = useState<string | null>(null);
   const [dropNotice, setDropNotice] = useState<string | null>(null);
+  const [renameTarget, setRenameTarget] = useState<MediaItem | null>(null);
+  const [renameBase, setRenameBase] = useState("");
+  const [renaming, setRenaming] = useState(false);
+  const [renameError, setRenameError] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const filesInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
@@ -223,6 +228,28 @@ export default function MediaPage() {
     }
   }
 
+  function openRenameFile(item: MediaItem) {
+    setRenameTarget(item);
+    setRenameBase(splitFileName(item.name).base);
+    setRenameError(null);
+  }
+
+  /** Renames the file in Google Drive and in the app; the extension stays as it was. */
+  async function submitRename(e: React.FormEvent) {
+    e.preventDefault();
+    if (!renameTarget || !renameBase.trim()) return;
+    setRenaming(true);
+    setRenameError(null);
+    try {
+      await useAppStore.getState().renameMediaItem(renameTarget.id, renameBase.trim() + splitFileName(renameTarget.name).ext);
+      setRenameTarget(null);
+    } catch (err) {
+      setRenameError(translateApiError(err, language));
+    } finally {
+      setRenaming(false);
+    }
+  }
+
   function isSupportedFile(file: File): boolean {
     return (file.name.split(".").pop() ?? "").toLowerCase() in extToType;
   }
@@ -305,6 +332,7 @@ export default function MediaPage() {
         onClick: () => window.open(driveDownloadUrl(item.driveFileId!), "_blank"),
       });
     }
+    items.push({ label: t("library.rename"), icon: <Pencil size={15} />, onClick: () => openRenameFile(item) });
     items.push({ label: t("library.delete"), icon: <Trash2 size={15} />, onClick: () => setDeleteFile(item), destructive: true, separator: true });
     return items;
   }
@@ -596,6 +624,31 @@ export default function MediaPage() {
           {folderError && <p className="text-[12px] text-red-500 font-medium">{folderError}</p>}
           <Button type="submit" className="w-full" loading={folderSaving} disabled={!folderName.trim()}>
             {folderModal?.mode === "rename" ? t("library.saveRename") : t("library.create")}
+          </Button>
+        </form>
+      </Modal>
+
+      <Modal open={!!renameTarget} onClose={() => setRenameTarget(null)} title={t("library.renameFileTitle")} size="sm">
+        <form onSubmit={submitRename} className="space-y-4">
+          <div>
+            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">{t("library.fileNameLabel")}</label>
+            <div className="flex items-center gap-2">
+              <input
+                autoFocus
+                value={renameBase}
+                onChange={(e) => setRenameBase(e.target.value)}
+                onFocus={(e) => e.currentTarget.select()}
+                className="flex-1 min-w-0 text-sm px-3.5 py-2.5 rounded-xl border border-[var(--border-soft)] bg-transparent focus-ring focus:border-[var(--color-gold)]"
+              />
+              {renameTarget && splitFileName(renameTarget.name).ext && (
+                <span className="text-sm font-semibold text-[var(--text-secondary)] shrink-0">{splitFileName(renameTarget.name).ext}</span>
+              )}
+            </div>
+            <p className="text-[11px] text-[var(--text-secondary)] mt-1.5">{t("library.renameFileNote")}</p>
+          </div>
+          {renameError && <p className="text-[12px] text-red-500 font-medium">{renameError}</p>}
+          <Button type="submit" className="w-full" loading={renaming} disabled={!renameBase.trim() || renaming}>
+            {t("library.saveRename")}
           </Button>
         </form>
       </Modal>
