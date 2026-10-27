@@ -23,7 +23,10 @@ const en = {
   deleteDocumentTitle: "Delete this document?",
   emptyFolderTitle: "This folder is empty",
   emptyFolderDescription: "Right-click anywhere in here to upload files, or upload a whole folder at once.",
-  rightClickHint: "Right-click anywhere to create a folder or upload files",
+  rightClickHint: "Right-click anywhere to create a folder or upload files — or drag files here",
+  dropToUpload: "Drop files to upload",
+  dropIntoFolder: "Drop to add to",
+  skippedUnsupported: "file(s) skipped because their type isn't supported here.",
   itemCount: "items",
 };
 
@@ -52,7 +55,10 @@ const nl: typeof en = {
   deleteDocumentTitle: "Dit document verwijderen?",
   emptyFolderTitle: "Deze map is leeg",
   emptyFolderDescription: "Klik met de rechtermuisknop ergens hier om bestanden te uploaden, of upload een hele map in één keer.",
-  rightClickHint: "Klik met de rechtermuisknop om een map te maken of bestanden te uploaden",
+  rightClickHint: "Klik met de rechtermuisknop om een map te maken of bestanden te uploaden — of sleep bestanden hierheen",
+  dropToUpload: "Laat los om te uploaden",
+  dropIntoFolder: "Laat los om toe te voegen aan",
+  skippedUnsupported: "bestand(en) overgeslagen omdat dit type hier niet wordt ondersteund.",
   itemCount: "items",
 };
 

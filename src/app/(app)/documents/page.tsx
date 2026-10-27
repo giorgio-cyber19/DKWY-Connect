@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Search,
   UploadCloud,
@@ -30,6 +30,7 @@ import { DocumentViewer } from "@/components/documents/DocumentViewer";
 import { getUser, useAppStore } from "@/lib/store";
 import { useAuth } from "@/lib/auth-context";
 import { formatDate, cn } from "@/lib/utils";
+import { hasDraggedFiles, readDroppedContent } from "@/lib/dropped-files";
 import { uploadToDrive, driveDownloadUrl, openInGoogleEditor } from "@/lib/upload";
 import { useLanguage } from "@/lib/language-context";
 import { translateApiError } from "@/lib/i18n/errors";
@@ -72,6 +73,9 @@ export default function DocumentsPage() {
   const [viewingDoc, setViewingDoc] = useState<DocumentItem | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [uploading, setUploading] = useState(false);
+  // What the cursor is over while dragging files in: the page ("canvas") or a folder's id.
+  const [dragTarget, setDragTarget] = useState<string | null>(null);
+  const [dropNotice, setDropNotice] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [openError, setOpenError] = useState<string | null>(null);
   const filesInputRef = useRef<HTMLInputElement>(null);
@@ -143,7 +147,7 @@ export default function DocumentsPage() {
     }
   }
 
-  async function handleFiles(fileList: FileList | null, targetFolder: LibraryFolder | null) {
+  async function handleFiles(fileList: FileList | File[] | null, targetFolder: LibraryFolder | null) {
     if (!user || !fileList || fileList.length === 0) return;
     setUploading(true);
     setUploadError(null);
@@ -188,6 +192,51 @@ export default function DocumentsPage() {
       e.target.value = "";
     }
   }
+
+  function isSupportedFile(file: File): boolean {
+    return (file.name.split(".").pop() ?? "").toLowerCase() in extToFileType;
+  }
+
+  /** Files or folders dropped from the computer: loose files go into `target`; each dropped folder becomes (or reuses) a library folder. */
+  async function handleDrop(e: React.DragEvent, target: LibraryFolder | null) {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragTarget(null);
+    if (!user || !hasDraggedFiles(e.dataTransfer)) return;
+
+    const content = await readDroppedContent(e.dataTransfer); // reads synchronously before its first await
+    setDropNotice(null);
+    setUploadError(null);
+
+    const loose = content.files.filter(isSupportedFile);
+    const droppedFolders = content.folders.map((d) => ({ name: d.name, files: d.files.filter(isSupportedFile) })).filter((d) => d.files.length > 0);
+    const skipped = content.files.filter((f) => !isSupportedFile(f)).length + content.folders.reduce((n, d) => n + d.files.filter((f) => !isSupportedFile(f)).length, 0);
+
+    if (loose.length > 0) await handleFiles(loose, target);
+    for (const dropped of droppedFolders) {
+      try {
+        const existing = folders.find((f) => f.name.toLowerCase() === dropped.name.toLowerCase());
+        const folder = existing ?? (await useAppStore.getState().createLibraryFolder(dropped.name, "documents"));
+        await handleFiles(dropped.files, folder);
+      } catch (err) {
+        setUploadError(translateApiError(err, language));
+      }
+    }
+    if (skipped > 0) setDropNotice(`${skipped} ${t("library.skippedUnsupported")}`);
+  }
+
+  // A file dropped outside a drop zone would make the browser open it and leave the app — stop that.
+  useEffect(() => {
+    const stop = (ev: DragEvent) => {
+      if (hasDraggedFiles(ev.dataTransfer)) ev.preventDefault();
+    };
+    window.addEventListener("dragover", stop);
+    window.addEventListener("drop", stop);
+    return () => {
+      window.removeEventListener("dragover", stop);
+      window.removeEventListener("drop", stop);
+    };
+  }, []);
 
   function openFilesPicker() {
     filesInputRef.current?.click();
@@ -292,6 +341,7 @@ export default function DocumentsPage() {
       {uploadError && <p className="text-xs text-red-500 font-medium mb-4">{uploadError}</p>}
       {openError && <p className="text-xs text-red-500 font-medium mb-4">{openError}</p>}
       {uploading && <p className="text-xs text-[var(--text-secondary)] mb-4">{t("documents.uploadingToDrive")}</p>}
+      {dropNotice && <p className="text-xs text-[var(--text-secondary)] mb-4">{dropNotice}</p>}
 
       <input
         ref={filesInputRef}
@@ -316,9 +366,29 @@ export default function DocumentsPage() {
       />
 
       <div
-        className="min-h-[240px] rounded-2xl"
+        className={cn(
+          "relative min-h-[240px] rounded-2xl transition-colors",
+          dragTarget === "canvas" && "outline-2 outline-dashed outline-[var(--color-blue)] bg-[color-mix(in_srgb,var(--color-blue)_6%,transparent)]"
+        )}
         onContextMenu={(e) => menu.open(e, canvasMenuItems())}
+        onDragOver={(e) => {
+          if (!hasDraggedFiles(e.dataTransfer)) return;
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "copy";
+          setDragTarget("canvas");
+        }}
+        onDragLeave={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragTarget(null);
+        }}
+        onDrop={(e) => handleDrop(e, currentFolder)}
       >
+        {dragTarget === "canvas" && (
+          <div className="pointer-events-none absolute inset-x-0 top-6 z-10 flex justify-center">
+            <span className="px-4 py-2 rounded-xl bg-[var(--color-blue)] text-white text-sm font-semibold shadow-lg">
+              {currentFolder ? `${t("library.dropIntoFolder")} “${currentFolder.name}”` : t("library.dropToUpload")}
+            </span>
+          </div>
+        )}
         {showFolders && folders.length > 0 && (
           <div className="mb-6">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)] mb-3">{t("library.foldersLabel")}</h3>
@@ -328,9 +398,20 @@ export default function DocumentsPage() {
                 return (
                   <Card
                     key={f.id}
-                    className="p-4 flex items-center gap-3 cursor-pointer"
+                    className={cn("p-4 flex items-center gap-3 cursor-pointer", dragTarget === f.id && "ring-2 ring-[var(--color-blue)]")}
                     onClick={() => setCurrentFolderId(f.id)}
                     onContextMenu={(e) => menu.open(e, folderMenuItems(f))}
+                    onDragOver={(e) => {
+                      if (!hasDraggedFiles(e.dataTransfer)) return;
+                      e.preventDefault();
+                      e.stopPropagation();
+                      e.dataTransfer.dropEffect = "copy";
+                      setDragTarget(f.id);
+                    }}
+                    onDragLeave={(e) => {
+                      if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragTarget(null);
+                    }}
+                    onDrop={(e) => handleDrop(e, f)}
                   >
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-[color-mix(in_srgb,var(--color-gold)_16%,transparent)] text-[var(--color-gold-deep)]">
                       <Folder size={18} />
