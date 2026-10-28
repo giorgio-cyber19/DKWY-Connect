@@ -18,7 +18,9 @@ const variants: Record<Variant, string> = {
   primary:
     "bg-[var(--color-blue)] text-white shadow-[0_8px_18px_-10px_color-mix(in_srgb,var(--color-blue)_75%,transparent)] hover:bg-[color-mix(in_srgb,var(--color-blue)_88%,white)]",
   secondary: "bg-[var(--color-gold)] text-[#151a2d]",
-  outline: "border border-[var(--border-soft)] bg-transparent text-[var(--text-primary)] hover:bg-[color-mix(in_srgb,var(--color-ink)_5%,transparent)]",
+  // Solid fill + a clearly visible border (theme-aware via --text-primary) so these stay legible on the wallpaper as well as on cards.
+  outline:
+    "border border-[color-mix(in_srgb,var(--text-primary)_20%,transparent)] bg-[var(--bg-elevated)] text-[var(--text-primary)] shadow-sm hover:bg-[color-mix(in_srgb,var(--text-primary)_7%,var(--bg-elevated))]",
   ghost: "bg-transparent text-[var(--text-primary)] hover:bg-[color-mix(in_srgb,var(--color-ink)_6%,transparent)]",
   danger: "bg-red-500/90 text-white hover:bg-red-500 shadow-[0_4px_14px_-2px_rgba(239,68,68,0.4)]",
 };
