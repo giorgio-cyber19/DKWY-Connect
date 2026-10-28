@@ -45,7 +45,7 @@ function MoreButton({ onClick, label, className }: { onClick: (e: React.MouseEve
 
 function SortHeader({ label, active, dir, onClick, className }: { label: string; active: boolean; dir: "asc" | "desc"; onClick: () => void; className?: string }) {
   return (
-    <button type="button" onClick={onClick} className={cn("inline-flex items-center gap-1 text-left hover:text-[var(--text-primary)] focus-ring rounded", active && "text-[var(--text-primary)]", className)}>
+    <button type="button" onClick={onClick} className={cn("inline-flex items-center gap-1 text-left whitespace-nowrap hover:text-[var(--text-primary)] focus-ring rounded", active && "text-[var(--text-primary)]", className)}>
       {label}
       {active && (dir === "asc" ? <ArrowUp size={12} /> : <ArrowDown size={12} />)}
     </button>
@@ -70,19 +70,19 @@ export function LibraryList({
   const { t, language } = useLanguage();
 
   return (
-    <div className="rounded-xl border border-[var(--border-soft)] overflow-hidden" role="table">
+    <div className="@container rounded-xl border border-[var(--border-soft)] overflow-hidden" role="table">
       <div role="row" className="flex items-center gap-3 px-3 h-10 text-[12px] font-semibold text-[var(--text-secondary)] border-b border-[var(--border-soft)] bg-[color-mix(in_srgb,var(--color-ink)_3%,transparent)]">
         <div role="columnheader" className="flex-1 min-w-0">
           <SortHeader label={t("library.colName")} active={sortKey === "name"} dir={sortDir} onClick={() => onSort("name")} />
         </div>
-        <div role="columnheader" className="hidden md:block w-40 shrink-0">
+        <div role="columnheader" className="hidden @3xl:block w-40 shrink-0">
           {t("library.colOwner")}
         </div>
-        <div role="columnheader" className="hidden sm:block w-28 shrink-0">
+        <div role="columnheader" className="hidden @xl:block w-36 shrink-0">
           <SortHeader label={t("library.colModified")} active={sortKey === "modified"} dir={sortDir} onClick={() => onSort("modified")} />
         </div>
-        <div role="columnheader" className="w-16 shrink-0 flex justify-end">
-          <SortHeader label={t("library.colSize")} active={sortKey === "size"} dir={sortDir} onClick={() => onSort("size")} className="hidden sm:inline-flex" />
+        <div role="columnheader" className="w-16 @lg:w-24 shrink-0 flex justify-end">
+          <SortHeader label={t("library.colSize")} active={sortKey === "size"} dir={sortDir} onClick={() => onSort("size")} className="hidden @lg:inline-flex" />
         </div>
         <div className="w-8 shrink-0" />
       </div>
@@ -104,20 +104,20 @@ export function LibraryList({
               <p className="font-medium truncate leading-tight">{row.name}</p>
               {/* Phones hide the Modified column, so the date moves under the name (as in Drive's mobile list). */}
               {(row.location || row.modified) && (
-                <p className={cn("text-[10.5px] text-[var(--text-secondary)] truncate leading-tight", !row.location && "sm:hidden")}>
+                <p className={cn("text-[10.5px] text-[var(--text-secondary)] truncate leading-tight", !row.location && "@xl:hidden")}>
                   {row.location ?? formatDate(modifiedDay(row.modified), undefined, language)}
                 </p>
               )}
             </div>
           </div>
-          <div role="cell" className="hidden md:flex w-40 shrink-0 items-center gap-2 min-w-0 text-[var(--text-secondary)]">
+          <div role="cell" className="hidden @3xl:flex w-40 shrink-0 items-center gap-2 min-w-0 text-[var(--text-secondary)]">
             <Avatar name={row.ownerName || "?"} color={row.ownerColor} size="xs" />
             <span className="truncate">{row.ownerName}</span>
           </div>
-          <div role="cell" className="hidden sm:block w-28 shrink-0 text-[var(--text-secondary)]">
+          <div role="cell" className="hidden @xl:block w-36 shrink-0 text-[var(--text-secondary)]">
             {row.modified ? formatDate(modifiedDay(row.modified), undefined, language) : "—"}
           </div>
-          <div role="cell" className="w-16 shrink-0 text-right text-[var(--text-secondary)]">
+          <div role="cell" className="w-16 @lg:w-24 shrink-0 text-right text-[var(--text-secondary)]">
             {row.sizeText}
           </div>
           <MoreButton label={t("library.moreActions")} onClick={(e) => onMenu(e, row.id)} />
@@ -143,7 +143,8 @@ export function LibraryGrid({
   const { t } = useLanguage();
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+    <div className="@container">
+      <div className="grid grid-cols-2 @lg:grid-cols-3 @3xl:grid-cols-4 @5xl:grid-cols-5 gap-3">
       {rows.map((row) => {
         const selected = selectedIds?.includes(row.id) ?? false;
         return (
@@ -187,6 +188,7 @@ export function LibraryGrid({
           </div>
         );
       })}
+      </div>
     </div>
   );
 }
@@ -215,7 +217,8 @@ export function FolderTiles({
 }) {
   const { t } = useLanguage();
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+    <div className="@container">
+      <div className="grid grid-cols-2 @lg:grid-cols-3 @3xl:grid-cols-4 @5xl:grid-cols-5 gap-3">
       {folders.map((f) => (
         <div
           key={f.id}
@@ -236,6 +239,7 @@ export function FolderTiles({
           <MoreButton label={t("library.moreActions")} onClick={(e) => onMenu(e, f.id)} />
         </div>
       ))}
+      </div>
     </div>
   );
 }

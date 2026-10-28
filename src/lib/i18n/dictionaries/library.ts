@@ -143,7 +143,7 @@ const nl: typeof en = {
   colName: "Naam",
   colOwner: "Geüpload door",
   colModified: "Laatst gewijzigd",
-  colSize: "Bestandsgrootte",
+  colSize: "Grootte",
   moreActions: "Meer acties",
   noMatchTitle: "Geen bestanden voldoen aan je filters",
   noMatchDescription: "Haal een filter weg om meer te zien.",
