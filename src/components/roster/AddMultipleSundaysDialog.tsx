@@ -5,6 +5,8 @@ import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { useAppStore } from "@/lib/store";
 import { useLanguage } from "@/lib/language-context";
+import { translateApiError } from "@/lib/i18n/errors";
+import { formatDate } from "@/lib/utils";
 
 function nextSunday(from: Date): Date {
   const d = new Date(from);
@@ -20,22 +22,50 @@ function toIsoDate(d: Date): string {
 const inputClass =
   "w-full text-sm px-3.5 py-2.5 rounded-xl border border-[var(--border-soft)] bg-transparent focus-ring focus:border-[var(--color-gold)] transition-colors";
 
-export function AddMultipleSundaysDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { t } = useLanguage();
-  const [start, setStart] = useState(() => toIsoDate(nextSunday(new Date())));
+/** The dates a start date + number of weeks expands to (one per week, same weekday). */
+function weeklyDates(start: string, weeks: number): string[] {
+  const [y, m, d] = start.split("-").map(Number);
+  return Array.from({ length: weeks }, (_, i) => toIsoDate(new Date(y, m - 1, d + i * 7)));
+}
+
+export function AddMultipleSundaysDialog({
+  open,
+  onClose,
+  initialStart,
+  onAdded,
+}: {
+  open: boolean;
+  onClose: () => void;
+  /** Suggested first date — the Sunday after the last roster entry, so nothing is added twice. */
+  initialStart?: string;
+  /** Called with the dates that were created (and how many were skipped because they already exist). */
+  onAdded: (result: { dates: string[]; skipped: number }) => void;
+}) {
+  const { t, language } = useLanguage();
+  const [start, setStart] = useState(() => initialStart ?? toIsoDate(nextSunday(new Date())));
   const [weeks, setWeeks] = useState(4);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const planned = start ? weeklyDates(start, weeks) : [];
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!start || weeks < 1) return;
     setSubmitting(true);
+    setError(null);
+    const created: string[] = [];
     try {
-      const [y, m, d] = start.split("-").map(Number);
-      for (let i = 0; i < weeks; i++) {
-        const date = new Date(y, m - 1, d + i * 7);
+      // Dates that already have a roster entry are skipped, so running this twice never doubles up.
+      const taken = new Set(useAppStore.getState().rosterEntries.map((r) => r.date));
+      const todo = planned.filter((date) => !taken.has(date));
+      if (todo.length === 0) {
+        setError(t("roster.allDatesExist"));
+        return;
+      }
+      for (const date of todo) {
         await useAppStore.getState().createRosterEntry({
-          date: toIsoDate(date),
+          date,
           sundaySchoolUserIds: [],
           teenClubUserIds: [],
           theme: "",
@@ -45,8 +75,14 @@ export function AddMultipleSundaysDialog({ open, onClose }: { open: boolean; onC
           liturgy: "",
           musicalAccompaniment: "",
         });
+        created.push(date);
       }
+      onAdded({ dates: created, skipped: planned.length - created.length });
       onClose();
+    } catch (err) {
+      setError(translateApiError(err, language));
+      // Rows created before the failure are real — tell the page so it can show them.
+      if (created.length > 0) onAdded({ dates: created, skipped: planned.length - created.length });
     } finally {
       setSubmitting(false);
     }
@@ -70,6 +106,13 @@ export function AddMultipleSundaysDialog({ open, onClose }: { open: boolean; onC
             className={inputClass}
           />
         </div>
+        {planned.length > 0 && (
+          <p className="text-[12px] text-[var(--text-secondary)]">
+            {planned.length} × {t("roster.addsRows")}: {formatDate(planned[0], undefined, language)}
+            {planned.length > 1 && <> – {formatDate(planned[planned.length - 1], undefined, language)}</>}
+          </p>
+        )}
+        {error && <p className="text-xs text-red-500 font-medium">{error}</p>}
         <Button type="submit" className="w-full" loading={submitting} disabled={!start || submitting}>
           {t("roster.addMultipleSundays")}
         </Button>

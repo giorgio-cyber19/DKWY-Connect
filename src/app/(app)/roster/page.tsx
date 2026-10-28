@@ -4,7 +4,7 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { addMonths, subMonths, format, isSameMonth } from "date-fns";
 import { nl as nlLocale } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Plus, Printer, ClipboardList, CalendarPlus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Printer, ClipboardList, CalendarPlus, CircleCheck } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Tabs } from "@/components/ui/Tabs";
 import { Button } from "@/components/ui/Button";
@@ -17,7 +17,7 @@ import { RosterFilters, emptyRosterFilters, type RosterFilterState } from "@/com
 import { useAppStore } from "@/lib/store";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/language-context";
-import { parseDate } from "@/lib/utils";
+import { parseDate, formatDate } from "@/lib/utils";
 
 function toIsoDate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -54,7 +54,9 @@ function RosterPageContent() {
   const [filters, setFilters] = useState<RosterFilterState>(emptyRosterFilters);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("saved");
   const [focusRowId, setFocusRowId] = useState<string | null>(null);
-  const [addMultipleOpen, setAddMultipleOpen] = useState(false);
+  // Non-null while the "add multiple Sundays" dialog is open: the suggested first date.
+  const [addMultipleStart, setAddMultipleStart] = useState<string | null>(null);
+  const [addNotice, setAddNotice] = useState<string | null>(null);
 
   const isAdmin = user?.role === "admin";
 
@@ -64,6 +66,24 @@ function RosterPageContent() {
     if (entry) setCursor(parseDate(entry.date));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [highlightId]);
+
+  useEffect(() => {
+    if (!addNotice) return;
+    const id = setTimeout(() => setAddNotice(null), 7000);
+    return () => clearTimeout(id);
+  }, [addNotice]);
+
+  /**
+   * New rows land on their own dates, which may be in another month than the one being viewed — and an active
+   * filter would hide a brand-new, still-empty row — so jump to the first new date and drop the filters,
+   * otherwise it looks as if nothing happened.
+   */
+  function revealAdded(firstDate: string, message: string) {
+    setFilters(emptyRosterFilters);
+    setCursor(parseDate(firstDate));
+    setTab("roster");
+    setAddNotice(message);
+  }
 
   function updateFilters(patch: Partial<RosterFilterState>) {
     setFilters((f) => ({ ...f, ...patch }));
@@ -104,15 +124,29 @@ function RosterPageContent() {
     : format(cursor, "MMMM yyyy", { locale: dateFnsLocale });
 
   async function handleAddRow() {
-    const entry = await useAppStore.getState().createRosterEntry({ date: toIsoDate(new Date()), ...blankFields });
-    setFocusRowId(entry.id);
+    const date = toIsoDate(new Date());
+    try {
+      const entry = await useAppStore.getState().createRosterEntry({ date, ...blankFields });
+      setFocusRowId(entry.id);
+      revealAdded(date, `${t("roster.addedRowNotice")}: ${formatDate(date, { weekday: "long" }, language)}`);
+    } catch {
+      setAddNotice(t("roster.addFailed"));
+    }
+  }
+
+  function latestRosterDate(): string {
+    return rosterEntries.reduce((max, r) => (r.date > max ? r.date : max), toIsoDate(new Date()));
   }
 
   async function handleAddNextSunday() {
-    const latest = rosterEntries.reduce((max, r) => (r.date > max ? r.date : max), toIsoDate(new Date()));
-    const date = toIsoDate(nextSundayAfter(parseDate(latest)));
-    const entry = await useAppStore.getState().createRosterEntry({ date, ...blankFields });
-    setFocusRowId(entry.id);
+    const date = toIsoDate(nextSundayAfter(parseDate(latestRosterDate())));
+    try {
+      const entry = await useAppStore.getState().createRosterEntry({ date, ...blankFields });
+      setFocusRowId(entry.id);
+      revealAdded(date, `${t("roster.addedRowNotice")}: ${formatDate(date, { weekday: "long" }, language)}`);
+    } catch {
+      setAddNotice(t("roster.addFailed"));
+    }
   }
 
   return (
@@ -135,7 +169,7 @@ function RosterPageContent() {
               </Button>
               {isAdmin && (
                 <>
-                  <Button variant="outline" onClick={() => setAddMultipleOpen(true)}>
+                  <Button variant="outline" onClick={() => setAddMultipleStart(toIsoDate(nextSundayAfter(parseDate(latestRosterDate()))))}>
                     <CalendarPlus size={15} /> {t("roster.addMultipleSundays")}
                   </Button>
                   <Button variant="outline" onClick={handleAddNextSunday}>
@@ -177,6 +211,12 @@ function RosterPageContent() {
           )}
         </div>
 
+        {addNotice && (
+          <p className="no-print flex items-center gap-1.5 text-[13px] font-semibold text-[var(--color-sage-deep)] mb-3" role="status">
+            <CircleCheck size={15} /> {addNotice}
+          </p>
+        )}
+
         {tab === "roster" && <RosterFilters value={filters} onChange={updateFilters} users={users} />}
       </div>
 
@@ -216,7 +256,19 @@ function RosterPageContent() {
         </>
       )}
 
-      {isAdmin && <AddMultipleSundaysDialog open={addMultipleOpen} onClose={() => setAddMultipleOpen(false)} />}
+      {isAdmin && addMultipleStart && (
+        <AddMultipleSundaysDialog
+          open
+          initialStart={addMultipleStart}
+          onClose={() => setAddMultipleStart(null)}
+          onAdded={({ dates, skipped }) => {
+            if (dates.length === 0) return;
+            const range = dates.length > 1 ? ` (${formatDate(dates[0], undefined, language)} – ${formatDate(dates[dates.length - 1], undefined, language)})` : "";
+            const skippedText = skipped > 0 ? ` · ${skipped} ${t("roster.skippedExisting")}` : "";
+            revealAdded(dates[0], `${dates.length} ${t("roster.addedRowsNotice")}${range}${skippedText}`);
+          }}
+        />
+      )}
     </div>
   );
 }

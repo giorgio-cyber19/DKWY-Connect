@@ -56,7 +56,7 @@ function PeriodFilter({ value, onChange }: { value: RosterFilterState; onChange:
     .join(" ");
 
   return (
-    <div className="w-full rounded-2xl border border-[var(--border-soft)] p-3 sm:p-3.5">
+    <div className="w-full rounded-xl border border-[var(--border-soft)] bg-[color-mix(in_srgb,var(--color-ink)_4%,transparent)] p-3 sm:p-3.5">
       <div className="flex flex-wrap items-end gap-x-3 gap-y-2.5">
         <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-[var(--text-secondary)] sm:self-center mr-1 w-full sm:w-auto">
           <CalendarRange size={14} /> {t("roster.filterPeriod")}
@@ -133,7 +133,7 @@ export function RosterFilters({
   const { t } = useLanguage();
 
   return (
-    <div className="no-print flex flex-wrap items-end gap-2.5 mb-4">
+    <div className="no-print flex flex-wrap items-end gap-2.5 mb-4 p-3 sm:p-4 rounded-2xl bg-[var(--bg-elevated)] border border-[var(--border-soft)] shadow-sm">
       <div className="relative flex-1 min-w-[180px]">
         <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
         <input
