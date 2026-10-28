@@ -32,10 +32,11 @@ export function Sidebar({
   const content = (
     <div className="flex flex-col h-full">
       <div className={cn("flex items-center gap-2.5 px-4 h-16 shrink-0", collapsed && "justify-center px-0")}>
-        <div className="relative w-9 h-9 rounded-full overflow-hidden shrink-0 shadow-[0_4px_10px_-2px_rgba(47,143,91,0.5)]">
-          <Image src="/seal.png" alt="DWKY Connect" fill sizes="36px" className="object-cover" />
-        </div>
-        {!collapsed && (
+        <Link href="/dashboard" onClick={onCloseMobile} aria-label={t("layout.navDashboard")} title={t("layout.navDashboard")} className="flex items-center gap-2.5 min-w-0 rounded-lg focus-ring">
+          <div className="relative w-9 h-9 rounded-full overflow-hidden shrink-0 shadow-[0_4px_10px_-2px_rgba(47,143,91,0.5)]">
+            <Image src="/seal.png" alt="DWKY Connect" fill sizes="36px" className="object-cover" />
+          </div>
+          {!collapsed && (
             <motion.span
               initial={{ opacity: 0, width: 0 }}
               animate={{ opacity: 1, width: "auto" }}
@@ -44,6 +45,7 @@ export function Sidebar({
               DWKY Connect
             </motion.span>
           )}
+        </Link>
         <button onClick={onCloseMobile} className="ml-auto lg:hidden p-1.5 rounded-lg hover:bg-black/5">
           <X size={18} />
         </button>

@@ -9,7 +9,6 @@ import {
   HeartHandshake,
   ArrowRight,
   UploadCloud,
-  GraduationCap,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { Card } from "@/components/ui/Card";
@@ -114,11 +113,6 @@ export default function DashboardPage() {
                   </Button>
                 </Link>
               )}
-              <Link href="/my-class">
-                <Button variant="outline" size="sm" className="!border-white/40 !text-white hover:!bg-white/10">
-                  <GraduationCap size={14} /> {t("dashboard.myClassLabel")}
-                </Button>
-              </Link>
             </div>
           </div>
 
