@@ -127,7 +127,7 @@ function HolidayModal({ state, onClose, defaultYear }: { state: HolidayModalStat
 }
 
 /** One-click import of an official school-year calendar; entries that already exist are skipped. */
-function HolidayImportModal({ preset, open, onClose }: { preset: SchoolYearPreset; open: boolean; onClose: () => void }) {
+function HolidayImportModal({ preset, open, onClose, onImported }: { preset: SchoolYearPreset; open: boolean; onClose: () => void; onImported: (schoolYear: string) => void }) {
   const { t, language } = useLanguage();
   const holidays = useAppStore((s) => s.holidays);
   const [progress, setProgress] = useState<number | null>(null);
@@ -151,6 +151,7 @@ function HolidayImportModal({ preset, open, onClose }: { preset: SchoolYearPrese
         done += 1;
       }
       setAdded(done);
+      onImported(preset.schoolYear);
     } catch (err) {
       setError(translateApiError(err, language));
       if (done > 0) setAdded(done);
@@ -274,11 +275,16 @@ export function HolidaysManager() {
   const [deleting, setDeleting] = useState(false);
   const [importing, setImporting] = useState<SchoolYearPreset | null>(null);
 
-  const schoolYear = useMemo(() => currentSchoolYear(holidays, todayInAmsterdam(), DEFAULT_SCHOOL_YEAR), [holidays]);
+  // Every school year that has holidays (newest first); the tab shows one year at a time.
+  const years = useMemo(() => Array.from(new Set(holidays.map((h) => h.schoolYear))).sort().reverse(), [holidays]);
+  const [pickedYear, setPickedYear] = useState<string | null>(null);
+  const currentYear = useMemo(() => currentSchoolYear(holidays, todayInAmsterdam(), DEFAULT_SCHOOL_YEAR), [holidays]);
+  const schoolYear = pickedYear && years.includes(pickedYear) ? pickedYear : currentYear;
+  const yearHolidays = useMemo(() => holidays.filter((h) => h.schoolYear === schoolYear), [holidays, schoolYear]);
   const importPreset = SCHOOL_YEAR_PRESETS.find((p) => missingPresetItems(holidays, p).length > 0);
 
-  const vacations = holidays.filter((h) => h.type === "school_vacation").sort((a, b) => a.startDate.localeCompare(b.startDate));
-  const national = holidays.filter((h) => h.type === "national_holiday").sort((a, b) => a.startDate.localeCompare(b.startDate));
+  const vacations = yearHolidays.filter((h) => h.type === "school_vacation").sort((a, b) => a.startDate.localeCompare(b.startDate));
+  const national = yearHolidays.filter((h) => h.type === "national_holiday").sort((a, b) => a.startDate.localeCompare(b.startDate));
 
   async function confirmDelete() {
     if (!deleteTarget) return;
@@ -294,7 +300,20 @@ export function HolidaysManager() {
   return (
     <div className="space-y-8 bg-[var(--bg-elevated)] border border-[var(--border-soft)] rounded-[20px] p-5 sm:p-6">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-[var(--text-secondary)]">{t("calendar.holidaysSchoolYearHeading")}: <span className="font-semibold text-[var(--text-primary)]">{schoolYear}</span></p>
+        <label className="flex items-center gap-2.5 text-sm text-[var(--text-secondary)]">
+          {t("calendar.holidaysSchoolYearHeading")}
+          <select
+            value={schoolYear}
+            onChange={(e) => setPickedYear(e.target.value)}
+            className="text-sm font-semibold text-[var(--text-primary)] pl-3.5 pr-8 py-2 rounded-xl border border-[var(--border-soft)] bg-transparent focus-ring focus:border-[var(--color-gold)] cursor-pointer"
+          >
+            {(years.includes(schoolYear) ? years : [schoolYear, ...years]).map((year) => (
+              <option key={year} value={year}>
+                {year} ({holidays.filter((h) => h.schoolYear === year).length})
+              </option>
+            ))}
+          </select>
+        </label>
         <div className="flex items-center gap-2">
           {importPreset && (
             <Button size="sm" variant="outline" onClick={() => setImporting(importPreset)}>
@@ -341,7 +360,7 @@ export function HolidaysManager() {
 
       <HolidayModal state={modal} onClose={() => setModal(null)} defaultYear={schoolYear} />
 
-      {importing && <HolidayImportModal preset={importing} open onClose={() => setImporting(null)} />}
+      {importing && <HolidayImportModal preset={importing} open onClose={() => setImporting(null)} onImported={setPickedYear} />}
 
       <ConfirmDialog
         open={!!deleteTarget}
