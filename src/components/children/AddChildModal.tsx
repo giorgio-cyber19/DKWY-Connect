@@ -7,7 +7,7 @@ import { useAppStore } from "@/lib/store";
 import { useLanguage } from "@/lib/language-context";
 import { translateApiError } from "@/lib/i18n/errors";
 import { calculateAge, cn } from "@/lib/utils";
-import type { SchoolClass } from "@/lib/types";
+import type { Child, SchoolClass } from "@/lib/types";
 
 const inputClass = "w-full text-sm px-3.5 py-2.5 rounded-xl border border-[var(--border-soft)] bg-transparent focus-ring focus:border-[var(--color-gold)] transition-colors";
 
@@ -17,12 +17,15 @@ export function AddChildModal({
   classes,
   defaultClassId,
   defaultTeacherId,
+  onCreated,
 }: {
   open: boolean;
   onClose: () => void;
   classes: SchoolClass[];
   defaultClassId?: string;
   defaultTeacherId?: string;
+  /** Called with the saved child, before the dialog closes. */
+  onCreated?: (child: Child) => void;
 }) {
   const [name, setName] = useState("");
   const [birthday, setBirthday] = useState("");
@@ -52,7 +55,7 @@ export function AddChildModal({
     setSubmitting(true);
     setError("");
     try {
-      await useAppStore.getState().createChild({
+      const created = await useAppStore.getState().createChild({
         name: name.trim(),
         age: calculateAge(birthday),
         birthday,
@@ -64,6 +67,7 @@ export function AddChildModal({
         allergies: allergies.trim() || undefined,
       });
       reset();
+      onCreated?.(created);
       onClose();
     } catch (err) {
       setError(translateApiError(err, language));
