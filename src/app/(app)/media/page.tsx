@@ -38,6 +38,7 @@ import { applyLibraryView, hasActiveFilters, parseSizeToBytes, DEFAULT_VIEW_STAT
 import { LibraryToolbar, type LibraryLayout } from "@/components/library/LibraryToolbar";
 import { LibraryList, LibraryGrid, FolderTiles, type LibraryRow } from "@/components/library/LibraryFiles";
 import { uploadToDrive, driveDownloadUrl } from "@/lib/upload";
+import { childFolders, descendantIds, folderPath, folderPathLabel } from "@/lib/library-folders";
 import type { MediaItem, LibraryFolder } from "@/lib/types";
 
 const typeIcons: Record<MediaItem["type"], typeof ImageIcon> = {
@@ -115,6 +116,8 @@ export default function MediaPage() {
   const menu = useContextMenu();
 
   const currentFolder = currentFolderId ? folders.find((f) => f.id === currentFolderId) ?? null : null;
+  const subfolders = useMemo(() => childFolders(folders, currentFolderId), [folders, currentFolderId]);
+  const breadcrumb = useMemo(() => folderPath(folders, currentFolderId), [folders, currentFolderId]);
 
   const filtered = useMemo(() => {
     if (query.trim()) {
@@ -147,7 +150,7 @@ export default function MediaPage() {
     setFolderError(null);
     try {
       if (folderModal.mode === "create") {
-        await useAppStore.getState().createLibraryFolder(folderName.trim(), "media");
+        await useAppStore.getState().createLibraryFolder(folderName.trim(), "media", currentFolderId);
       } else if (folderModal.folder) {
         await useAppStore.getState().renameLibraryFolder(folderModal.folder.id, folderName.trim());
       }
@@ -164,7 +167,9 @@ export default function MediaPage() {
     setDeleting(true);
     try {
       await useAppStore.getState().removeLibraryFolder(deleteFolder.id);
-      if (currentFolderId === deleteFolder.id) setCurrentFolderId(null);
+      if (currentFolderId && (currentFolderId === deleteFolder.id || descendantIds(folders, deleteFolder.id).includes(currentFolderId))) {
+        setCurrentFolderId(deleteFolder.parentId ?? null);
+      }
       setDeleteFolder(null);
     } finally {
       setDeleting(false);
@@ -222,7 +227,7 @@ export default function MediaPage() {
     setUploading(true);
     setUploadError(null);
     try {
-      const created = await useAppStore.getState().createLibraryFolder(folderName, "media");
+      const created = await useAppStore.getState().createLibraryFolder(folderName, "media", currentFolderId);
       await handleFiles(fileList, created);
     } catch (err) {
       setUploadError(translateApiError(err, language));
@@ -276,8 +281,8 @@ export default function MediaPage() {
     if (loose.length > 0) await handleFiles(loose, target);
     for (const dropped of droppedFolders) {
       try {
-        const existing = folders.find((f) => f.name.toLowerCase() === dropped.name.toLowerCase());
-        const folder = existing ?? (await useAppStore.getState().createLibraryFolder(dropped.name, "media"));
+        const existing = folders.find((f) => (f.parentId ?? null) === (target?.id ?? null) && f.name.toLowerCase() === dropped.name.toLowerCase());
+        const folder = existing ?? (await useAppStore.getState().createLibraryFolder(dropped.name, "media", target?.id ?? null));
         await handleFiles(dropped.files, folder);
       } catch (err) {
         setUploadError(translateApiError(err, language));
@@ -309,13 +314,9 @@ export default function MediaPage() {
 
   function canvasMenuItems(): ContextMenuItem[] {
     const items: ContextMenuItem[] = [];
-    if (!currentFolderId) {
-      items.push({ label: t("library.newFolder"), icon: <FolderPlus size={15} />, onClick: openNewFolder });
-    }
+    items.push({ label: t("library.newFolder"), icon: <FolderPlus size={15} />, onClick: openNewFolder });
     items.push({ label: t("library.uploadFiles"), icon: <UploadCloud size={15} />, onClick: openFilesPicker });
-    if (!currentFolderId) {
-      items.push({ label: t("library.uploadFolder"), icon: <FolderUp size={15} />, onClick: openFolderPicker });
-    }
+    items.push({ label: t("library.uploadFolder"), icon: <FolderUp size={15} />, onClick: openFolderPicker });
     return items;
   }
 
@@ -377,7 +378,7 @@ export default function MediaPage() {
       modified: item.modifiedAt ?? item.uploadedAt,
       ownerName: uploader?.name ?? "",
       ownerColor: uploader?.avatarColor,
-      location: query.trim() ? folders.find((f) => f.id === item.folderId)?.name : undefined,
+      location: query.trim() ? folderPathLabel(folders, item.folderId) || undefined : undefined,
       canOpen: true,
     };
   });
@@ -397,7 +398,7 @@ export default function MediaPage() {
     if (folder) menu.open(e, folderMenuItems(folder));
   }
 
-  const showFolders = !currentFolderId && !query.trim();
+  const showFolders = !query.trim();
 
   return (
     <div className="bg-[var(--bg-elevated)] border border-[var(--border-soft)] rounded-[20px] p-5 sm:p-6">
@@ -423,12 +424,23 @@ export default function MediaPage() {
           />
         </div>
         {!query.trim() && currentFolder && (
-          <button
-            onClick={() => setCurrentFolderId(null)}
-            className="flex items-center gap-1.5 text-sm font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors shrink-0"
-          >
-            <ChevronLeft size={15} /> {t("library.backToAllFiles")} <span className="text-[var(--color-ink-faint)]">/</span> {currentFolder.name}
-          </button>
+          <nav aria-label={t("library.breadcrumb")} className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm font-semibold text-[var(--text-secondary)]">
+            <button onClick={() => setCurrentFolderId(null)} className="flex items-center gap-1.5 hover:text-[var(--text-primary)] transition-colors">
+              <ChevronLeft size={15} /> {t("library.backToAllFiles")}
+            </button>
+            {breadcrumb.map((f, i) => (
+              <span key={f.id} className="flex items-center gap-1.5">
+                <span className="text-[var(--color-ink-faint)]">/</span>
+                {i === breadcrumb.length - 1 ? (
+                  <span className="text-[var(--text-primary)]">{f.name}</span>
+                ) : (
+                  <button onClick={() => setCurrentFolderId(f.id)} className="hover:text-[var(--text-primary)] transition-colors">
+                    {f.name}
+                  </button>
+                )}
+              </span>
+            ))}
+          </nav>
         )}
       </div>
 
@@ -495,11 +507,11 @@ export default function MediaPage() {
             </span>
           </div>
         )}
-        {showFolders && folders.length > 0 && (
+        {showFolders && subfolders.length > 0 && (
           <div className="mb-5">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)] mb-2.5">{t("library.foldersLabel")}</h3>
             <FolderTiles
-              folders={folders}
+              folders={subfolders}
               dragTarget={dragTarget}
               onOpen={setCurrentFolderId}
               onMenu={folderMenu}
@@ -533,7 +545,7 @@ export default function MediaPage() {
                 </Button>
               }
             />
-          ) : (
+          ) : currentFolderId && subfolders.length > 0 ? null : (
             <EmptyState
               icon={Folder}
               title={currentFolderId ? t("library.emptyFolderTitle") : mediaItems.length === 0 ? t("media.noFilesYetTitle") : t("media.noFilesFoundTitle")}
@@ -548,7 +560,7 @@ export default function MediaPage() {
           )
         ) : (
           <>
-            {showFolders && folders.length > 0 && <h3 className="text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)] mb-2.5">{t("library.filesLabel")}</h3>}
+            {showFolders && subfolders.length > 0 && <h3 className="text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)] mb-2.5">{t("library.filesLabel")}</h3>}
             {layout === "list" ? (
               <LibraryList rows={rows} sortKey={viewState.sortKey} sortDir={viewState.sortDir} onSort={sortBy} onOpen={openRow} onMenu={rowMenu} />
             ) : (

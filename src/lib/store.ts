@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { apiGet, apiPost, apiPatch, apiDelete, ApiError } from "./api-client";
 import { pickColor } from "./colors";
+import { descendantIds } from "./library-folders";
 import type {
   User,
   AgeGroup,
@@ -135,7 +136,7 @@ interface AppState {
   updateDocumentItemSize: (id: string, size: string) => Promise<void>;
   renameDocumentItem: (id: string, name: string) => Promise<void>;
   renameMediaItem: (id: string, name: string) => Promise<void>;
-  createLibraryFolder: (name: string, library: LibraryFolder["library"]) => Promise<LibraryFolder>;
+  createLibraryFolder: (name: string, library: LibraryFolder["library"], parentId?: string | null) => Promise<LibraryFolder>;
   renameLibraryFolder: (id: string, name: string) => Promise<void>;
   removeLibraryFolder: (id: string) => Promise<void>;
 
@@ -475,8 +476,8 @@ export const useAppStore = create<AppState>()(
         set((s) => ({ documentItems: s.documentItems.map((d) => (d.id === id ? doc : d)) }));
       },
 
-      createLibraryFolder: async (name, library) => {
-        const folder = await apiPost<LibraryFolder>("/api/library-folders", { name, library });
+      createLibraryFolder: async (name, library, parentId) => {
+        const folder = await apiPost<LibraryFolder>("/api/library-folders", { name, library, parentId: parentId ?? null });
         set((s) => ({ libraryFolders: [...s.libraryFolders, folder] }));
         return folder;
       },
@@ -488,11 +489,14 @@ export const useAppStore = create<AppState>()(
 
       removeLibraryFolder: async (id) => {
         await apiDelete(`/api/library-folders/${id}`);
-        set((s) => ({
-          libraryFolders: s.libraryFolders.filter((f) => f.id !== id),
-          documentItems: s.documentItems.map((d) => (d.folderId === id ? { ...d, folderId: null } : d)),
-          mediaItems: s.mediaItems.map((m) => (m.folderId === id ? { ...m, folderId: null } : m)),
-        }));
+        set((s) => {
+          const removed = new Set([id, ...descendantIds(s.libraryFolders, id)]);
+          return {
+            libraryFolders: s.libraryFolders.filter((f) => !removed.has(f.id)),
+            documentItems: s.documentItems.map((d) => (d.folderId && removed.has(d.folderId) ? { ...d, folderId: null } : d)),
+            mediaItems: s.mediaItems.map((m) => (m.folderId && removed.has(m.folderId) ? { ...m, folderId: null } : m)),
+          };
+        });
       },
 
       createEvent: async (item) => {

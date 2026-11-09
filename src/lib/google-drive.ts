@@ -143,11 +143,12 @@ async function resolveCategoryFolder(drive: ReturnType<typeof getDrive>, categor
   return categoryFolderId;
 }
 
-/** Creates (or reuses) a named subfolder directly under a library category's Drive
- * folder — the Drive-side counterpart of a user-created LibraryFolder. */
-export async function createCategorySubfolder(category: DriveCategory, name: string): Promise<string> {
+/** Creates (or reuses) a named subfolder under a library category's Drive folder — or under
+ * `parentDriveFolderId` for a nested folder — the Drive-side counterpart of a user-created LibraryFolder. */
+export async function createCategorySubfolder(category: DriveCategory, name: string, parentDriveFolderId?: string): Promise<string> {
   const auth = await getAuthorizedClient();
   const drive = getDrive(auth);
+  if (parentDriveFolderId) return findOrCreateFolder(drive, name, parentDriveFolderId);
   const root = await rootFolderId();
   const categoryFolderId = await findOrCreateFolder(drive, SUBFOLDERS[category], root);
   return findOrCreateFolder(drive, name, categoryFolderId);

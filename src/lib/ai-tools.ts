@@ -29,6 +29,7 @@ import { eventTypeColors } from "@/lib/calendar-colors";
 import { pickColor } from "@/lib/colors";
 import type { PublicUser } from "@/lib/password";
 import type { SessionClaims } from "@/lib/session";
+import { folderPathLabel } from "@/lib/library-folders";
 import type {
   AgeGroup,
   AttendanceRecord,
@@ -148,6 +149,10 @@ function pick<T extends { id: string }>(items: T[], value: string, label: (item:
     throw new ToolError(`More than one ${kind} matches "${value}": ${candidates.slice(0, 6).map(label).join("; ")}. Ask the user which one.`);
   }
   throw new ToolError(`No ${kind} found matching "${value}".`);
+}
+
+function pickLibraryFolder(folders: LibraryFolder[], value: string): LibraryFolder {
+  return pick(folders, value, (f) => folderPathLabel(folders, f.id), "folder");
 }
 
 function todayIso(): string {
@@ -526,7 +531,7 @@ const tools: ToolDef[] = [
       const snap = await rt.snapshot();
       const library = args.library === "media" ? "media" : "documents";
       const folders = snap.libraryFolders.filter((f) => f.library === library);
-      const folder = str(args, "folder") ? pick(folders, str(args, "folder")!, (f) => f.name, "folder") : null;
+      const folder = str(args, "folder") ? pick(folders, str(args, "folder")!, (f) => folderPathLabel(folders, f.id), "folder") : null;
       const q = str(args, "search")?.toLowerCase();
       const files = (library === "documents" ? snap.documentItems : snap.mediaItems)
         .filter((f) => (folder ? f.folderId === folder.id : true) && (!q || f.name.toLowerCase().includes(q)))
@@ -534,11 +539,11 @@ const tools: ToolDef[] = [
       return {
         summary: `Listed ${library}`,
         result: {
-          folders: folders.map((f) => ({ id: f.id, name: f.name })),
+          folders: folders.map((f) => ({ id: f.id, name: f.name, path: folderPathLabel(folders, f.id) })),
           files: files.map((f) => ({
             id: f.id,
             name: f.name,
-            folder: f.folderId ? folders.find((x) => x.id === f.folderId)?.name ?? null : null,
+            folder: f.folderId ? folderPathLabel(folders, f.folderId) || null : null,
             size: f.size,
             uploadedBy: userName(snap, f.uploadedBy),
             uploadedAt: f.uploadedAt,
@@ -1115,12 +1120,17 @@ const tools: ToolDef[] = [
   {
     name: "create_library_folder",
     description: "Create a folder in the Documents or Media library.",
-    parameters: schema({ library: { type: "string", enum: ["documents", "media"] }, name: s("Folder name.") }, ["library", "name"]),
+    parameters: schema(
+      { library: { type: "string", enum: ["documents", "media"] }, name: s("Folder name."), parent: s("Optional: name or id of the folder to create it inside (makes a subfolder). Leave out for a top-level folder.") },
+      ["library", "name"]
+    ),
     write: true,
     async run(args, rt) {
       const library = args.library === "media" ? "media" : "documents";
-      const folder = await call<LibraryFolder>(foldersPOST, rt.token, "POST", "/api/library-folders", { library, name: needStr(args, "name") });
-      return { summary: `Created ${library} folder "${folder.name}"`, result: { id: folder.id } };
+      const inLibrary = (await rt.snapshot()).libraryFolders.filter((f) => f.library === library);
+      const parent = str(args, "parent") ? pick(inLibrary, str(args, "parent")!, (f) => folderPathLabel(inLibrary, f.id), "folder") : null;
+      const folder = await call<LibraryFolder>(foldersPOST, rt.token, "POST", "/api/library-folders", { library, name: needStr(args, "name"), parentId: parent?.id ?? null });
+      return { summary: parent ? `Created ${library} folder "${folder.name}" inside "${parent.name}"` : `Created ${library} folder "${folder.name}"`, result: { id: folder.id } };
     },
   },
   {
@@ -1131,7 +1141,7 @@ const tools: ToolDef[] = [
     async run(args, rt) {
       const snap = await rt.snapshot();
       const library = args.library === "media" ? "media" : "documents";
-      const folder = pick(snap.libraryFolders.filter((f) => f.library === library), needStr(args, "folder"), (f) => f.name, "folder");
+      const folder = pickLibraryFolder(snap.libraryFolders.filter((f) => f.library === library), needStr(args, "folder"));
       await call(folderPATCH, rt.token, "PATCH", `/api/library-folders/${folder.id}`, { name: needStr(args, "name") }, { id: folder.id });
       return { summary: `Renamed folder "${folder.name}" to "${needStr(args, "name")}"`, result: { ok: true } };
     },
@@ -1144,7 +1154,7 @@ const tools: ToolDef[] = [
     async run(args, rt) {
       const snap = await rt.snapshot();
       const library = args.library === "media" ? "media" : "documents";
-      const folder = pick(snap.libraryFolders.filter((f) => f.library === library), needStr(args, "folder"), (f) => f.name, "folder");
+      const folder = pickLibraryFolder(snap.libraryFolders.filter((f) => f.library === library), needStr(args, "folder"));
       await call(folderDELETE, rt.token, "DELETE", `/api/library-folders/${folder.id}`, undefined, { id: folder.id });
       return { summary: `Deleted folder "${folder.name}" (its files moved to the root)`, result: { ok: true } };
     },

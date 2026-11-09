@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getBearerToken, verifySessionToken } from "@/lib/session";
 import { getCollection, getEntity, putEntity, deleteEntity } from "@/lib/db";
 import { renameFolderInDrive } from "@/lib/google-drive";
+import { descendantIds, hasSiblingNamed } from "@/lib/library-folders";
 import type { LibraryFolder, DocumentItem, MediaItem } from "@/lib/types";
 
 export async function PATCH(request: Request, ctx: RouteContext<"/api/library-folders/[id]">) {
@@ -17,7 +18,7 @@ export async function PATCH(request: Request, ctx: RouteContext<"/api/library-fo
   if (!name) return NextResponse.json({ error: "bad_request", message: "A folder name is required." }, { status: 400 });
 
   const existing = await getCollection<LibraryFolder>("libraryFolders");
-  if (existing.some((f) => f.id !== id && f.library === folder.library && f.name.toLowerCase() === name.toLowerCase())) {
+  if (hasSiblingNamed(existing.filter((f) => f.library === folder.library), folder.parentId ?? null, name, id)) {
     return NextResponse.json({ error: "folder_exists", message: "A folder with that name already exists." }, { status: 409 });
   }
 
@@ -42,16 +43,21 @@ export async function DELETE(request: Request, ctx: RouteContext<"/api/library-f
   const folder = await getEntity<LibraryFolder>("libraryFolders", id);
   if (!folder) return NextResponse.json({ error: "not_found", message: "That folder no longer exists." }, { status: 404 });
 
-  // Deliberately doesn't delete the folder's Drive subfolder or the files in it —
-  // only our own grouping. Items move back to the library root; nothing is lost.
+  // Deliberately doesn't delete the Drive subfolders or the files in them — only our own
+  // grouping. The folder's subfolders go with it; every file inside moves back to the library
+  // root, so nothing is lost.
+  const all = await getCollection<LibraryFolder>("libraryFolders");
+  const subfolderIds = descendantIds(all.filter((f) => f.library === folder.library), id);
+  const removedIds = new Set([id, ...subfolderIds]);
   if (folder.library === "documents") {
     const docs = await getCollection<DocumentItem>("documentItems");
-    for (const doc of docs.filter((d) => d.folderId === id)) await putEntity("documentItems", { ...doc, folderId: null });
+    for (const doc of docs.filter((d) => d.folderId && removedIds.has(d.folderId))) await putEntity("documentItems", { ...doc, folderId: null });
   } else {
     const items = await getCollection<MediaItem>("mediaItems");
-    for (const item of items.filter((m) => m.folderId === id)) await putEntity("mediaItems", { ...item, folderId: null });
+    for (const item of items.filter((m) => m.folderId && removedIds.has(m.folderId))) await putEntity("mediaItems", { ...item, folderId: null });
   }
 
+  for (const subId of subfolderIds) await deleteEntity("libraryFolders", subId);
   await deleteEntity("libraryFolders", id);
   return NextResponse.json({ ok: true });
 }

@@ -222,6 +222,8 @@ export interface LibraryFolder {
   id: string;
   name: string;
   library: "documents" | "media";
+  /** The folder this one sits inside; absent/null for a top-level folder. */
+  parentId?: string | null;
   /** The matching Drive subfolder, created alongside this folder — undefined if Drive
    * wasn't connected at creation time, in which case uploads fall back to the library root. */
   driveFolderId?: string;
