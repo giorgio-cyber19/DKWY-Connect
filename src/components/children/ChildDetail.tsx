@@ -23,6 +23,7 @@ import {
   HeartHandshake,
   MessagesSquare,
   Trash2,
+  Pencil,
 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Avatar } from "@/components/ui/Avatar";
@@ -39,6 +40,7 @@ import { driveDownloadUrl } from "@/lib/upload";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { enumLabels } from "@/lib/i18n/enum-labels";
 import { translateApiError } from "@/lib/i18n/errors";
+import { EditChildModal } from "@/components/children/EditChildModal";
 import { ChildAttendance } from "@/components/attendance/ChildAttendance";
 import { AddArtworkButton, AddAlbumButton, AddVideoButton, AddChildDocumentButton, AddMilestoneButton } from "@/components/children/ChildRecordModals";
 import type { Child, SpiritualMilestone } from "@/lib/types";
@@ -68,6 +70,8 @@ export function ChildDetail({ child }: { child: Child }) {
   const { t, language } = useLanguage();
   const { user } = useAuth();
   const router = useRouter();
+  const classes = useAppStore((s) => s.classes);
+  const [editing, setEditing] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -115,18 +119,23 @@ export function ChildDetail({ child }: { child: Child }) {
                     </Badge>
                   )}
                 </div>
-                {user?.role === "admin" && (
-                  <Button variant="outline" size="sm" onClick={() => setConfirmingDelete(true)}>
-                    <Trash2 size={13} /> {t("children.deleteChildButton")}
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
+                    <Pencil size={13} /> {t("children.editChildButton")}
                   </Button>
-                )}
+                  {user?.role === "admin" && (
+                    <Button variant="outline" size="sm" onClick={() => setConfirmingDelete(true)}>
+                      <Trash2 size={13} /> {t("children.deleteChildButton")}
+                    </Button>
+                  )}
+                </div>
               </div>
               <p className="text-[var(--text-secondary)] text-sm mb-4">
-                {cls?.name} · {t("children.ageLabel")} {child.age} · {t("children.taughtByLabel")} {teacher?.name ?? t("children.noTeacherAssignedLabel")}
+                {cls?.name} · {child.birthday && `${t("children.ageLabel")} ${child.age} · `}{t("children.taughtByLabel")} {teacher?.name ?? t("children.noTeacherAssignedLabel")}
               </p>
               <div className="grid sm:grid-cols-2 gap-3 text-[13px]">
                 <div className="flex items-center gap-2 text-[var(--text-secondary)]">
-                  <Cake size={14} /> {t("children.bornLabel")} {formatDate(child.birthday, undefined, language)}
+                  <Cake size={14} /> {child.birthday ? `${t("children.bornLabel")} ${formatDate(child.birthday, undefined, language)}` : t("children.birthdayNotSet")}
                 </div>
                 <div className="flex items-center gap-2 text-[var(--text-secondary)]">
                   <MapPin size={14} /> {t("children.enrolledLabel")} {formatDate(child.enrollmentDate, undefined, language)}
@@ -381,6 +390,7 @@ export function ChildDetail({ child }: { child: Child }) {
         </div>
       )}
 
+      {editing && <EditChildModal child={child} classes={user?.role === "admin" ? classes : classes.filter((c) => c.id === child.classId)} onClose={() => setEditing(false)} />}
       <ConfirmDialog
         open={confirmingDelete}
         onClose={() => setConfirmingDelete(false)}

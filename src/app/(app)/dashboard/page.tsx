@@ -298,7 +298,7 @@ export default function DashboardPage() {
                   <Card className="p-4 flex flex-col items-center text-center">
                     <Avatar name={c.name} color={c.photoColor} size="lg" />
                     <p className="text-[13px] font-semibold mt-2.5 truncate w-full">{c.name}</p>
-                    <p className="text-[11px] text-[var(--text-secondary)]">{t("dashboard.agePrefix")} {c.age}</p>
+                    {c.birthday && <p className="text-[11px] text-[var(--text-secondary)]">{t("dashboard.agePrefix")} {c.age}</p>}
                   </Card>
                 </Link>
               </StaggerItem>

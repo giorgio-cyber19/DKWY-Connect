@@ -108,6 +108,7 @@ interface AppState {
     address?: string;
     allergies?: string;
   }) => Promise<Child>;
+  updateChild: (id: string, data: Partial<Pick<Child, "name" | "birthday" | "classId" | "guardians" | "address" | "allergies">>) => Promise<Child>;
   removeChild: (id: string) => Promise<void>;
   addArtwork: (childId: string, item: Omit<ArtworkItem, "id">) => Promise<void>;
   addAlbum: (childId: string, item: Omit<PhotoAlbum, "id">) => Promise<void>;
@@ -364,6 +365,15 @@ export const useAppStore = create<AppState>()(
           children: [...s.children, child],
           classes: s.classes.map((c) => (c.id === child.classId ? { ...c, childCount: c.childCount + 1 } : c)),
         }));
+        return child;
+      },
+
+      updateChild: async (id, data) => {
+        const child = await apiPatch<Child>(`/api/children/${id}`, data);
+        set((s) => {
+          const children = s.children.map((c) => (c.id === id ? child : c));
+          return { children, classes: s.classes.map((c) => ({ ...c, childCount: children.filter((x) => x.classId === c.id).length })) };
+        });
         return child;
       },
 

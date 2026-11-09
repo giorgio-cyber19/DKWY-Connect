@@ -10,7 +10,7 @@ const en = {
   navCalendar: "Calendar",
   navRoster: "Roster",
   navBible: "Bible",
-  navMyClass: "My Class",
+  navMyClass: "Class & Attendance",
   navSettings: "Settings",
   navAdmin: "Admin",
 
@@ -56,7 +56,7 @@ const nl: typeof en = {
   navCalendar: "Kalender",
   navRoster: "Rooster",
   navBible: "Bijbel",
-  navMyClass: "Mijn Klas",
+  navMyClass: "Klas en Presentie",
   navSettings: "Instellingen",
   navAdmin: "Beheer",
 

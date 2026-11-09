@@ -49,7 +49,7 @@ export function AddChildModal({
   }
 
   async function submit() {
-    if (!name.trim() || !classId || !birthday) return;
+    if (!name.trim() || !classId) return;
     const cls = classes.find((c) => c.id === classId);
     const teacherId = defaultTeacherId ?? cls?.teacherIds[0];
     setSubmitting(true);
@@ -57,7 +57,7 @@ export function AddChildModal({
     try {
       const created = await useAppStore.getState().createChild({
         name: name.trim(),
-        age: calculateAge(birthday),
+        age: birthday ? calculateAge(birthday) : 0,
         birthday,
         classId,
         teacherId,
@@ -85,7 +85,9 @@ export function AddChildModal({
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">{t("children.birthdayLabel")}</label>
+            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">
+              {t("children.birthdayLabel")} ({t("common.optional")})
+            </label>
             <input value={birthday} onChange={(e) => setBirthday(e.target.value)} type="date" className={inputClass} />
           </div>
           <div>
@@ -125,7 +127,7 @@ export function AddChildModal({
           <input value={allergies} onChange={(e) => setAllergies(e.target.value)} className={inputClass} placeholder={t("children.allergiesPlaceholder")} />
         </div>
         {error && <p className="text-xs text-red-500 font-medium">{error}</p>}
-        <Button className="w-full" onClick={submit} loading={submitting} disabled={!name.trim() || !classId || !birthday || submitting}>
+        <Button className="w-full" onClick={submit} loading={submitting} disabled={!name.trim() || !classId || submitting}>
           {t("children.addChildButton")}
         </Button>
       </div>

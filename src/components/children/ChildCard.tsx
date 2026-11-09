@@ -20,15 +20,18 @@ export function ChildCard({ child }: { child: Child }) {
           <Avatar name={child.name} color={child.photoColor} size="xl" />
           <h3 className="font-display font-semibold text-base mt-3">{child.name}</h3>
           <p className="text-[12px] text-[var(--text-secondary)]">
-            {cls?.name} · {t("children.ageLabel")} {child.age}
+            {cls?.name}
+            {child.birthday && ` · ${t("children.ageLabel")} ${child.age}`}
           </p>
           <div className="flex items-center gap-3 mt-3 text-[11px] text-[var(--text-secondary)]">
             <span className="flex items-center gap-1">
               <ImageIcon size={12} /> {child.artwork.length + child.albums.length}
             </span>
-            <span className="flex items-center gap-1">
-              <Cake size={12} /> {formatDate(child.birthday, { year: undefined }, language)}
-            </span>
+            {child.birthday && (
+              <span className="flex items-center gap-1">
+                <Cake size={12} /> {formatDate(child.birthday, { year: undefined }, language)}
+              </span>
+            )}
           </div>
         </Card>
       </Link>
