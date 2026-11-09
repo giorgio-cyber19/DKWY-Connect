@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Check, Minus, Plus, CircleCheck, UserPlus, ClipboardCheck, Search } from "lucide-react";
-import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
@@ -218,7 +217,7 @@ function Register({ classId, date, pupils }: { classId: string; date: string; pu
             </div>
           </div>
 
-          {pupils.length > 8 && (
+          {pupils.length > 0 && (
             <div className="relative">
               <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
               <input
@@ -233,7 +232,7 @@ function Register({ classId, date, pupils }: { classId: string; date: string; pu
           {pupils.length === 0 ? (
             <p className="text-sm text-[var(--text-secondary)] py-2">{t("attendance.noChildren")}</p>
           ) : (
-            <ul className="divide-y divide-[var(--border-softer)] rounded-2xl border border-[var(--border-soft)] overflow-hidden">
+            <ul className="divide-y divide-[var(--border-softer)] rounded-2xl border border-[var(--border-soft)] max-h-[min(22rem,40vh)] overflow-y-auto">
               {filteredPupils.map((child) => {
                 const on = selected.has(child.id);
                 return (
@@ -244,11 +243,10 @@ function Register({ classId, date, pupils }: { classId: string; date: string; pu
                       aria-checked={on}
                       onClick={() => toggle(child.id)}
                       className={cn(
-                        "w-full flex items-center gap-3 px-3.5 py-2.5 text-left transition-colors focus-ring",
+                        "w-full flex items-center gap-3 px-3.5 py-2 text-left transition-colors focus-ring",
                         on ? "bg-[color-mix(in_srgb,var(--color-sage-deep)_10%,transparent)]" : "hover:bg-black/[0.04]"
                       )}
                     >
-                      <Avatar name={child.name} color={child.photoColor} size="sm" />
                       <span className="text-sm font-semibold flex-1 truncate">{child.name}</span>
                       <span
                         className={cn(
