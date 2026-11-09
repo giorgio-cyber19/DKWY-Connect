@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, Minus, Plus, CircleCheck, UserPlus, ClipboardCheck, Search } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { AddChildModal } from "@/components/children/AddChildModal";
+import { AttendanceHistory } from "@/components/attendance/AttendanceHistory";
 import { useAuth } from "@/lib/auth-context";
 import { useLanguage } from "@/lib/language-context";
 import { apiGet, apiPut } from "@/lib/api-client";
@@ -34,7 +35,7 @@ function Chips({ children, tone }: { children: Child[]; tone: "present" | "absen
   );
 }
 
-function Register({ classId, date, pupils }: { classId: string; date: string; pupils: Child[] }) {
+function Register({ classId, date, pupils, onSaved }: { classId: string; date: string; pupils: Child[]; onSaved: () => void }) {
   const { t, language } = useLanguage();
   const { user } = useAuth();
   const classes = useAppStore((s) => s.classes);
@@ -111,6 +112,7 @@ function Register({ classId, date, pupils }: { classId: string; date: string; pu
       setExisting(res.record);
       setJustSaved(true);
       setStep("closed");
+      onSaved();
     } catch (err) {
       setError(translateApiError(err, language));
     } finally {
@@ -321,9 +323,19 @@ export function AttendanceTaker({ classId, pupils }: { classId: string; pupils: 
   const { user } = useAuth();
   const today = todayInAmsterdam();
   const [date, setDate] = useState(today);
+  const [version, setVersion] = useState(0);
+  const registerRef = useRef<HTMLDivElement>(null);
+  const className = useAppStore((s) => s.classes.find((c) => c.id === classId)?.name ?? "");
   const isAdmin = user?.role === "admin";
 
+  function openDate(next: string) {
+    setDate(next);
+    registerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   return (
+    <div className="space-y-6">
+    <div ref={registerRef} className="scroll-mt-24">
     <Card hover={false} className="p-5 sm:p-6">
       <div className="flex flex-wrap items-end justify-between gap-3 mb-4">
         <div>
@@ -343,8 +355,11 @@ export function AttendanceTaker({ classId, pupils }: { classId: string; pupils: 
         </div>
       </div>
 
-      <Register key={`${classId}|${date}`} classId={classId} date={date} pupils={pupils} />
+      <Register key={`${classId}|${date}`} classId={classId} date={date} pupils={pupils} onSaved={() => setVersion((v) => v + 1)} />
       {!isAdmin && <p className="text-[11px] text-[var(--text-secondary)] mt-4">{t("attendance.backfillHint")}</p>}
     </Card>
+    </div>
+    <AttendanceHistory classId={classId} className={className} pupils={pupils} version={version} onOpenDate={openDate} />
+    </div>
   );
 }
