@@ -2,6 +2,7 @@
 
 import { useAppStore } from "./store";
 import { formatFileBytes } from "./format-bytes";
+import { uploadTracker, type UploadKind } from "./upload-tracker";
 
 export interface DriveUploadResult {
   fileId: string;
@@ -14,10 +15,41 @@ export interface DriveUploadResult {
 export class DriveNotConfiguredError extends Error {}
 export class NotSignedInError extends Error {}
 
-function authHeaders(): HeadersInit {
+function sessionToken(): string {
   const token = useAppStore.getState().sessionToken;
   if (!token) throw new NotSignedInError("You need to be signed in to upload files.");
-  return { Authorization: `Bearer ${token}` };
+  return token;
+}
+
+function authHeaders(): HeadersInit {
+  return { Authorization: `Bearer ${sessionToken()}` };
+}
+
+/**
+ * PUTs one chunk with XMLHttpRequest — unlike fetch(), it reports how many bytes have left the browser,
+ * which is what drives the progress bar.
+ */
+function putChunk(url: string, chunk: Blob, onProgress: (sent: number) => void): Promise<{ ok: boolean; status: number; data: Record<string, unknown> }> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("PUT", url);
+    xhr.setRequestHeader("Authorization", `Bearer ${sessionToken()}`);
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) onProgress(e.loaded);
+    };
+    xhr.onload = () => {
+      let data: Record<string, unknown> = {};
+      try {
+        data = JSON.parse(xhr.responseText);
+      } catch {
+        /* an empty or non-JSON body is treated like fetch(...).json() failing: no details */
+      }
+      resolve({ ok: xhr.status >= 200 && xhr.status < 300, status: xhr.status, data });
+    };
+    xhr.onerror = () => reject(new Error("Upload to Google Drive failed. Check your connection and try again."));
+    xhr.onabort = () => reject(new Error("Upload cancelled."));
+    xhr.send(chunk);
+  });
 }
 
 // A multiple of 256KB (Google's chunk-size requirement) and comfortably under
@@ -34,40 +66,61 @@ const CHUNK_SIZE = 4 * 1024 * 1024;
  * file-size limit: total size is no longer bounded by any single request's
  * body, only by how many chunks get sent.
  */
-async function chunkedUpload(file: File | Blob, filename: string, uploadUrl: string): Promise<Record<string, unknown>> {
+async function chunkedUpload(file: File | Blob, uploadUrl: string, onProgress: (sent: number) => void): Promise<Record<string, unknown>> {
   let start = 0;
   let driveFile: Record<string, unknown> | null = null;
 
   while (start < file.size || file.size === 0) {
     const chunk = file.slice(start, start + CHUNK_SIZE);
     const params = new URLSearchParams({ sessionUrl: uploadUrl, start: String(start), total: String(file.size) });
-    const chunkRes = await fetch(`/api/drive/upload-chunk?${params}`, {
-      method: "PUT",
-      headers: authHeaders(),
-      body: chunk,
-    });
-    const chunkData = await chunkRes.json().catch(() => ({}));
+    const chunkStart = start;
+    const chunkRes = await putChunk(`/api/drive/upload-chunk?${params}`, chunk, (sent) => onProgress(chunkStart + sent));
+    const chunkData = chunkRes.data;
 
     if (!chunkRes.ok) {
-      if (chunkRes.status === 401) throw new NotSignedInError(chunkData.message || "Please sign in again.");
-      throw new Error(chunkData.message || "Upload to Google Drive failed. Please try again.");
+      if (chunkRes.status === 401) throw new NotSignedInError((chunkData.message as string) || "Please sign in again.");
+      throw new Error((chunkData.message as string) || "Upload to Google Drive failed. Please try again.");
     }
     if (chunkData.done) {
-      driveFile = chunkData.file;
+      driveFile = chunkData.file as Record<string, unknown>;
       break;
     }
     start += chunk.size;
+    onProgress(start);
   }
 
   if (!driveFile) throw new Error("Upload to Google Drive failed. Please try again.");
   return driveFile;
 }
 
-export async function uploadToDrive(
+/** Runs `work` while showing it in the global upload progress panel. */
+async function tracked<T>(name: string, total: number, kind: UploadKind, work: (report: (sent: number) => void) => Promise<T>): Promise<T> {
+  const id = uploadTracker.start(name, total, kind);
+  try {
+    const result = await work((sent) => uploadTracker.progress(id, sent));
+    uploadTracker.finish(id);
+    return result;
+  } catch (err) {
+    uploadTracker.fail(id);
+    throw err;
+  }
+}
+
+export function uploadToDrive(
   file: File,
   category: "media" | "documents" | "lessons" | "children" | "encouragements",
   childId?: string,
   parentFolderId?: string
+): Promise<DriveUploadResult> {
+  return tracked(file.name, file.size, "upload", (report) => doUploadToDrive(file, category, childId, parentFolderId, report));
+}
+
+async function doUploadToDrive(
+  file: File,
+  category: "media" | "documents" | "lessons" | "children" | "encouragements",
+  childId: string | undefined,
+  parentFolderId: string | undefined,
+  report: (sent: number) => void
 ): Promise<DriveUploadResult> {
   const sessionRes = await fetch("/api/drive/upload-session", {
     method: "POST",
@@ -89,7 +142,7 @@ export async function uploadToDrive(
     throw new Error(sessionData.message || "Upload failed. Please try again.");
   }
 
-  const driveFile = await chunkedUpload(file, file.name, sessionData.uploadUrl);
+  const driveFile = await chunkedUpload(file, sessionData.uploadUrl, report);
 
   return {
     fileId: driveFile.id as string,
@@ -102,7 +155,11 @@ export async function uploadToDrive(
 
 /** Saves new bytes over an existing Drive file (same fileId, same name/location) —
  * used to save edits (e.g. a spreadsheet) back to the file they were opened from. */
-export async function updateFileInDrive(fileId: string, blob: Blob, mimeType: string): Promise<DriveUploadResult> {
+export function updateFileInDrive(fileId: string, blob: Blob, mimeType: string, name = "Spreadsheet"): Promise<DriveUploadResult> {
+  return tracked(name, blob.size, "save", (report) => doUpdateFileInDrive(fileId, blob, mimeType, report));
+}
+
+async function doUpdateFileInDrive(fileId: string, blob: Blob, mimeType: string, report: (sent: number) => void): Promise<DriveUploadResult> {
   const sessionRes = await fetch("/api/drive/update-session", {
     method: "POST",
     headers: { ...authHeaders(), "Content-Type": "application/json" },
@@ -116,7 +173,7 @@ export async function updateFileInDrive(fileId: string, blob: Blob, mimeType: st
     throw new Error(sessionData.message || "Save failed. Please try again.");
   }
 
-  const driveFile = await chunkedUpload(blob, fileId, sessionData.uploadUrl);
+  const driveFile = await chunkedUpload(blob, sessionData.uploadUrl, report);
 
   return {
     fileId: (driveFile.id as string) ?? fileId,

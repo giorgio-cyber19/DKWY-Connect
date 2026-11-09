@@ -434,6 +434,7 @@ const nl: HelpContent = {
             "Klik rechtsboven op **Toevoegen** en kies **Bestanden uploaden**, of klik met de rechtermuisknop ergens op de pagina.",
             "Of sleep bestanden gewoon vanaf je computer naar het scherm: laat ze los op de pagina of op een map.",
             "Een hele map uploaden kan ook: kies **Map uploaden** of sleep de map naar het scherm.",
+            "Rechtsonder in beeld zie je een **voortgangsbalk** met de naam van het bestand, het percentage en hoeveel er al is verstuurd. Staat er **Afronden…**, dan is het bestand bijna klaar. Blijf op de pagina tot er **Klaar** staat; bij een grote video kan dat even duren.",
           ],
         },
         {
@@ -1011,6 +1012,7 @@ const en: HelpContent = {
             "Click **Add** at the top right and choose **Upload files**, or right-click anywhere on the page.",
             "Or simply drag files from your computer onto the screen: drop them on the page or on a folder.",
             "You can upload a whole folder too: choose **Upload folder** or drag the folder onto the screen.",
+            "At the bottom right you'll see a **progress bar** with the file name, the percentage and how much has been sent. When it says **Finishing…** the file is almost done. Stay on the page until it says **Done**; a large video can take a while.",
           ],
         },
         {

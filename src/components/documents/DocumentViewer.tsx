@@ -168,7 +168,7 @@ export function DocumentViewer({ doc, onClose }: { doc: DocumentItem; onClose: (
       }
       const out: ArrayBuffer = XLSX.write(wb, { type: "array", bookType: "xlsx" });
       const blob = new Blob([out], { type: XLSX_MIME });
-      const result = await updateFileInDrive(doc.driveFileId, blob, XLSX_MIME);
+      const result = await updateFileInDrive(doc.driveFileId, blob, XLSX_MIME, doc.name);
       await useAppStore.getState().updateDocumentItemSize(doc.id, result.size);
       setDirty(false);
     } catch (err) {

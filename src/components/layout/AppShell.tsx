@@ -11,6 +11,7 @@ import { GlobalSearch } from "./GlobalSearch";
 import { PageTransition } from "./PageTransition";
 import { FAB } from "./FAB";
 import { IdleLogout } from "./IdleLogout";
+import { UploadProgress } from "./UploadProgress";
 import { YouVersionThemeProvider } from "@/components/bible/YouVersionThemeProvider";
 import { Cross } from "lucide-react";
 
@@ -73,6 +74,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
         <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
         <FAB />
+        <UploadProgress />
       </div>
     </YouVersionThemeProvider>
   );

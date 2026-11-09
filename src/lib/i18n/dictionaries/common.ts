@@ -45,6 +45,11 @@ const en = {
   administrator: "Administrator",
   teacher: "Teacher",
   admin: "Admin",
+  uploadingFile: "Uploading",
+  savingFile: "Saving",
+  uploadFinishing: "Finishing…",
+  uploadDone: "Done",
+  uploadFailed: "Failed",
 };
 
 const nl: typeof en = {
@@ -94,6 +99,11 @@ const nl: typeof en = {
   administrator: "Beheerder",
   teacher: "Leraar",
   admin: "Beheerder",
+  uploadingFile: "Uploaden",
+  savingFile: "Opslaan",
+  uploadFinishing: "Afronden…",
+  uploadDone: "Klaar",
+  uploadFailed: "Mislukt",
 };
 
 export const common = { en, nl };
