@@ -12,6 +12,7 @@ import {
   Settings,
   ShieldCheck,
   Sparkles,
+  LifeBuoy,
   type LucideIcon,
 } from "lucide-react";
 
@@ -36,5 +37,6 @@ export const navItems: NavItem[] = [
   { href: "/roster", label: "layout.navRoster", icon: ClipboardList },
   { href: "/my-class", label: "layout.navMyClass", icon: GraduationCap },
   { href: "/settings", label: "layout.navSettings", icon: Settings },
+  { href: "/help", label: "layout.navHelp", icon: LifeBuoy },
   { href: "/admin", label: "layout.navAdmin", icon: ShieldCheck, adminOnly: true },
 ];

@@ -360,6 +360,19 @@ body {
   body {
     background: #fff !important;
   }
+  .help-doc,
+  .help-doc * {
+    color: #111 !important;
+    box-shadow: none !important;
+  }
+  .help-doc .help-card {
+    background: #fff !important;
+    border: 1px solid #ccc !important;
+    break-inside: auto;
+  }
+  .help-doc section {
+    margin-bottom: 14px;
+  }
   .roster-print-area {
     padding: 0 !important;
   }

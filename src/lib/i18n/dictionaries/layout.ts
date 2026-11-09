@@ -12,6 +12,7 @@ const en = {
   navBible: "Bible",
   navMyClass: "Class & Attendance",
   navSettings: "Settings",
+  navHelp: "User Guide",
   navAdmin: "Admin",
 
   // Sidebar.tsx
@@ -58,6 +59,7 @@ const nl: typeof en = {
   navBible: "Bijbel",
   navMyClass: "Klas en Presentie",
   navSettings: "Instellingen",
+  navHelp: "Handleiding",
   navAdmin: "Beheer",
 
   // Sidebar.tsx
