@@ -34,6 +34,7 @@ export function RosterSpreadsheet({
   highlightId,
   focusRowId,
   isAdmin,
+  canEdit,
   onSaveStatusChange,
 }: {
   entries: RosterEntry[];
@@ -43,6 +44,8 @@ export function RosterSpreadsheet({
   focusRowId?: string | null;
   /** Non-admins get a read-only grid — the API rejects their writes anyway. */
   isAdmin: boolean;
+  /** Teachers and administrators may edit cells; only administrators add, duplicate or delete rows. */
+  canEdit: boolean;
   onSaveStatusChange?: (status: "idle" | "saving" | "saved") => void;
 }) {
   const { t } = useLanguage();
@@ -153,11 +156,11 @@ export function RosterSpreadsheet({
           value={entry[field]}
           onCommit={(value) => commitField(entry, { [field]: value })}
           onNavigate={(dir) => moveActive(entry.id, field, dir)}
-          isActive={isAdmin && activeCell?.entryId === entry.id && activeCell.field === field}
+          isActive={canEdit && activeCell?.entryId === entry.id && activeCell.field === field}
           onActivate={() => setActiveCell({ entryId: entry.id, field })}
           multiline={multiline}
           placeholder={field === "notes" ? "" : t(PLACEHOLDER_KEYS[field])}
-          readOnly={!isAdmin}
+          readOnly={!canEdit}
         />
       </td>
     );
@@ -191,7 +194,7 @@ export function RosterSpreadsheet({
               }}
             >
               <td className={cn(tdClass, rowBg, "transition-colors duration-[1500ms] sticky left-0 z-[5]")}>
-                <EditableDateCell value={entry.date} onCommit={(value) => commitField(entry, { date: value })} readOnly={!isAdmin} />
+                <EditableDateCell value={entry.date} onCommit={(value) => commitField(entry, { date: value })} readOnly={!canEdit} />
               </td>
               <td className={cn(tdClass, rowBg, "transition-colors duration-[1500ms]")}>
                 <UserMultiSelect
@@ -200,7 +203,7 @@ export function RosterSpreadsheet({
                   selectedIds={entry.sundaySchoolUserIds}
                   onChange={(ids) => commitField(entry, { sundaySchoolUserIds: ids })}
                   compact
-                  readOnly={!isAdmin}
+                  readOnly={!canEdit}
                 />
               </td>
               <td className={cn(tdClass, rowBg, "transition-colors duration-[1500ms]")}>
@@ -210,7 +213,7 @@ export function RosterSpreadsheet({
                   selectedIds={entry.teenClubUserIds}
                   onChange={(ids) => commitField(entry, { teenClubUserIds: ids })}
                   compact
-                  readOnly={!isAdmin}
+                  readOnly={!canEdit}
                 />
               </td>
               {textCell(entry, "theme", cn(rowBg, "transition-colors duration-[1500ms]"), true)}

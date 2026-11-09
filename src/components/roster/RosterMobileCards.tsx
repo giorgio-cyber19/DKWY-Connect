@@ -21,7 +21,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-export function RosterMobileCards({ entries, users, isAdmin }: { entries: RosterEntry[]; users: User[]; isAdmin: boolean }) {
+export function RosterMobileCards({ entries, users, isAdmin, canEdit }: { entries: RosterEntry[]; users: User[]; isAdmin: boolean; canEdit: boolean }) {
   const { t } = useLanguage();
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -63,7 +63,7 @@ export function RosterMobileCards({ entries, users, isAdmin }: { entries: Roster
       {entries.map((entry) => (
         <Card key={entry.id} className="p-4 space-y-3" hover={false}>
           <div className="flex items-center justify-between">
-            <EditableDateCell value={entry.date} onCommit={(value) => commitField(entry, { date: value })} readOnly={!isAdmin} />
+            <EditableDateCell value={entry.date} onCommit={(value) => commitField(entry, { date: value })} readOnly={!canEdit} />
             <div className="flex items-center gap-1">
               <Link
                 href={`/calendar?event=${entry.calendarEventId}`}
@@ -103,7 +103,7 @@ export function RosterMobileCards({ entries, users, isAdmin }: { entries: Roster
                 selectedIds={entry.sundaySchoolUserIds}
                 onChange={(ids) => commitField(entry, { sundaySchoolUserIds: ids })}
                 compact
-                readOnly={!isAdmin}
+                readOnly={!canEdit}
               />
             </Field>
             <Field label={t("roster.teenClub")}>
@@ -113,29 +113,29 @@ export function RosterMobileCards({ entries, users, isAdmin }: { entries: Roster
                 selectedIds={entry.teenClubUserIds}
                 onChange={(ids) => commitField(entry, { teenClubUserIds: ids })}
                 compact
-                readOnly={!isAdmin}
+                readOnly={!canEdit}
               />
             </Field>
           </div>
 
           <Field label={t("roster.theme")}>
-            <EditableTextCell value={entry.theme} onCommit={(v) => commitField(entry, { theme: v })} placeholder={t("roster.themePlaceholder")} multiline readOnly={!isAdmin} />
+            <EditableTextCell value={entry.theme} onCommit={(v) => commitField(entry, { theme: v })} placeholder={t("roster.themePlaceholder")} multiline readOnly={!canEdit} />
           </Field>
           <Field label={t("roster.notes")}>
-            <EditableTextCell value={entry.notes} onCommit={(v) => commitField(entry, { notes: v })} placeholder="" multiline readOnly={!isAdmin} />
+            <EditableTextCell value={entry.notes} onCommit={(v) => commitField(entry, { notes: v })} placeholder="" multiline readOnly={!canEdit} />
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label={t("roster.serviceType")}>
-              <EditableTextCell value={entry.serviceType} onCommit={(v) => commitField(entry, { serviceType: v })} placeholder={t("roster.serviceTypePlaceholder")} readOnly={!isAdmin} />
+              <EditableTextCell value={entry.serviceType} onCommit={(v) => commitField(entry, { serviceType: v })} placeholder={t("roster.serviceTypePlaceholder")} readOnly={!canEdit} />
             </Field>
             <Field label={t("roster.preacher")}>
-              <EditableTextCell value={entry.preacher} onCommit={(v) => commitField(entry, { preacher: v })} placeholder={t("roster.preacherPlaceholder")} readOnly={!isAdmin} />
+              <EditableTextCell value={entry.preacher} onCommit={(v) => commitField(entry, { preacher: v })} placeholder={t("roster.preacherPlaceholder")} readOnly={!canEdit} />
             </Field>
             <Field label={t("roster.liturgy")}>
-              <EditableTextCell value={entry.liturgy} onCommit={(v) => commitField(entry, { liturgy: v })} placeholder={t("roster.liturgyPlaceholder")} readOnly={!isAdmin} />
+              <EditableTextCell value={entry.liturgy} onCommit={(v) => commitField(entry, { liturgy: v })} placeholder={t("roster.liturgyPlaceholder")} readOnly={!canEdit} />
             </Field>
             <Field label={t("roster.musicalAccompaniment")}>
-              <EditableTextCell value={entry.musicalAccompaniment} onCommit={(v) => commitField(entry, { musicalAccompaniment: v })} placeholder={t("roster.musicalAccompanimentPlaceholder")} readOnly={!isAdmin} />
+              <EditableTextCell value={entry.musicalAccompaniment} onCommit={(v) => commitField(entry, { musicalAccompaniment: v })} placeholder={t("roster.musicalAccompanimentPlaceholder")} readOnly={!canEdit} />
             </Field>
           </div>
         </Card>

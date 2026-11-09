@@ -109,8 +109,8 @@ const nl: HelpContent = {
           kind: "list",
           title: "Wie mag wat?",
           items: [
-            "**Leraar:** kijkt en werkt mee — eigen klas en presentie, kinderportfolio's, lesplannen, updates, documenten en media, kalender, rooster (alleen kijken).",
-            "**Beheerder:** kan daarnaast klassen, leraren en het rooster beheren, alle klassen bekijken, en gebruikt het Beheerpaneel (inclusief back-ups).",
+            "**Leraar:** kijkt en werkt mee — eigen klas en presentie, kinderportfolio's, lesplannen, updates, documenten en media, kalender, en het rooster bijwerken.",
+            "**Beheerder:** kan daarnaast klassen en leraren beheren, zondagen aan het rooster toevoegen of verwijderen, alle klassen bekijken, en gebruikt het Beheerpaneel (inclusief back-ups).",
           ],
         },
       ],
@@ -528,9 +528,16 @@ const nl: HelpContent = {
         },
         {
           kind: "steps",
-          title: "Voor beheerders: het rooster invullen",
+          title: "Voor leraren en beheerders: het rooster bijwerken",
           items: [
-            "Klik op een cel om hem te bewerken. Alles wordt automatisch bewaard, net als in een spreadsheet.",
+            "Klik op een cel om hem te bewerken: kies leraren, of vul thema, opmerkingen, soort dienst, voorganger, liturgie of muziek in. Alles wordt automatisch bewaard, net als in een spreadsheet.",
+            "Wijzig je de datum van een rij, dan verschuift het bijbehorende evenement in de kalender mee.",
+          ],
+        },
+        {
+          kind: "steps",
+          title: "Alleen voor beheerders: zondagen toevoegen en verwijderen",
+          items: [
             "Voeg zondagen toe met **Rij Toevoegen**, **Volgende Zondag Toevoegen** of **Meerdere Zondagen Toevoegen** (kies de startdatum en het aantal weken).",
             "Met **Dupliceren** of **Verwijderen** op een rij kopieer of verwijder je een zondag. Elke rij heeft een bijbehorend evenement in de kalender (**Bekijk in Kalender**).",
           ],
@@ -689,8 +696,8 @@ const en: HelpContent = {
           kind: "list",
           title: "Who can do what?",
           items: [
-            "**Teacher:** views and contributes — own class and attendance, child portfolios, lesson plans, updates, documents and media, calendar, roster (view only).",
-            "**Administrator:** can also manage classes, teachers and the roster, see all classes, and use the Admin Panel (including backups).",
+            "**Teacher:** views and contributes — own class and attendance, child portfolios, lesson plans, updates, documents and media, calendar, and updating the roster.",
+            "**Administrator:** can also manage classes and teachers, add or delete Sundays on the roster, see all classes, and use the Admin Panel (including backups).",
           ],
         },
       ],
@@ -1098,9 +1105,16 @@ const en: HelpContent = {
         },
         {
           kind: "steps",
-          title: "For administrators: filling in the roster",
+          title: "For teachers and administrators: updating the roster",
           items: [
-            "Click a cell to edit it. Everything is saved automatically, just like a spreadsheet.",
+            "Click a cell to edit it: pick teachers, or fill in the theme, notes, service type, preacher, liturgy or music. Everything is saved automatically, just like a spreadsheet.",
+            "If you change the date of a row, its matching calendar event moves with it.",
+          ],
+        },
+        {
+          kind: "steps",
+          title: "Administrators only: adding and deleting Sundays",
+          items: [
             "Add Sundays with **Add Row**, **Add Next Sunday** or **Add Multiple Sundays** (pick the start date and number of weeks).",
             "**Duplicate** or **Delete** on a row copies or removes a Sunday. Every row has a matching event in the calendar (**View in Calendar**).",
           ],

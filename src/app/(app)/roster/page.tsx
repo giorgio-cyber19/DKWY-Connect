@@ -59,6 +59,7 @@ function RosterPageContent() {
   const [addNotice, setAddNotice] = useState<string | null>(null);
 
   const isAdmin = user?.role === "admin";
+  const canEdit = !!user; // teachers update the roster too; adding and deleting rows is for administrators
 
   useEffect(() => {
     if (!highlightId) return;
@@ -232,11 +233,12 @@ function RosterPageContent() {
                 highlightId={highlightId}
                 focusRowId={focusRowId}
                 isAdmin={isAdmin}
+                canEdit={canEdit}
                 onSaveStatusChange={setSaveStatus}
               />
             </div>
             <div className="sm:hidden">
-              <RosterMobileCards entries={scopedEntries} users={users} isAdmin={isAdmin} />
+              <RosterMobileCards entries={scopedEntries} users={users} isAdmin={isAdmin} canEdit={canEdit} />
             </div>
           </>
         ))}

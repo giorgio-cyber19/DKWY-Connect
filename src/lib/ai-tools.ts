@@ -1069,7 +1069,7 @@ const tools: ToolDef[] = [
   },
   {
     name: "update_roster_entry",
-    description: "Edit a roster entry (administrators only). Only the fields you pass are changed; teacher lists replace the old lists.",
+    description: "Edit a roster entry (teachers and administrators). Only the fields you pass are changed; teacher lists replace the old lists.",
     parameters: schema(
       {
         entry: s("Roster entry id or its date (YYYY-MM-DD)."),

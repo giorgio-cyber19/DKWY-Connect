@@ -19,9 +19,7 @@ const EDITABLE_FIELDS = [
 export async function PATCH(request: Request, ctx: RouteContext<"/api/roster/[id]">) {
   const claims = verifySessionToken(getBearerToken(request));
   if (!claims) return NextResponse.json({ error: "unauthorized", message: "Sign in first." }, { status: 401 });
-  if (claims.role !== "admin") {
-    return NextResponse.json({ error: "forbidden", message: "Only administrators can edit roster entries." }, { status: 403 });
-  }
+  // Teachers and administrators may both update the roster; only administrators add or delete entries.
 
   const { id } = await ctx.params;
   const entry = await getEntity<RosterEntry>("rosterEntries", id);
