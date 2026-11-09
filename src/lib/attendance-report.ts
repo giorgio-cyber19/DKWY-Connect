@@ -1,6 +1,9 @@
 import type { AttendanceRecord, AttendanceStatus, Child } from "./types";
 
-/** The class register across many Sundays, shaped for a table (screen or PDF). Pure — no React, no Date-of-today. */
+/**
+ * The class register across many Sundays, shaped for a table (screen or PDF). Pure — no React, no Date-of-today.
+ * Children who weren't present on any of the Sundays are left out: the overview lists who was there.
+ */
 
 export interface ReportRow {
   child: Child;
@@ -36,6 +39,7 @@ export function buildReport(records: AttendanceRecord[], pupils: Child[]): Repor
 
   const rows = [...pupils]
     .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }))
+    .filter((child) => sorted.some((r) => r.marks[child.id] === "present"))
     .map<ReportRow>((child) => {
       const marks = sorted.map((r) => r.marks[child.id] ?? null);
       const counted = marks.filter((m) => m !== null).length;

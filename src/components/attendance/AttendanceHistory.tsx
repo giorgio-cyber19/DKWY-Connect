@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Check, X, FileDown, ClipboardList } from "lucide-react";
+import { Check, FileDown, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -236,15 +236,10 @@ export function AttendanceHistory({
                         key={shown[i].date}
                         className={cn(
                           "text-center px-1 py-1.5 border-b border-[var(--border-softer)]",
-                          m === "present" && "bg-[color-mix(in_srgb,var(--color-sage-deep)_10%,transparent)]",
-                          m === "absent" && "bg-[color-mix(in_srgb,#ef4444_10%,transparent)]",
-                          m === "excused" && "bg-[color-mix(in_srgb,var(--color-gold-deep)_14%,transparent)]"
+                          m === "present" && "bg-[color-mix(in_srgb,var(--color-sage-deep)_10%,transparent)]"
                         )}
                       >
                         {m === "present" && <Check size={15} strokeWidth={3} className="inline text-[var(--color-sage-deep)]" aria-label={t("attendance.present")} />}
-                        {m === "absent" && <X size={15} strokeWidth={3} className="inline text-red-500" aria-label={t("attendance.absent")} />}
-                        {m === "excused" && <span className="font-bold text-[var(--color-gold-deep)]" title={t("attendance.excused")}>{t("attendance.excusedLetter")}</span>}
-                        {m === null && <span className="text-[var(--color-ink-faint)]" title={t("attendance.reportNotRecorded")}>·</span>}
                       </td>
                     ))}
                     <td className="text-center px-2 py-1.5 border-b border-l border-[var(--border-softer)] tabular-nums text-[var(--text-secondary)]">
@@ -280,9 +275,7 @@ export function AttendanceHistory({
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mt-3 text-[11.5px] text-[var(--text-secondary)]">
             <p className="flex flex-wrap items-center gap-x-3.5 gap-y-1">
               <span className="inline-flex items-center gap-1"><Check size={13} strokeWidth={3} className="text-[var(--color-sage-deep)]" /> {t("attendance.present")}</span>
-              <span className="inline-flex items-center gap-1"><X size={13} strokeWidth={3} className="text-red-500" /> {t("attendance.absent")}</span>
-              <span className="inline-flex items-center gap-1"><b className="text-[var(--color-gold-deep)]">{t("attendance.excusedLetter")}</b> {t("attendance.excused")}</span>
-              <span className="inline-flex items-center gap-1"><b>·</b> {t("attendance.reportNotRecorded")}</span>
+              <span>{t("attendance.reportOnlyPresent")}</span>
             </p>
             <p>
               {shown.length < all.length && `${t("attendance.reportShowingOf").replace("{n}", String(shown.length)).replace("{total}", String(all.length))} · `}

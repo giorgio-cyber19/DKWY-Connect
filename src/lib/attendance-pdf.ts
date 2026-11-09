@@ -50,26 +50,13 @@ const COLOR: Record<AttendanceStatus, RGB> = { present: GREEN, absent: RED, excu
 
 type CellMark = AttendanceStatus | null;
 
-/** A tick, a cross, a letter or a dot, centred on (cx, cy). */
-function drawGlyph(doc: jsPDF, mark: CellMark, cx: number, cy: number, excusedLetter: string) {
+/** A tick (for "present") centred on (cx, cy); nothing for anyone who wasn't there. */
+function drawGlyph(doc: jsPDF, mark: CellMark, cx: number, cy: number) {
   if (mark === "present") {
     doc.setDrawColor(...GREEN);
     doc.setLineWidth(0.55);
     doc.line(cx - 1.6, cy + 0.1, cx - 0.5, cy + 1.3);
     doc.line(cx - 0.5, cy + 1.3, cx + 1.8, cy - 1.5);
-  } else if (mark === "absent") {
-    doc.setDrawColor(...RED);
-    doc.setLineWidth(0.55);
-    doc.line(cx - 1.3, cy - 1.3, cx + 1.3, cy + 1.3);
-    doc.line(cx - 1.3, cy + 1.3, cx + 1.3, cy - 1.3);
-  } else if (mark === "excused") {
-    doc.setTextColor(...GOLD);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(8.5);
-    doc.text(excusedLetter, cx, cy + 1.1, { align: "center" });
-  } else {
-    doc.setFillColor(190, 195, 202);
-    doc.circle(cx, cy, 0.35, "F");
   }
 }
 
@@ -143,41 +130,24 @@ export async function downloadAttendancePdf(opts: AttendancePdfOptions): Promise
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10.5);
     let x = 12;
-    for (const [status, count, label] of [
-      ["present", total.present, labels.present],
-      ["absent", total.absent, labels.absent],
-      ["excused", total.excused, labels.excused],
-    ] as [AttendanceStatus, number, string][]) {
-      if (status === "excused" && count === 0) continue;
-      doc.setTextColor(...COLOR[status]);
-      const text = `${count} ${label.toLowerCase()}`;
-      doc.text(text, x, headerHeight + 4);
-      x += doc.getTextWidth(text) + 8;
-    }
+    doc.setTextColor(...COLOR.present);
+    const presentText = `${total.present} ${labels.present.toLowerCase()}`;
+    doc.text(presentText, x, headerHeight + 4);
+    x += doc.getTextWidth(presentText) + 8;
     if (record.visitors > 0) {
       doc.setTextColor(...MUTED);
       doc.text(`${record.visitors} ${labels.visitors.toLowerCase()}`, x, headerHeight + 4);
     }
 
-    const statusText: Record<AttendanceStatus, string> = { present: labels.present, absent: labels.absent, excused: labels.excused };
     autoTable(doc, {
       startY: headerHeight + 9,
-      head: [["#", labels.name, ""]],
-      body: report.rows
-        .filter((r) => r.marks[0] !== null)
-        .map((r, i) => [String(i + 1), r.child.name, { content: statusText[r.marks[0] as AttendanceStatus], status: r.marks[0] } as never]),
+      head: [["#", labels.name]],
+      body: report.rows.map((r, i) => [String(i + 1), r.child.name]),
       theme: "grid",
       styles: { fontSize: 10, cellPadding: 2.4, lineColor: [225, 228, 232], lineWidth: 0.1, textColor: INK },
       headStyles: { fillColor: HEAD, textColor: 255, fontSize: 9 },
-      columnStyles: { 0: { cellWidth: 12, halign: "center", textColor: MUTED }, 2: { cellWidth: 38, halign: "center", fontStyle: "bold" } },
+      columnStyles: { 0: { cellWidth: 12, halign: "center", textColor: MUTED } },
       margin: { left: 12, right: 12, bottom: 16 },
-      didParseCell: (data) => {
-        const status = (data.cell.raw as { status?: AttendanceStatus } | null)?.status;
-        if (data.section === "body" && status) {
-          data.cell.styles.fillColor = FILL[status];
-          data.cell.styles.textColor = COLOR[status];
-        }
-      },
     });
 
     let y = lastTableY(doc) + 8;
@@ -248,12 +218,12 @@ export async function downloadAttendancePdf(opts: AttendancePdfOptions): Promise
       didParseCell: (data) => {
         if (data.section !== "body" || data.column.index < 1 || data.column.index > n) return;
         const status = (data.cell.raw as { status?: AttendanceStatus | "none" } | null)?.status;
-        if (status && status !== "none") data.cell.styles.fillColor = FILL[status];
+        if (status === "present") data.cell.styles.fillColor = FILL.present;
       },
       didDrawCell: (data) => {
         if (data.section !== "body" || data.column.index < 1 || data.column.index > n) return;
         const status = (data.cell.raw as { status?: AttendanceStatus | "none" } | null)?.status;
-        drawGlyph(doc, status && status !== "none" ? status : null, data.cell.x + data.cell.width / 2, data.cell.y + data.cell.height / 2, labels.excusedLetter);
+        drawGlyph(doc, status && status !== "none" ? status : null, data.cell.x + data.cell.width / 2, data.cell.y + data.cell.height / 2);
       },
     });
 
@@ -265,13 +235,8 @@ export async function downloadAttendancePdf(opts: AttendancePdfOptions): Promise
     }
     doc.setFontSize(8.5);
     let x = 12;
-    for (const [mark, label] of [
-      ["present", labels.present],
-      ["absent", labels.absent],
-      ["excused", labels.excused],
-      [null, labels.notRecorded],
-    ] as [CellMark, string][]) {
-      drawGlyph(doc, mark, x + 1.8, y - 1, labels.excusedLetter);
+    for (const [mark, label] of [["present", labels.present]] as [CellMark, string][]) {
+      drawGlyph(doc, mark, x + 1.8, y - 1);
       doc.setFont("helvetica", "normal");
       doc.setTextColor(...MUTED);
       doc.text(label, x + 5, y);
