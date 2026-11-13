@@ -236,7 +236,7 @@ export default function DashboardPage() {
                   const author = getUser(p.authorId);
                   return (
                     <StaggerItem key={p.id} className="flex gap-3">
-                      <Avatar name={author?.name ?? "?"} color={author?.avatarColor} size="sm" />
+                      <Avatar name={author?.name ?? "?"} color={author?.avatarColor} src={author?.photo} size="sm" />
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5 mb-0.5">
                           <p className="text-[12.5px] font-semibold">{author?.name}</p>

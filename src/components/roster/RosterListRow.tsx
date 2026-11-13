@@ -9,8 +9,8 @@ import type { RosterEntry, User } from "@/lib/types";
 
 export function resolveUserDisplay(id: string, users: User[]) {
   const user = users.find((u) => u.id === id);
-  if (!user) return { name: "roster.formerMember" as const, avatarColor: "var(--color-ink-soft)", inactive: true, missing: true };
-  return { name: user.name, avatarColor: user.avatarColor, inactive: user.status === "disabled", missing: false };
+  if (!user) return { name: "roster.formerMember" as const, avatarColor: "var(--color-ink-soft)", photo: undefined as string | undefined, inactive: true, missing: true };
+  return { name: user.name, avatarColor: user.avatarColor, photo: user.photo, inactive: user.status === "disabled", missing: false };
 }
 
 function PeopleChips({ ids, users }: { ids: string[]; users: User[] }) {
@@ -23,7 +23,7 @@ function PeopleChips({ ids, users }: { ids: string[]; users: User[] }) {
         const name = display.missing ? t("roster.formerMember") : display.name;
         return (
           <span key={id} className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[color-mix(in_srgb,var(--color-ink)_5%,transparent)]">
-            <Avatar name={name} color={display.avatarColor} size="xs" />
+            <Avatar name={name} color={display.avatarColor} src={display.photo} size="xs" />
             <span className="text-[11.5px] font-medium">{name}</span>
             {display.inactive && <Badge tone="danger">{t("roster.disabledTag")}</Badge>}
           </span>

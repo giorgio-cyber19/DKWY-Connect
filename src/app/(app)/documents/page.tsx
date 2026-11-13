@@ -399,6 +399,7 @@ export default function DocumentsPage() {
       modified: item.modifiedAt ?? item.uploadedAt,
       ownerName: uploader?.name ?? "",
       ownerColor: uploader?.avatarColor,
+      ownerPhoto: uploader?.photo,
       location: query.trim() ? folderPathLabel(folders, item.folderId) || undefined : undefined,
       canOpen: !!item.driveFileId,
     };
@@ -449,7 +450,7 @@ export default function DocumentsPage() {
   const folderRowData = listFolders
     ? sortFolderRows(subfolders, viewState.sortKey, viewState.sortDir).map((folder) => {
         const owner = getUser(folder.createdBy);
-        return { id: folder.id, name: folder.name, modified: folder.createdAt, ownerName: owner?.name ?? "", ownerColor: owner?.avatarColor };
+        return { id: folder.id, name: folder.name, modified: folder.createdAt, ownerName: owner?.name ?? "", ownerColor: owner?.avatarColor, ownerPhoto: owner?.photo };
       })
     : [];
 

@@ -94,7 +94,7 @@ export function Topbar({ onOpenMobileSidebar, onOpenSearch }: { onOpenMobileSide
 
         <div className="relative ml-1" ref={userRef}>
           <button onClick={() => setUserMenuOpen((o) => !o)} className="flex items-center gap-2 p-1 pr-2 rounded-xl hover:bg-black/5 transition-colors">
-            <Avatar name={user.name} color={user.avatarColor} size="sm" />
+            <Avatar name={user.name} color={user.avatarColor} src={user.photo} size="sm" />
             <ChevronDown size={13} className="hidden sm:block text-[var(--text-secondary)]" />
           </button>
           {userMenuOpen && (

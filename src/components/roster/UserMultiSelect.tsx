@@ -73,7 +73,7 @@ export function UserMultiSelect({
             key={u.id}
             className="roster-chip inline-flex items-center gap-1.5 pl-1 pr-2 py-1 rounded-full bg-[color-mix(in_srgb,var(--color-ink)_6%,transparent)] max-w-full"
           >
-            <Avatar name={u.name} color={u.avatarColor} size="xs" />
+            <Avatar name={u.name} color={u.avatarColor} src={u.photo} size="xs" />
             <span className="roster-chip-name text-xs font-medium min-w-0">{u.name}</span>
             {u.status === "disabled" && <Badge tone="danger">{t("roster.disabledTag")}</Badge>}
             {!readOnly && (
@@ -125,7 +125,7 @@ export function UserMultiSelect({
                   className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-[color-mix(in_srgb,var(--color-ink)_5%,transparent)] transition-colors text-left"
                 >
                   <input type="checkbox" readOnly checked={checked} className="accent-[var(--color-gold)]" />
-                  <Avatar name={u.name} color={u.avatarColor} size="sm" />
+                  <Avatar name={u.name} color={u.avatarColor} src={u.photo} size="sm" />
                   <span className="min-w-0 flex-1 text-sm font-medium truncate">{u.name}</span>
                   <Badge tone={u.role === "admin" ? "gold" : "blue"}>{u.role === "admin" ? t("common.admin") : t("common.teacher")}</Badge>
                   {u.status === "disabled" && <Badge tone="danger">{t("roster.disabledTag")}</Badge>}

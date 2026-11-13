@@ -65,7 +65,7 @@ export function PostCard({ post, compact }: { post: Post; compact?: boolean }) {
     <StaggerItem>
       <Card className="p-5">
         <div className="flex items-start gap-3">
-          <Avatar name={author.name} color={author.avatarColor} size="md" />
+          <Avatar name={author.name} color={author.avatarColor} src={author.photo} size="md" />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
               <p className="text-sm font-semibold">{author.name}</p>
@@ -196,7 +196,7 @@ export function PostCard({ post, compact }: { post: Post; compact?: boolean }) {
               const cAuthor = getUser(c.authorId);
               return (
                 <div key={c.id} className="flex items-start gap-2.5">
-                  <Avatar name={cAuthor?.name ?? "?"} color={cAuthor?.avatarColor} size="xs" />
+                  <Avatar name={cAuthor?.name ?? "?"} color={cAuthor?.avatarColor} src={cAuthor?.photo} size="xs" />
                   <div className="flex-1 bg-black/[0.03] rounded-2xl px-3.5 py-2">
                     <p className="text-[12px] font-semibold">{cAuthor?.name}</p>
                     <p className="text-[13px]">{c.text}</p>

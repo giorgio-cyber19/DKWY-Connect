@@ -18,6 +18,7 @@ export interface LibraryRow {
   modified: string;
   ownerName: string;
   ownerColor?: string;
+  ownerPhoto?: string;
   /** Shown under the name while searching across folders. */
   location?: string;
   /** Whether clicking the row does something (preview / viewer). */
@@ -67,6 +68,7 @@ export interface FolderRowData {
   modified: string;
   ownerName: string;
   ownerColor?: string;
+  ownerPhoto?: string;
 }
 
 /** What folder rows (and tiles) do: open, menu, drag, and receive drops. */
@@ -150,7 +152,7 @@ export function LibraryList({
               </div>
             </div>
             <div role="cell" className="hidden @3xl:flex w-40 shrink-0 items-center gap-2 min-w-0 text-[var(--text-secondary)]">
-              <Avatar name={folder.ownerName || "?"} color={folder.ownerColor} size="xs" />
+              <Avatar name={folder.ownerName || "?"} src={folder.ownerPhoto} color={folder.ownerColor} size="xs" />
               <span className="truncate">{folder.ownerName}</span>
             </div>
             <div role="cell" className="hidden @xl:block w-36 shrink-0 text-[var(--text-secondary)]">
@@ -191,7 +193,7 @@ export function LibraryList({
             </div>
           </div>
           <div role="cell" className="hidden @3xl:flex w-40 shrink-0 items-center gap-2 min-w-0 text-[var(--text-secondary)]">
-            <Avatar name={row.ownerName || "?"} color={row.ownerColor} size="xs" />
+            <Avatar name={row.ownerName || "?"} src={row.ownerPhoto} color={row.ownerColor} size="xs" />
             <span className="truncate">{row.ownerName}</span>
           </div>
           <div role="cell" className="hidden @xl:block w-36 shrink-0 text-[var(--text-secondary)]">

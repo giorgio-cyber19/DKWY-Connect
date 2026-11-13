@@ -22,6 +22,7 @@ const errorMessages: Record<string, Record<Language, string>> = {
   list_failed: { en: "Couldn't load files from Google Drive.", nl: "Kon bestanden niet laden vanuit Google Drive." },
   storage_unavailable: { en: "Couldn't retrieve storage details from Google Drive.", nl: "Kon opslaggegevens niet ophalen van Google Drive." },
   invalid_reset_token: { en: "This reset link is invalid or has expired. Request a new one.", nl: "Deze resetlink is ongeldig of verlopen. Vraag een nieuwe aan." },
+  invalid_photo: { en: "That photo can't be used. Choose a JPG, PNG or WebP image.", nl: "Deze foto kan niet worden gebruikt. Kies een JPG-, PNG- of WebP-afbeelding.", },
   folder_exists: { en: "A folder with that name already exists.", nl: "Er bestaat al een map met die naam." },
   invalid_move: { en: "A folder can't be moved or copied into itself or one of its own subfolders.", nl: "Een map kan niet in zichzelf of in een van zijn eigen submappen worden geplaatst." },
   folder_too_deep: { en: "Folders can't be nested any deeper.", nl: "Mappen kunnen niet dieper worden genest." },

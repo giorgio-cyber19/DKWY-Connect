@@ -76,7 +76,7 @@ interface AppState {
 
   // self-service account
   changeOwnPassword: (currentPassword: string, newPassword: string) => Promise<void>;
-  updateProfile: (input: { name?: string; bio?: string; username?: string | null; accentColor?: string | null }) => Promise<User>;
+  updateProfile: (input: { name?: string; bio?: string; username?: string | null; accentColor?: string | null; photo?: string | null }) => Promise<User>;
 
   // notifications
   markNotificationRead: (id: string) => Promise<void>;

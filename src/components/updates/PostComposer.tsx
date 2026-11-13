@@ -63,7 +63,7 @@ export function PostComposer() {
   return (
     <Card className="p-5">
       <div className="flex gap-3">
-        <Avatar name={user.name} color={user.avatarColor} size="md" />
+        <Avatar name={user.name} color={user.avatarColor} src={user.photo} size="md" />
         <div className="flex-1 space-y-3">
           <textarea
             value={content}

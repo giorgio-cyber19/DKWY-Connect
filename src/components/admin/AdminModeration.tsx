@@ -39,7 +39,7 @@ export function AdminModeration() {
                 <StaggerItem key={p.id}>
                   <Card className="p-4">
                     <div className="flex items-center gap-2.5 mb-2">
-                      <Avatar name={author?.name ?? "?"} color={author?.avatarColor} size="xs" />
+                      <Avatar name={author?.name ?? "?"} color={author?.avatarColor} src={author?.photo} size="xs" />
                       <p className="text-[12.5px] font-semibold">{author?.name}</p>
                       <Badge tone="neutral">{enumLabels.postType[language][p.type]}</Badge>
                     </div>

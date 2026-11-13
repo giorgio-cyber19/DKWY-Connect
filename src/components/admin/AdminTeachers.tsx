@@ -263,7 +263,7 @@ export function AdminTeachers() {
           return (
             <StaggerItem key={u.id} className={menuFor === u.id ? "relative z-30" : undefined}>
               <Card className="p-4 flex items-center gap-3.5 relative">
-                <Avatar name={u.name} color={u.avatarColor} size="md" />
+                <Avatar name={u.name} color={u.avatarColor} src={u.photo} size="md" />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-semibold truncate">{u.name}</p>

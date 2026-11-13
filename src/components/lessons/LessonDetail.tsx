@@ -80,7 +80,7 @@ export function LessonDetail({ lesson }: { lesson: LessonPlan }) {
         <h1 className="font-display text-3xl sm:text-4xl font-semibold mb-2 max-w-2xl">{lesson.title}</h1>
         <p className="text-white/90 text-sm">{lesson.passage} · {lesson.theme}</p>
         <div className="flex items-center gap-3 mt-5">
-          <Avatar name={author?.name ?? "?"} color="rgba(255,255,255,0.3)" size="sm" />
+          <Avatar name={author?.name ?? "?"} src={author?.photo} color="rgba(255,255,255,0.3)" size="sm" />
           <div className="text-sm">
             <p className="font-semibold">{author?.name}</p>
             <p className="text-white/75 text-xs">{formatDate(lesson.date, undefined, language)}</p>

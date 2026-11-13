@@ -6,6 +6,10 @@ import { normalizeUsername, isValidUsernameFormat, isUsernameTaken } from "@/lib
 import { isValidHexColor } from "@/lib/accent-color";
 import type { User } from "@/lib/types";
 
+/** A profile photo is a small image sent as a data URL (the app shrinks it to a ~192px square first). */
+const PHOTO_PATTERN = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/;
+const MAX_PHOTO_LENGTH = 60_000;
+
 export async function PATCH(request: Request) {
   const claims = verifySessionToken(getBearerToken(request));
   if (!claims) return NextResponse.json({ error: "unauthorized", message: "Sign in first." }, { status: 401 });
@@ -54,6 +58,17 @@ export async function PATCH(request: Request) {
           return NextResponse.json({ error: "username_taken", message: "That username is already in use." }, { status: 409 });
         }
         updated.username = username;
+      }
+    }
+
+    if ("photo" in (body ?? {})) {
+      const photo = body?.photo;
+      if (photo === null) {
+        delete updated.photo;
+      } else if (typeof photo === "string" && photo.length <= MAX_PHOTO_LENGTH && PHOTO_PATTERN.test(photo)) {
+        updated.photo = photo;
+      } else {
+        return NextResponse.json({ error: "invalid_photo", message: "That photo can't be used. Choose a JPG, PNG or WebP image." }, { status: 400 });
       }
     }
 

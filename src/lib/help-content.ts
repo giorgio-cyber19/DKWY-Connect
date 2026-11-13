@@ -558,6 +558,7 @@ const nl: HelpContent = {
         {
           kind: "list",
           items: [
+            "**Profielfoto:** klik bij **Profiel** op **Foto uploaden** (of **Foto wijzigen**) en kies een foto van jezelf. Hij wordt vierkant bijgesneden, direct opgeslagen en getoond in plaats van je initialen, bijvoorbeeld bovenin, bij je berichten en in het rooster. Met **Foto verwijderen** ga je terug naar je initialen.",
             "**Profiel:** je naam, e-mailadres, een optionele **gebruikersnaam** (waarmee je ook kunt inloggen) en een korte tekst over jezelf.",
             "**Weergave:** kies Licht of Donker.",
             "**Accentkleur:** je eigen kleur voor knoppen.",
@@ -1141,6 +1142,7 @@ const en: HelpContent = {
         {
           kind: "list",
           items: [
+            "**Profile photo:** under **Profile** click **Upload photo** (or **Change photo**) and choose a photo of yourself. It is cropped square, saved straight away and shown instead of your initials, for example at the top, on your posts and in the roster. **Remove photo** takes you back to your initials.",
             "**Profile:** your name, email, an optional **username** (which you can also sign in with) and a short text about yourself.",
             "**Appearance:** choose Light or Dark.",
             "**Accent color:** your own colour for buttons.",
