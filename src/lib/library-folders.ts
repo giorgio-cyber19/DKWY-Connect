@@ -54,3 +54,44 @@ export function hasSiblingNamed(folders: FolderLike[], parentId: string | null, 
   const lower = name.toLowerCase();
   return folders.some((f) => f.id !== exceptId && (f.parentId ?? null) === parentId && f.name.toLowerCase() === lower);
 }
+
+/** Levels in the tree rooted at `id`, counting `id` itself (a folder without subfolders is 1). */
+export function subtreeHeight(folders: FolderLike[], id: string): number {
+  const seen = new Set<string>([id]);
+  let level = [id];
+  let height = 0;
+  while (level.length) {
+    height++;
+    const next: string[] = [];
+    for (const parent of level) {
+      for (const f of folders) {
+        if (f.parentId === parent && !seen.has(f.id)) {
+          seen.add(f.id);
+          next.push(f.id);
+        }
+      }
+    }
+    level = next;
+  }
+  return height;
+}
+
+/** Whether folder `id` may be moved into `targetId` (null = top level): not into itself or something below itself. */
+export function canMoveFolderInto(folders: FolderLike[], id: string, targetId: string | null): boolean {
+  if (targetId === null) return true;
+  return targetId !== id && !descendantIds(folders, id).includes(targetId);
+}
+
+/** "Report.pdf" -> "Report - Copy.pdf" (then "Report - Copy 2.pdf", …) — the first name not in `taken` (case-insensitive). */
+export function copyName(name: string, taken: Iterable<string>, isFolder = false): string {
+  const used = new Set(Array.from(taken, (n) => n.toLowerCase()));
+  if (!used.has(name.toLowerCase())) return name;
+  const dot = isFolder ? -1 : name.lastIndexOf(".");
+  const base = dot > 0 && dot < name.length - 1 ? name.slice(0, dot) : name;
+  const ext = dot > 0 && dot < name.length - 1 ? name.slice(dot) : "";
+  for (let n = 1; n < 1000; n++) {
+    const candidate = `${base} - Copy${n === 1 ? "" : ` ${n}`}${ext}`;
+    if (!used.has(candidate.toLowerCase())) return candidate;
+  }
+  return `${base} - Copy ${Date.now()}${ext}`;
+}

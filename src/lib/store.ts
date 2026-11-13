@@ -140,6 +140,11 @@ interface AppState {
   createLibraryFolder: (name: string, library: LibraryFolder["library"], parentId?: string | null) => Promise<LibraryFolder>;
   renameLibraryFolder: (id: string, name: string) => Promise<void>;
   removeLibraryFolder: (id: string) => Promise<void>;
+  /** Move / copy a file or a folder into another folder (null = top level). */
+  moveLibraryItem: (library: LibraryFolder["library"], id: string, folderId: string | null) => Promise<void>;
+  copyLibraryItem: (library: LibraryFolder["library"], id: string, folderId: string | null) => Promise<void>;
+  moveLibraryFolder: (id: string, parentId: string | null) => Promise<void>;
+  copyLibraryFolder: (id: string, parentId: string | null) => Promise<void>;
 
   // calendar
   createEvent: (item: Omit<CalendarEvent, "id">) => Promise<CalendarEvent>;
@@ -502,6 +507,40 @@ export const useAppStore = create<AppState>()(
             mediaItems: s.mediaItems.map((m) => (m.folderId && removed.has(m.folderId) ? { ...m, folderId: null } : m)),
           };
         });
+      },
+
+      moveLibraryItem: async (library, id, folderId) => {
+        if (library === "documents") {
+          const moved = await apiPatch<DocumentItem>(`/api/documents/${id}`, { folderId });
+          set((s) => ({ documentItems: s.documentItems.map((d) => (d.id === id ? moved : d)) }));
+        } else {
+          const moved = await apiPatch<MediaItem>(`/api/media/${id}`, { folderId });
+          set((s) => ({ mediaItems: s.mediaItems.map((m) => (m.id === id ? moved : m)) }));
+        }
+      },
+
+      copyLibraryItem: async (library, id, folderId) => {
+        if (library === "documents") {
+          const copy = await apiPost<DocumentItem>(`/api/documents/${id}/copy`, { folderId });
+          set((s) => ({ documentItems: [copy, ...s.documentItems] }));
+        } else {
+          const copy = await apiPost<MediaItem>(`/api/media/${id}/copy`, { folderId });
+          set((s) => ({ mediaItems: [copy, ...s.mediaItems] }));
+        }
+      },
+
+      moveLibraryFolder: async (id, parentId) => {
+        const moved = await apiPatch<LibraryFolder>(`/api/library-folders/${id}`, { parentId });
+        set((s) => ({ libraryFolders: s.libraryFolders.map((f) => (f.id === id ? moved : f)) }));
+      },
+
+      copyLibraryFolder: async (id, parentId) => {
+        const result = await apiPost<{ library: LibraryFolder["library"]; folders: LibraryFolder[]; items: (DocumentItem | MediaItem)[] }>(`/api/library-folders/${id}/copy`, { parentId });
+        set((s) => ({
+          libraryFolders: [...s.libraryFolders, ...result.folders],
+          documentItems: result.library === "documents" ? [...(result.items as DocumentItem[]), ...s.documentItems] : s.documentItems,
+          mediaItems: result.library === "media" ? [...(result.items as MediaItem[]), ...s.mediaItems] : s.mediaItems,
+        }));
       },
 
       createEvent: async (item) => {

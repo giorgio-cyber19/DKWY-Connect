@@ -17,6 +17,8 @@ import {
   Trash2,
   ChevronLeft,
   Plus,
+  FolderInput,
+  Copy,
 } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/Button";
@@ -33,6 +35,8 @@ import { splitFileName } from "@/lib/file-name";
 import { applyLibraryView, hasActiveFilters, parseSizeToBytes, DEFAULT_VIEW_STATE, type LibraryEntry, type LibraryViewState } from "@/lib/library-view";
 import { LibraryToolbar, type LibraryLayout } from "@/components/library/LibraryToolbar";
 import { LibraryList, LibraryGrid, FolderTiles, type LibraryRow } from "@/components/library/LibraryFiles";
+import { PdfViewer } from "@/components/library/PdfViewer";
+import { useLibraryTransfer } from "@/components/library/useLibraryTransfer";
 import { uploadToDrive, driveDownloadUrl, openInGoogleEditor } from "@/lib/upload";
 import { useLanguage } from "@/lib/language-context";
 import { translateApiError } from "@/lib/i18n/errors";
@@ -95,6 +99,25 @@ export default function DocumentsPage() {
   const folderInputRef = useRef<HTMLInputElement>(null);
 
   const menu = useContextMenu();
+
+  // Moving and copying: drag onto a folder, or "Move to… / Copy to…" in the right-click menu.
+  const transfer = useLibraryTransfer({ library: "documents", folders, getFile: (id) => documentItems.find((x) => x.id === id) });
+  const fileDrag = {
+    onDragStart: (id: string) => transfer.startDrag("file", id),
+    onDragEnd: transfer.endDrag,
+    draggingId: transfer.dragging?.kind === "file" ? transfer.dragging.id : null,
+  };
+  const folderDrag = {
+    onDragStart: (id: string) => transfer.startDrag("folder", id),
+    onDragEnd: transfer.endDrag,
+    draggingId: transfer.dragging?.kind === "folder" ? transfer.dragging.id : null,
+  };
+  // Dropping on a breadcrumb entry (or "All files") moves the dragged item up there.
+  const crumbDrop = (targetId: string | null) => ({
+    onDragOver: (e: React.DragEvent) => void transfer.handleOver(e, targetId),
+    onDragLeave: (e: React.DragEvent) => void transfer.handleLeave(e),
+    onDrop: (e: React.DragEvent) => void transfer.handleDrop(e, targetId),
+  });
 
   const currentFolder = currentFolderId ? folders.find((f) => f.id === currentFolderId) ?? null : null;
   const subfolders = useMemo(() => childFolders(folders, currentFolderId), [folders, currentFolderId]);
@@ -296,7 +319,9 @@ export default function DocumentsPage() {
   function folderMenuItems(folder: LibraryFolder): ContextMenuItem[] {
     return [
       { label: t("library.open"), icon: <Folder size={15} />, onClick: () => setCurrentFolderId(folder.id) },
-      { label: t("library.rename"), icon: <Pencil size={15} />, onClick: () => openRenameFolder(folder) },
+      { label: t("library.moveTo"), icon: <FolderInput size={15} />, onClick: () => transfer.openDialog("move", "folder", folder.id) },
+      { label: t("library.copyTo"), icon: <Copy size={15} />, onClick: () => transfer.openDialog("copy", "folder", folder.id) },
+      { label: t("library.rename"), icon: <Pencil size={15} />, onClick: () => openRenameFolder(folder), separator: true },
       { label: t("library.delete"), icon: <Trash2 size={15} />, onClick: () => setDeleteFolder(folder), destructive: true, separator: true },
     ];
   }
@@ -317,7 +342,7 @@ export default function DocumentsPage() {
 
   function fileMenuItems(item: DocumentItem): ContextMenuItem[] {
     const items: ContextMenuItem[] = [];
-    const canPreview = item.fileType === "docx" || item.fileType === "xlsx";
+    const canPreview = true; // every type opens in the built-in viewers (PDF, Word, Excel)
     if (canPreview && item.driveFileId) {
       items.push({ label: t("library.open"), icon: <Eye size={15} />, onClick: () => setViewingDoc(item) });
     }
@@ -334,7 +359,9 @@ export default function DocumentsPage() {
         onClick: () => window.open(driveDownloadUrl(item.driveFileId!), "_blank"),
       });
     }
-    items.push({ label: t("library.rename"), icon: <Pencil size={15} />, onClick: () => openRenameFile(item) });
+    items.push({ label: t("library.moveTo"), icon: <FolderInput size={15} />, onClick: () => transfer.openDialog("move", "file", item.id) });
+    items.push({ label: t("library.copyTo"), icon: <Copy size={15} />, onClick: () => transfer.openDialog("copy", "file", item.id) });
+    items.push({ label: t("library.rename"), icon: <Pencil size={15} />, onClick: () => openRenameFile(item), separator: true });
     items.push({ label: t("library.delete"), icon: <Trash2 size={15} />, onClick: () => setDeleteFile(item), destructive: true });
     return items;
   }
@@ -373,7 +400,7 @@ export default function DocumentsPage() {
       ownerName: uploader?.name ?? "",
       ownerColor: uploader?.avatarColor,
       location: query.trim() ? folderPathLabel(folders, item.folderId) || undefined : undefined,
-      canOpen: (item.fileType === "docx" || item.fileType === "xlsx") && !!item.driveFileId,
+      canOpen: !!item.driveFileId,
     };
   });
 
@@ -419,7 +446,11 @@ export default function DocumentsPage() {
         </div>
         {!query.trim() && currentFolder && (
           <nav aria-label={t("library.breadcrumb")} className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm font-semibold text-[var(--text-secondary)]">
-            <button onClick={() => setCurrentFolderId(null)} className="flex items-center gap-1.5 hover:text-[var(--text-primary)] transition-colors">
+            <button
+              onClick={() => setCurrentFolderId(null)}
+              {...crumbDrop(null)}
+              className={cn("flex items-center gap-1.5 hover:text-[var(--text-primary)] transition-colors rounded-md -mx-1 px-1", transfer.overKey === "root" && "ring-2 ring-[var(--color-blue)] text-[var(--text-primary)]")}
+            >
               <ChevronLeft size={15} /> {t("library.backToAllFiles")}
             </button>
             {breadcrumb.map((f, i) => (
@@ -428,7 +459,11 @@ export default function DocumentsPage() {
                 {i === breadcrumb.length - 1 ? (
                   <span className="text-[var(--text-primary)]">{f.name}</span>
                 ) : (
-                  <button onClick={() => setCurrentFolderId(f.id)} className="hover:text-[var(--text-primary)] transition-colors">
+                  <button
+                    onClick={() => setCurrentFolderId(f.id)}
+                    {...crumbDrop(f.id)}
+                    className={cn("hover:text-[var(--text-primary)] transition-colors rounded-md -mx-1 px-1", transfer.overKey === f.id && "ring-2 ring-[var(--color-blue)] text-[var(--text-primary)]")}
+                  >
                     {f.name}
                   </button>
                 )}
@@ -444,6 +479,7 @@ export default function DocumentsPage() {
       {openError && <p className="text-xs text-red-500 font-medium mb-4">{openError}</p>}
       {uploading && <p className="text-xs text-[var(--text-secondary)] mb-4">{t("documents.uploadingToDrive")}</p>}
       {dropNotice && <p className="text-xs text-[var(--text-secondary)] mb-4">{dropNotice}</p>}
+      {transfer.noticeElement}
 
       <input
         ref={filesInputRef}
@@ -496,10 +532,12 @@ export default function DocumentsPage() {
             <h3 className="text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)] mb-2.5">{t("library.foldersLabel")}</h3>
             <FolderTiles
               folders={subfolders}
-              dragTarget={dragTarget}
+              dragTarget={dragTarget ?? transfer.overKey}
+              drag={folderDrag}
               onOpen={setCurrentFolderId}
               onMenu={folderMenu}
               onDragOver={(e, id) => {
+                if (transfer.handleOver(e, id)) return;
                 if (!hasDraggedFiles(e.dataTransfer)) return;
                 e.preventDefault();
                 e.stopPropagation();
@@ -507,9 +545,11 @@ export default function DocumentsPage() {
                 setDragTarget(id);
               }}
               onDragLeave={(e) => {
+                if (transfer.handleLeave(e)) return;
                 if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragTarget(null);
               }}
               onDrop={(e, id) => {
+                if (transfer.handleDrop(e, id)) return;
                 const folder = folders.find((f) => f.id === id);
                 if (folder) handleDrop(e, folder);
               }}
@@ -546,15 +586,16 @@ export default function DocumentsPage() {
           <>
             {showFolders && subfolders.length > 0 && <h3 className="text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)] mb-2.5">{t("library.filesLabel")}</h3>}
             {layout === "list" ? (
-              <LibraryList rows={rows} sortKey={viewState.sortKey} sortDir={viewState.sortDir} onSort={sortBy} onOpen={openRow} onMenu={rowMenu} />
+              <LibraryList rows={rows} sortKey={viewState.sortKey} sortDir={viewState.sortDir} onSort={sortBy} onOpen={openRow} onMenu={rowMenu} drag={fileDrag} />
             ) : (
-              <LibraryGrid rows={rows} onOpen={openRow} onMenu={rowMenu}  />
+              <LibraryGrid rows={rows} onOpen={openRow} onMenu={rowMenu} drag={fileDrag} />
             )}
           </>
         )}
       </div>
 
       {menu.state && <ContextMenu x={menu.state.x} y={menu.state.y} items={menu.state.items} onClose={menu.close} />}
+      {transfer.element}
 
       <Modal open={!!folderModal} onClose={() => setFolderModal(null)} title={folderModal?.mode === "rename" ? t("library.renameFolderTitle") : t("library.newFolderTitle")} size="sm">
         <form onSubmit={submitFolder} className="space-y-4">
@@ -618,7 +659,8 @@ export default function DocumentsPage() {
         confirming={deleting}
       />
 
-      {viewingDoc && <DocumentViewer doc={viewingDoc} onClose={() => setViewingDoc(null)} />}
+      {viewingDoc && viewingDoc.fileType === "pdf" && <PdfViewer name={viewingDoc.name} fileId={viewingDoc.driveFileId} onClose={() => setViewingDoc(null)} />}
+      {viewingDoc && viewingDoc.fileType !== "pdf" && <DocumentViewer doc={viewingDoc} onClose={() => setViewingDoc(null)} />}
     </div>
   );
 }

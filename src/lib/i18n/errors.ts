@@ -23,6 +23,10 @@ const errorMessages: Record<string, Record<Language, string>> = {
   storage_unavailable: { en: "Couldn't retrieve storage details from Google Drive.", nl: "Kon opslaggegevens niet ophalen van Google Drive." },
   invalid_reset_token: { en: "This reset link is invalid or has expired. Request a new one.", nl: "Deze resetlink is ongeldig of verlopen. Vraag een nieuwe aan." },
   folder_exists: { en: "A folder with that name already exists.", nl: "Er bestaat al een map met die naam." },
+  invalid_move: { en: "A folder can't be moved or copied into itself or one of its own subfolders.", nl: "Een map kan niet in zichzelf of in een van zijn eigen submappen worden geplaatst." },
+  folder_too_deep: { en: "Folders can't be nested any deeper.", nl: "Mappen kunnen niet dieper worden genest." },
+  too_many_files: { en: "This folder holds too many files to copy at once. Copy its subfolders separately.", nl: "Deze map bevat te veel bestanden om in één keer te kopiëren. Kopieer de submappen apart." },
+  copy_failed: { en: "Google Drive couldn't copy the file. Nothing was changed.", nl: "Google Drive kon het bestand niet kopiëren. Er is niets gewijzigd." },
   in_use: {
     en: "This is still being used elsewhere. Reassign or remove those items first.",
     nl: "Dit wordt nog ergens anders gebruikt. Wijs eerst iets anders toe of verwijder die items.",

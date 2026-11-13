@@ -4,9 +4,13 @@ import { getEntity, putEntity, deleteEntity } from "@/lib/db";
 import { deleteFileFromDrive, renameFileInDrive } from "@/lib/google-drive";
 import { validateRename } from "@/lib/file-name";
 import { driveRenameFailure } from "@/lib/drive-http";
+import { loadFolders, moveItem, resolveTarget } from "@/lib/library-ops";
 import type { MediaItem } from "@/lib/types";
 
-/** Rename: renamed in Google Drive first, and only if that succeeds is the app's record updated. */
+/**
+ * { name }     -> rename: renamed in Google Drive first, and only if that succeeds is the app's record updated.
+ * { folderId } -> move to that folder (null = top level); Google Drive's own folders are kept in step.
+ */
 export async function PATCH(request: Request, ctx: RouteContext<"/api/media/[id]">) {
   const claims = verifySessionToken(getBearerToken(request));
   if (!claims) return NextResponse.json({ error: "unauthorized", message: "Sign in first." }, { status: 401 });
@@ -16,6 +20,13 @@ export async function PATCH(request: Request, ctx: RouteContext<"/api/media/[id]
   if (!item) return NextResponse.json({ error: "not_found", message: "That file no longer exists." }, { status: 404 });
 
   const body = await request.json().catch(() => null);
+
+  if (body && "folderId" in body) {
+    const target = await resolveTarget(await loadFolders("media"), body.folderId);
+    if ("response" in target) return target.response;
+    return NextResponse.json(await moveItem("media", item, target.folder));
+  }
+
   if (typeof body?.name !== "string") return NextResponse.json({ error: "bad_request", message: "A new name is required." }, { status: 400 });
 
   const check = validateRename(body.name, item.name);

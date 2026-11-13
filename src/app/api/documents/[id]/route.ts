@@ -4,11 +4,13 @@ import { getEntity, putEntity, deleteEntity } from "@/lib/db";
 import { deleteFileFromDrive, renameFileInDrive } from "@/lib/google-drive";
 import { validateRename } from "@/lib/file-name";
 import { driveRenameFailure } from "@/lib/drive-http";
+import { loadFolders, moveItem, resolveTarget } from "@/lib/library-ops";
 import type { DocumentItem } from "@/lib/types";
 
 /**
  * { name }  -> rename: the file is renamed in Google Drive first, and only if that succeeds is the app's record updated,
  *              so the two can't drift apart.
+ * { folderId } -> move to that folder (null = top level); Google Drive's own folders are kept in step.
  * { size }  -> called after a successful save-back-to-Drive (e.g. editing a spreadsheet) to refresh the size
  *              shown in the file list — the file's identity/location don't change.
  */
@@ -21,6 +23,12 @@ export async function PATCH(request: Request, ctx: RouteContext<"/api/documents/
   if (!doc) return NextResponse.json({ error: "not_found", message: "That document no longer exists." }, { status: 404 });
 
   const body = await request.json().catch(() => null);
+
+  if (body && "folderId" in body) {
+    const target = await resolveTarget(await loadFolders("documents"), body.folderId);
+    if ("response" in target) return target.response;
+    return NextResponse.json(await moveItem("documents", doc, target.folder));
+  }
 
   if (typeof body?.name === "string") {
     const check = validateRename(body.name, doc.name);

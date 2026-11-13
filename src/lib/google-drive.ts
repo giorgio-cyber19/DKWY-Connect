@@ -154,6 +154,46 @@ export async function createCategorySubfolder(category: DriveCategory, name: str
   return findOrCreateFolder(drive, name, categoryFolderId);
 }
 
+/** The Drive folder that holds a library's top level (where files go when they aren't in a user folder). */
+export async function categoryRootDriveFolder(category: DriveCategory): Promise<string> {
+  const auth = await getAuthorizedClient();
+  return resolveCategoryFolder(getDrive(auth), category);
+}
+
+/** Moves a Drive file or folder under `newParentId` (removing it from wherever it was). */
+export async function moveDriveItem(itemId: string, newParentId: string): Promise<void> {
+  const auth = await getAuthorizedClient();
+  const drive = getDrive(auth);
+  const current = await drive.files.get({ fileId: itemId, fields: "parents" });
+  const parents = current.data.parents ?? [];
+  if (parents.length === 1 && parents[0] === newParentId) return;
+  await drive.files.update({
+    fileId: itemId,
+    addParents: newParentId,
+    removeParents: parents.length ? parents.join(",") : undefined,
+    fields: "id",
+  });
+}
+
+/** Makes an independent copy of a Drive file inside `parentId` — so deleting one never touches the other. */
+export async function copyFileInDrive(fileId: string, name: string, parentId: string): Promise<DriveFile> {
+  const auth = await getAuthorizedClient();
+  const res = await getDrive(auth).files.copy({
+    fileId,
+    requestBody: { name, parents: [parentId] },
+    fields: "id, name, webViewLink, size, mimeType, modifiedTime",
+  });
+  const file = res.data;
+  return {
+    fileId: file.id!,
+    name: file.name ?? name,
+    viewUrl: file.webViewLink ?? `https://drive.google.com/file/d/${file.id}/view`,
+    size: file.size ? formatFileBytes(Number(file.size)) : "—",
+    mimeType: file.mimeType ?? "application/octet-stream",
+    modifiedTime: file.modifiedTime ?? undefined,
+  };
+}
+
 /** Renames a Drive folder in place — folders are just files with a folder mimeType,
  * so this is the same operation as renameFileInDrive, kept separate for clarity. */
 export async function renameFolderInDrive(folderId: string, newName: string): Promise<void> {

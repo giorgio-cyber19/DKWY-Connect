@@ -3,6 +3,7 @@ import { getBearerToken, verifySessionToken } from "@/lib/session";
 import { getCollection, getEntity, putEntity, deleteEntity } from "@/lib/db";
 import { renameFolderInDrive } from "@/lib/google-drive";
 import { descendantIds, hasSiblingNamed } from "@/lib/library-folders";
+import { loadFolders, moveFolder, resolveTarget } from "@/lib/library-ops";
 import type { LibraryFolder, DocumentItem, MediaItem } from "@/lib/types";
 
 export async function PATCH(request: Request, ctx: RouteContext<"/api/library-folders/[id]">) {
@@ -14,6 +15,16 @@ export async function PATCH(request: Request, ctx: RouteContext<"/api/library-fo
   if (!folder) return NextResponse.json({ error: "not_found", message: "That folder no longer exists." }, { status: 404 });
 
   const body = await request.json().catch(() => null);
+
+  // { parentId } -> move the folder (and everything in it) into another folder; null = top level.
+  if (body && "parentId" in body && !("name" in body)) {
+    const folders = await loadFolders(folder.library);
+    const target = await resolveTarget(folders, body.parentId);
+    if ("response" in target) return target.response;
+    const moved = await moveFolder(folder.library, folder, folders, target.folder);
+    return moved instanceof NextResponse ? moved : NextResponse.json(moved);
+  }
+
   const name = typeof body?.name === "string" ? body.name.trim() : "";
   if (!name) return NextResponse.json({ error: "bad_request", message: "A folder name is required." }, { status: 400 });
 

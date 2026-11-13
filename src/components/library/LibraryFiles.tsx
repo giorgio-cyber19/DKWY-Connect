@@ -26,6 +26,14 @@ export interface LibraryRow {
 
 type MenuHandler = (e: React.MouseEvent, id: string) => void;
 
+/** Optional drag-and-drop (moving things into folders): `onDragStart(id)` returns the dragstart handler. */
+export interface DragSource {
+  onDragStart: (id: string) => (e: React.DragEvent) => void;
+  onDragEnd: () => void;
+  /** The id currently being dragged, shown dimmed. */
+  draggingId: string | null;
+}
+
 function MoreButton({ onClick, label, className }: { onClick: (e: React.MouseEvent) => void; label: string; className?: string }) {
   return (
     <button
@@ -59,6 +67,7 @@ export function LibraryList({
   onSort,
   onOpen,
   onMenu,
+  drag,
 }: {
   rows: LibraryRow[];
   sortKey: LibrarySortKey;
@@ -66,6 +75,7 @@ export function LibraryList({
   onSort: (key: LibrarySortKey) => void;
   onOpen: (id: string) => void;
   onMenu: MenuHandler;
+  drag?: DragSource;
 }) {
   const { t, language } = useLanguage();
 
@@ -93,9 +103,13 @@ export function LibraryList({
           role="row"
           onClick={row.canOpen ? () => onOpen(row.id) : undefined}
           onContextMenu={(e) => onMenu(e, row.id)}
+          draggable={!!drag}
+          onDragStart={drag?.onDragStart(row.id)}
+          onDragEnd={drag?.onDragEnd}
           className={cn(
             "group flex items-center gap-3 px-3 h-11 border-b border-[var(--border-softer)] last:border-b-0 text-[13px] hover:bg-[color-mix(in_srgb,var(--color-ink)_4%,transparent)] transition-colors",
-            row.canOpen && "cursor-pointer"
+            row.canOpen && "cursor-pointer",
+            drag?.draggingId === row.id && "opacity-40"
           )}
         >
           <div role="cell" className="flex-1 min-w-0 flex items-center gap-3">
@@ -133,12 +147,14 @@ export function LibraryGrid({
   onMenu,
   selectedIds,
   onToggleSelect,
+  drag,
 }: {
   rows: LibraryRow[];
   onOpen: (id: string) => void;
   onMenu: MenuHandler;
   selectedIds?: string[];
   onToggleSelect?: (id: string) => void;
+  drag?: DragSource;
 }) {
   const { t } = useLanguage();
 
@@ -152,9 +168,13 @@ export function LibraryGrid({
             key={row.id}
             onClick={row.canOpen ? () => onOpen(row.id) : undefined}
             onContextMenu={(e) => onMenu(e, row.id)}
+            draggable={!!drag}
+            onDragStart={drag?.onDragStart(row.id)}
+            onDragEnd={drag?.onDragEnd}
             className={cn(
               "group relative rounded-xl border overflow-hidden bg-[var(--bg-elevated)] transition-shadow hover:shadow-md",
               row.canOpen && "cursor-pointer",
+              drag?.draggingId === row.id && "opacity-40",
               selected ? "border-[var(--color-blue)] ring-2 ring-[var(--color-blue)]" : "border-[var(--border-soft)]"
             )}
           >
@@ -206,7 +226,9 @@ export function FolderTiles({
   onDragOver,
   onDragLeave,
   onDrop,
+  drag,
 }: {
+  drag?: DragSource;
   folders: FolderTileData[];
   dragTarget: string | null;
   onOpen: (id: string) => void;
@@ -227,8 +249,12 @@ export function FolderTiles({
           onDragOver={(e) => onDragOver(e, f.id)}
           onDragLeave={onDragLeave}
           onDrop={(e) => onDrop(e, f.id)}
+          draggable={!!drag}
+          onDragStart={drag?.onDragStart(f.id)}
+          onDragEnd={drag?.onDragEnd}
           className={cn(
             "flex items-center gap-3 h-12 pl-3.5 pr-1.5 rounded-xl border border-[var(--border-soft)] bg-[var(--bg-elevated)] cursor-pointer transition-colors hover:bg-[color-mix(in_srgb,var(--color-ink)_5%,var(--bg-elevated))]",
+            drag?.draggingId === f.id && "opacity-40",
             dragTarget === f.id && "ring-2 ring-[var(--color-blue)] bg-[color-mix(in_srgb,var(--color-blue)_8%,transparent)]"
           )}
         >
