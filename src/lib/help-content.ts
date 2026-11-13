@@ -109,7 +109,7 @@ const nl: HelpContent = {
           kind: "list",
           title: "Wie mag wat?",
           items: [
-            "**Leraar:** kijkt en werkt mee — eigen klas en presentie, kinderportfolio's, lesplannen, updates, documenten en media, kalender, en het rooster bijwerken.",
+            "**Leraar:** kijkt en werkt mee — klassen en presentie (alle klassen: je kunt zowel Zondagsschool als Jeugdclub geven), kinderportfolio's, lesplannen, updates, documenten en media, kalender, en het rooster bijwerken.",
             "**Beheerder:** kan daarnaast klassen en leraren beheren, zondagen aan het rooster toevoegen of verwijderen, alle klassen bekijken, en gebruikt het Beheerpaneel (inclusief back-ups).",
           ],
         },
@@ -200,14 +200,15 @@ const nl: HelpContent = {
       id: "klas-en-presentie",
       icon: "class",
       title: "Klas en Presentie",
-      lead: "Hier zie je je klas en hou je bij wie er elke zondag was. Beheerders zien alle klassen.",
+      lead: "Hier zie je de klassen en hou je bij wie er elke zondag was. Een leraar is niet aan één klas gebonden: je kunt zowel Zondagsschool als Jeugdclub geven en de presentie van elke klas invullen.",
       blocks: [
         {
           kind: "list",
           title: "Wat zie je hier?",
           items: [
-            "**Leraar:** je eigen klas met het aantal kinderen, lesplannen, het lokaal, de presentie, de klaslijst en je lesplannen.",
-            "**Beheerder:** een overzicht van alle klassen. Klik op een klas om hem te openen.",
+            "**Iedereen:** een overzicht van alle klassen. Klik op een klas om hem te openen: je ziet dan het aantal kinderen, het lokaal, de klaslijst en de bijbehorende lesplannen.",
+            "**Presentie:** kies bovenaan bij **Klas** de klas waarvan je de presentie wilt invullen, of open eerst de klas zelf.",
+            "**Alleen beheerders:** klassen aanmaken en bewerken.",
           ],
         },
         {
@@ -588,7 +589,7 @@ const nl: HelpContent = {
           title: "Een leraar toevoegen",
           items: [
             "Ga naar **Beheer → Leraren** en klik op **Leraaraccount Aanmaken**.",
-            "Vul de naam en het e-mailadres in, eventueel een titel, en kies bij **Klas Toewijzen** de klas van de leraar. Laat je de **gebruikersnaam** leeg, dan wordt dat automatisch de eerste letter van de voornaam plus de achternaam (bijvoorbeeld *gpaidin*). Klik op **Account Aanmaken**.",
+            "Vul de naam en het e-mailadres in, eventueel een titel. Je kiest geen klas: een leraar kan elke klas doen. Laat je de **gebruikersnaam** leeg, dan wordt dat automatisch de eerste letter van de voornaam plus de achternaam (bijvoorbeeld *gpaidin*). Klik op **Account Aanmaken**.",
             "De leraar krijgt direct een **e-mail** met het e-mailadres, de gebruikersnaam en een **eenmalig wachtwoord**. Jij ziet het wachtwoord ook één keer in beeld. Lukt het mailen niet, dan staat dat er duidelijk bij en geef je het wachtwoord zelf door.",
             "De leraar kiest bij de eerste keer inloggen een eigen wachtwoord.",
             "Met **Wachtwoord Resetten** maak je een nieuw eenmalig wachtwoord; met **Account Uitschakelen** blokkeer je een account zonder gegevens te verliezen.",
@@ -698,7 +699,7 @@ const en: HelpContent = {
           kind: "list",
           title: "Who can do what?",
           items: [
-            "**Teacher:** views and contributes — own class and attendance, child portfolios, lesson plans, updates, documents and media, calendar, and updating the roster.",
+            "**Teacher:** views and contributes — classes and attendance (all classes: you can teach both Sunday School and Youth Club), child portfolios, lesson plans, updates, documents and media, calendar, and updating the roster.",
             "**Administrator:** can also manage classes and teachers, add or delete Sundays on the roster, see all classes, and use the Admin Panel (including backups).",
           ],
         },
@@ -785,14 +786,15 @@ const en: HelpContent = {
       id: "class-and-attendance",
       icon: "class",
       title: "Class & Attendance",
-      lead: "See your class here and keep track of who was there each Sunday. Administrators see all classes.",
+      lead: "See the classes here and keep track of who was there each Sunday. A teacher isn't tied to one class: you can teach both Sunday School and Youth Club and record the attendance of any class.",
       blocks: [
         {
           kind: "list",
           title: "What do you see here?",
           items: [
-            "**Teacher:** your own class with the number of children, lesson plans, the room, the attendance, the class roster and your lesson plans.",
-            "**Administrator:** an overview of all classes. Click a class to open it.",
+            "**Everyone:** an overview of all classes. Click a class to open it: you'll see the number of children, the room, the class roster and the matching lesson plans.",
+            "**Attendance:** choose the class under **Class** at the top to record its attendance, or open the class first.",
+            "**Administrators only:** creating and editing classes.",
           ],
         },
         {
@@ -1167,7 +1169,7 @@ const en: HelpContent = {
           title: "Adding a teacher",
           items: [
             "Go to **Admin → Teachers** and click **Create Teacher Account**.",
-            "Enter the name and email address, optionally a title, and choose the teacher's class under **Assign Class**. If you leave the **username** blank, it becomes the first letter of the first name plus the surname (for example *gpaidin*). Click **Create Account**.",
+            "Enter the name and email address, optionally a title. You don't pick a class: a teacher can work with every class. If you leave the **username** blank, it becomes the first letter of the first name plus the surname (for example *gpaidin*). Click **Create Account**.",
             "The teacher immediately gets an **email** with their email address, username and a **one-time password**. You also see the password once on screen. If the email can't be sent, the app says so and you pass the password on yourself.",
             "The teacher chooses their own password the first time they sign in.",
             "**Reset Password** creates a new one-time password; **Disable Account** blocks an account without losing any data.",

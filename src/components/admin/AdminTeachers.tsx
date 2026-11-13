@@ -79,11 +79,9 @@ function CredentialReveal({
 
 function CreateTeacherModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { t, language } = useLanguage();
-  const classes = useAppStore((s) => s.classes);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
-  const [classId, setClassId] = useState("");
   const [title, setTitle] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -93,7 +91,6 @@ function CreateTeacherModal({ open, onClose }: { open: boolean; onClose: () => v
     setName("");
     setEmail("");
     setUsername("");
-    setClassId("");
     setTitle("");
     setError("");
     setCreated(null);
@@ -108,7 +105,6 @@ function CreateTeacherModal({ open, onClose }: { open: boolean; onClose: () => v
         name: name.trim(),
         email: email.trim(),
         username: username.trim() || undefined,
-        classId: classId || null,
         title: title.trim() || "Teacher",
       });
       setCreated({ email: email.trim(), username: user.username, tempPassword, emailSent });
@@ -157,17 +153,6 @@ function CreateTeacherModal({ open, onClose }: { open: boolean; onClose: () => v
           <div>
             <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">{t("admin.teachersTitleOptionalLabel")}</label>
             <input value={title} onChange={(e) => setTitle(e.target.value)} className={inputClass} placeholder={t("admin.teachersTitlePlaceholder")} />
-          </div>
-          <div>
-            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">{t("admin.teachersAssignClassLabel")}</label>
-            <select value={classId} onChange={(e) => setClassId(e.target.value)} className={inputClass}>
-              <option value="">{t("admin.teachersUnassignedOption")}</option>
-              {classes.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
           </div>
           <p className="text-[11.5px] text-[var(--text-secondary)]">{t("admin.teachersTempPasswordNote")}</p>
           {error && <p className="text-xs text-red-500 font-medium">{error}</p>}

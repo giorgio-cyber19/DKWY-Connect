@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { getBearerToken, verifySessionToken } from "@/lib/session";
 import { hashPassword, generateTempPassword, toPublicUser } from "@/lib/password";
-import { getCollection, getEntity, putEntity, newId, appendFeed } from "@/lib/db";
+import { getCollection, putEntity, newId, appendFeed } from "@/lib/db";
 import { pickColor } from "@/lib/colors";
 import { normalizeUsername, isValidUsernameFormat, isUsernameTaken, isEmailTaken, suggestUsername } from "@/lib/username";
 import { sendWelcomeEmail } from "@/lib/email";
-import type { User, SchoolClass, AuditLogEntry } from "@/lib/types";
+import type { User, AuditLogEntry } from "@/lib/types";
 
 export async function POST(request: Request) {
   const claims = verifySessionToken(getBearerToken(request));
@@ -17,7 +17,6 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const name = body?.name;
   const email = body?.email;
-  const classId = typeof body?.classId === "string" ? body.classId : null;
   const title = body?.title;
 
   if (typeof name !== "string" || !name.trim() || typeof email !== "string" || !email.trim()) {
@@ -55,20 +54,12 @@ export async function POST(request: Request) {
     passwordHash: hashPassword(tempPassword),
     role: "teacher",
     avatarColor: pickColor(existingUsers.length + 1),
-    classId: classId ?? undefined,
     title: typeof title === "string" && title ? title : "Teacher",
     joined: new Date().toISOString().slice(0, 10),
     status: "active",
     mustChangePassword: true,
   };
   await putEntity("users", user);
-
-  if (classId) {
-    const schoolClass = await getEntity<SchoolClass>("classes", classId);
-    if (schoolClass) {
-      await putEntity("classes", { ...schoolClass, teacherIds: Array.from(new Set([...schoolClass.teacherIds, user.id])) });
-    }
-  }
 
   await appendFeed<AuditLogEntry>(
     "auditLog",

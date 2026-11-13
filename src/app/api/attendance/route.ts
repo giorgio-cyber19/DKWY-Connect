@@ -9,7 +9,7 @@ import {
   parseAttendanceInput,
   todayInAmsterdam,
 } from "@/lib/attendance-stats";
-import type { AttendanceRecord, AuditLogEntry, Child, SchoolClass, User } from "@/lib/types";
+import type { AttendanceRecord, AuditLogEntry, Child, SchoolClass } from "@/lib/types";
 
 const ENTITY = "attendance";
 const MAX_RANGE_DAYS = 366;
@@ -72,17 +72,9 @@ export async function PUT(request: Request) {
   const schoolClass = classId ? await getEntity<SchoolClass>("classes", classId) : null;
   if (!schoolClass) return NextResponse.json({ error: "not_found", message: "That class no longer exists." }, { status: 404 });
 
+  // Teachers aren't tied to one class (they may teach Sunday School and Youth Club both), so any signed-in
+  // teacher can record any class's register; administrators additionally aren't limited to the last 30 days.
   const isAdmin = claims.role === "admin";
-  if (!isAdmin) {
-    const me = await getEntity<User>("users", claims.userId);
-    const teachesClass = me?.classId === classId || schoolClass.teacherIds.includes(claims.userId);
-    if (!teachesClass) {
-      return NextResponse.json(
-        { error: "forbidden", message: "Only this class's teachers and administrators can record its attendance." },
-        { status: 403 }
-      );
-    }
-  }
 
   const children = (await getCollection<Child>("children")).filter((c) => c.classId === classId);
   const parsed = parseAttendanceInput(body, { today: todayInAmsterdam(), isAdmin, childIds: new Set(children.map((c) => c.id)) });

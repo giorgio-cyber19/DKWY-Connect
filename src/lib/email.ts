@@ -115,48 +115,27 @@ function welcomeEmailHtml(user: User, tempPassword: string): string {
   const username = user.username ? escapeHtml(user.username) : null;
   const password = escapeHtml(tempPassword);
   const loginUrl = `${APP_URL}/login`;
-  const box = "margin: 0 0 16px; padding: 14px 16px; background: #f7f9fd; border-left: 3px solid #2f8f5b; border-radius: 8px; font-size: 14px; line-height: 1.7;";
   const mono = "font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace; font-size: 15px; font-weight: 600;";
-  const label = "font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #2f8f5b; margin: 0 0 12px;";
-  const button = "display: inline-block; padding: 10px 18px; background: #2f8f5b; color: #ffffff; text-decoration: none; border-radius: 10px; font-size: 14px; font-weight: 600;";
-
-  const details = (nl: boolean) => `
-      <div style="${box}">
-        ${nl ? "E-mailadres" : "Email address"}: <span style="${mono}">${email}</span><br/>
-        ${username ? `${nl ? "Gebruikersnaam" : "Username"}: <span style="${mono}">${username}</span><br/>` : ""}
-        ${nl ? "Eenmalig wachtwoord" : "One-time password"}: <span style="${mono}">${password}</span>
-      </div>`;
 
   return `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; color: #151a2d;">
-      <p style="${label}">Welcome to DWKY Connect</p>
+      <p style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #2f8f5b; margin: 0 0 12px;">Welcome to DWKY Connect</p>
       <p style="font-size: 15px; margin: 0 0 16px;">Hi ${first},</p>
       <p style="font-size: 15px; line-height: 1.5; margin: 0 0 16px;">
         An account has been created for you on DWKY Connect, the Sunday School intranet.
         Sign in with your email address${username ? " or your username" : ""} and the one-time password below.
       </p>
-      ${details(false)}
+      <div style="margin: 0 0 16px; padding: 14px 16px; background: #f7f9fd; border-left: 3px solid #2f8f5b; border-radius: 8px; font-size: 14px; line-height: 1.7;">
+        Email address: <span style="${mono}">${email}</span><br/>
+        ${username ? `Username: <span style="${mono}">${username}</span><br/>` : ""}
+        One-time password: <span style="${mono}">${password}</span>
+      </div>
       <p style="font-size: 14px; line-height: 1.5; margin: 0 0 20px;">
         The first time you sign in you will be asked to choose your own password.
       </p>
-      <a href="${loginUrl}" style="${button}">Sign in</a>
-
-      <hr style="border: none; border-top: 1px solid #e3e7f0; margin: 28px 0;"/>
-
-      <p style="${label}">Welkom bij DWKY Connect</p>
-      <p style="font-size: 15px; margin: 0 0 16px;">Hallo ${first},</p>
-      <p style="font-size: 15px; line-height: 1.5; margin: 0 0 16px;">
-        Er is een account voor je aangemaakt op DWKY Connect, het intranet van de Zondagsschool.
-        Log in met je e-mailadres${username ? " of je gebruikersnaam" : ""} en het eenmalige wachtwoord hieronder.
-      </p>
-      ${details(true)}
-      <p style="font-size: 14px; line-height: 1.5; margin: 0 0 20px;">
-        Bij de eerste keer inloggen kies je een eigen wachtwoord.
-      </p>
-      <a href="${loginUrl}" style="${button}">Inloggen</a>
-
+      <a href="${loginUrl}" style="display: inline-block; padding: 10px 18px; background: #2f8f5b; color: #ffffff; text-decoration: none; border-radius: 10px; font-size: 14px; font-weight: 600;">Sign in</a>
       <p style="font-size: 11px; color: #5f6478; margin: 28px 0 0;">
-        Keep this email private; the password only works once. / Bewaar deze e-mail privé; het wachtwoord werkt maar één keer.
+        Keep this email private; the password only works once.
       </p>
     </div>
   `;
@@ -174,7 +153,7 @@ export async function sendWelcomeEmail(user: User, tempPassword: string): Promis
     const { error } = await new Resend(apiKey).emails.send({
       from: FROM,
       to: user.email,
-      subject: "Your DWKY Connect account / Je DWKY Connect-account",
+      subject: "Your DWKY Connect account",
       html: welcomeEmailHtml(user, tempPassword),
     });
     if (error) {

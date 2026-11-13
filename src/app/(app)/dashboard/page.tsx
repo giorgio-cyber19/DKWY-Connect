@@ -57,7 +57,7 @@ export default function DashboardPage() {
 
   const nextSunday = getNextSunday();
   const myClass = user.classId ? getClass(user.classId) : undefined;
-  const myChildren = user.role === "teacher" ? children.filter((c) => c.classId === user.classId) : children;
+  const myChildren = children;
   const upcomingLesson = lessonPlans.find((l) => l.ageGroupId === myClass?.ageGroupId && l.status === "published");
 
   const recentUpdates = posts.slice(0, 2);

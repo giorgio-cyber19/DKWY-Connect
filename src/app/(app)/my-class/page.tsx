@@ -30,13 +30,11 @@ function ClassDetail({ schoolClass, isAdmin, onEdit }: { schoolClass: SchoolClas
 
   return (
     <div>
-      {isAdmin && (
-        <Link href="/my-class" className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] mb-5">
-          <ArrowLeft size={15} /> {t("myClass.backToAllClasses")}
-        </Link>
-      )}
+      <Link href="/my-class" className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] mb-5">
+        <ArrowLeft size={15} /> {t("myClass.backToAllClasses")}
+      </Link>
       <PageHeader
-        eyebrow={isAdmin ? t("myClass.allClassesEyebrow") : t("myClass.yourMinistryEyebrow")}
+        eyebrow={t("myClass.allClassesEyebrow")}
         title={schoolClass.name}
         description={`${ageGroup?.name} (${ageGroup?.range}) · ${schoolClass.room}`}
         actions={
@@ -145,8 +143,8 @@ function MyClassContent() {
   if (!user) return null;
 
   const isAdmin = user.role === "admin";
-  const myClass = classes.find((c) => c.id === user.classId);
-  const activeClass = isAdmin ? classes.find((c) => c.id === selectedId) : myClass;
+  // Everyone starts from the list of classes: teachers may teach several of them.
+  const activeClass = classes.find((c) => c.id === selectedId);
   const ageGroupOptions = ageGroups.map((a) => ({ id: a.id, label: `${a.name} (${a.range})` }));
 
   const modal = isAdmin && (
@@ -222,12 +220,10 @@ function MyClassContent() {
                 <p className="text-sm font-semibold">{c.childCount} {t("myClass.childrenSuffix")}</p>
               </Card>
             );
-            return isAdmin ? (
+            return (
               <Link key={c.id} href={`/my-class?class=${c.id}`} className="block rounded-[20px] focus-ring" aria-label={`${t("myClass.openClass")}: ${c.name}`}>
                 {card}
               </Link>
-            ) : (
-              <div key={c.id}>{card}</div>
             );
           })}
         </StaggerGrid>

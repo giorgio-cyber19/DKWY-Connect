@@ -21,9 +21,10 @@ export default function ChildrenPage() {
   const [classFilter, setClassFilter] = useState("all");
   const [addOpen, setAddOpen] = useState(false);
 
-  const scoped = user?.role === "teacher" ? allChildren.filter((c) => c.classId === user.classId) : allChildren;
-  const visibleClasses = user?.role === "teacher" ? allClasses.filter((c) => c.id === user.classId) : allClasses;
-  const eligibleClasses = user?.role === "teacher" ? allClasses.filter((c) => c.id === user.classId) : allClasses;
+  // Teachers work with every class (they can teach Sunday School and Youth Club both).
+  const scoped = allChildren;
+  const visibleClasses = allClasses;
+  const eligibleClasses = allClasses;
 
   const filtered = useMemo(() => {
     return scoped.filter((c) => {
@@ -105,7 +106,6 @@ export default function ChildrenPage() {
         open={addOpen}
         onClose={() => setAddOpen(false)}
         classes={eligibleClasses}
-        defaultClassId={user?.role === "teacher" ? user.classId : undefined}
         defaultTeacherId={user?.role === "teacher" ? user.id : undefined}
       />
     </div>
