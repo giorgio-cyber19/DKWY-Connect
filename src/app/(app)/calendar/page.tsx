@@ -18,7 +18,8 @@ import {
 } from "date-fns";
 import { nl as nlLocale } from "date-fns/locale";
 import { motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, Plus, MapPin, Clock, ClipboardList, Palmtree, Flag, CircleAlert, Pencil, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, MapPin, Clock, ClipboardList, Palmtree, Flag, CircleAlert, Pencil, Trash2, CalendarClock, Hourglass, Ban, Undo2 } from "lucide-react";
+import { Linkified } from "@/components/ui/Linkified";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -59,6 +60,81 @@ const eventTypes: CalendarEvent["type"][] = [
 const manualEventTypes = eventTypes.filter((et) => et !== "Sunday School & Youth Roster");
 
 const inputClass = "w-full text-sm px-3.5 py-2.5 rounded-xl border border-[var(--border-soft)] bg-transparent focus-ring focus:border-[var(--color-gold)] transition-colors";
+
+const STATUS_STYLE = {
+  moved: { tone: "sage", Icon: CalendarClock, key: "calendar.statusMoved" },
+  postponed: { tone: "gold", Icon: Hourglass, key: "calendar.statusPostponed" },
+  cancelled: { tone: "danger", Icon: Ban, key: "calendar.statusCancelled" },
+} as const;
+
+/** "Moved · from Dec 13", "Postponed" or "Cancelled" — what happened to the event. Nothing for a normal event. */
+function StatusBadge({ event, className }: { event: CalendarEvent; className?: string }) {
+  const { t, language } = useLanguage();
+  if (!event.status) return null;
+  const style = STATUS_STYLE[event.status];
+  const from = event.status === "moved" && event.originalDate ? ` · ${t("calendar.movedFrom")} ${formatDate(event.originalDate, { day: "numeric", month: "short", year: undefined }, language)}` : "";
+  return (
+    <Badge tone={style.tone} className={cn("!text-[10.5px] !py-0.5 whitespace-nowrap", className)}>
+      <style.Icon size={11} /> {t(style.key)}
+      {from}
+    </Badge>
+  );
+}
+
+/** Asks for the date to move an event to. */
+function MoveEventModal({ event, onClose }: { event: CalendarEvent | null; onClose: () => void }) {
+  const { t, language } = useLanguage();
+  const [date, setDate] = useState(event?.date ?? "");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  async function submit() {
+    if (!event || !date || date === event.date) return;
+    setBusy(true);
+    setError("");
+    try {
+      await useAppStore.getState().updateEvent(event.id, { status: "moved", date });
+      onClose();
+    } catch (err) {
+      setError(translateApiError(err, language));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Modal open={!!event} onClose={onClose} title={t("calendar.moveEventTitle")} size="sm">
+      {event && (
+        <form
+          className="space-y-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            submit();
+          }}
+        >
+          <div>
+            <p className="font-semibold text-sm">{event.title}</p>
+            <p className="text-[12.5px] text-[var(--text-secondary)]">
+              {t("calendar.moveCurrentDate")} {formatDate(event.date, { weekday: "long", day: "numeric", month: "long", year: "numeric" }, language)}
+            </p>
+          </div>
+          <p className="text-[13px] text-[var(--text-secondary)]">{t("calendar.moveEventHint")}</p>
+          <div>
+            <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">{t("calendar.moveNewDateLabel")}</label>
+            <input type="date" autoFocus value={date} onChange={(e) => setDate(e.target.value)} className={inputClass} />
+            {date && date !== event.date && (
+              <p className="text-[13px] font-semibold mt-2">{formatDate(date, { weekday: "long", day: "numeric", month: "long", year: "numeric" }, language)}</p>
+            )}
+          </div>
+          {error && <p className="text-xs text-red-500 font-medium">{error}</p>}
+          <Button type="submit" className="w-full" loading={busy} disabled={busy || !date || date === event.date}>
+            <CalendarClock size={15} /> {t("calendar.moveConfirmButton")}
+          </Button>
+        </form>
+      )}
+    </Modal>
+  );
+}
 
 function NewEventModal({
   open,
@@ -146,7 +222,7 @@ function NewEventModal({
         </div>
         <div>
           <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">{t("calendar.descriptionOptionalLabel")}</label>
-          <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} className={inputClass} />
+          <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder={t("calendar.descriptionPlaceholder")} className={inputClass} />
         </div>
         {error && <p className="text-xs text-red-500 font-medium">{error}</p>}
         <Button className="w-full" onClick={submit} loading={submitting} disabled={!title.trim() || submitting}>
@@ -166,7 +242,9 @@ function CalendarPageContent() {
   const holidays = useAppStore((s) => s.holidays);
   const [view, setView] = useState("month");
   const [cursor, setCursor] = useState(() => new Date());
-  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [openEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  // The open event always reflects the latest version in the store (after a move, postpone, cancel or restore).
+  const selectedEvent = openEvent ? (calendarEvents.find((e) => e.id === openEvent.id) ?? openEvent) : null;
   const [selectedHoliday, setSelectedHoliday] = useState<Holiday | null>(null);
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [newEventOpen, setNewEventOpen] = useState(false);
@@ -177,6 +255,10 @@ function CalendarPageContent() {
   const [deleteTarget, setDeleteTarget] = useState<CalendarEvent | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [moveTarget, setMoveTarget] = useState<CalendarEvent | null>(null);
+  const [cancelTarget, setCancelTarget] = useState<CalendarEvent | null>(null);
+  const [statusBusy, setStatusBusy] = useState(false);
+  const [statusError, setStatusError] = useState<string | null>(null);
 
   function openNewEvent(date?: string) {
     setEditingEvent(null);
@@ -198,6 +280,21 @@ function CalendarPageContent() {
     setNewEventSession((n) => n + 1);
     setSelectedEvent(null);
     setNewEventOpen(true);
+  }
+
+  /** Postpone, cancel or restore (move has its own date dialog). The detail view keeps showing the updated event. */
+  async function setEventStatus(event: CalendarEvent, status: "postponed" | "cancelled" | null) {
+    setStatusBusy(true);
+    setStatusError(null);
+    try {
+      const updated = await useAppStore.getState().updateEvent(event.id, { status });
+      setSelectedEvent(updated);
+      setCancelTarget(null);
+    } catch (err) {
+      setStatusError(translateApiError(err, language));
+    } finally {
+      setStatusBusy(false);
+    }
   }
 
   async function confirmDeleteEvent() {
@@ -362,10 +459,20 @@ function CalendarPageContent() {
                             ev.stopPropagation();
                             setSelectedEvent(c.event);
                           }}
-                          className="text-[9px] sm:text-[10px] font-semibold px-1 py-0.5 rounded truncate text-white"
+                          title={c.event.status ? t(STATUS_STYLE[c.event.status].key) : undefined}
+                          className={cn(
+                            "text-[9px] sm:text-[10px] font-semibold px-1 py-0.5 rounded truncate text-white flex items-center gap-0.5",
+                            c.event.status === "cancelled" && "opacity-60 line-through",
+                            c.event.status === "postponed" && "border border-dashed border-white/90"
+                          )}
                           style={{ background: c.event.color }}
                         >
-                          {c.event.title}
+                          {c.event.status &&
+                            (() => {
+                              const StatusIcon = STATUS_STYLE[c.event.status].Icon;
+                              return <StatusIcon size={8} className="shrink-0" />;
+                            })()}
+                          <span className="truncate">{c.event.title}</span>
                         </span>
                       )
                     )}
@@ -397,7 +504,10 @@ function CalendarPageContent() {
                   <span className="text-base font-bold leading-none mt-0.5">{format(e.dateObj, "d", { locale: dateFnsLocale })}</span>
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold truncate">{e.title}</p>
+                  <p className="text-sm font-semibold flex items-center gap-2 flex-wrap">
+                    <span className={cn("truncate", e.status === "cancelled" && "line-through opacity-60")}>{e.title}</span>
+                    <StatusBadge event={e} />
+                  </p>
                   <p className="text-[12px] text-[var(--text-secondary)] flex items-center gap-2 flex-wrap">
                     <span className="flex items-center gap-1">
                       <Clock size={11} /> {e.time ?? t("calendar.allDay")}
@@ -457,7 +567,12 @@ function CalendarPageContent() {
               <span className="text-[10px] font-bold text-white/90 uppercase tracking-wide">{enumLabels.eventType[language][selectedEvent.type]}</span>
             </div>
             <div className="p-6">
-              <h3 className="font-display font-semibold text-xl mb-3">{selectedEvent.title}</h3>
+              <h3 className={cn("font-display font-semibold text-xl mb-2", selectedEvent.status === "cancelled" && "line-through opacity-60")}>{selectedEvent.title}</h3>
+              {selectedEvent.status && (
+                <div className="mb-3">
+                  <StatusBadge event={selectedEvent} className="!text-[11.5px] !py-1" />
+                </div>
+              )}
               <div className="space-y-2 text-sm text-[var(--text-secondary)]">
                 <p className="flex items-center gap-2">
                   <Clock size={14} /> {parseDate(selectedEvent.date).toLocaleDateString(language === "nl" ? "nl-NL" : "en-US", { weekday: "long", month: "long", day: "numeric" })} {selectedEvent.time && `· ${selectedEvent.time}`}
@@ -468,7 +583,11 @@ function CalendarPageContent() {
                   </p>
                 )}
               </div>
-              {selectedEvent.description && <p className="text-sm mt-4">{selectedEvent.description}</p>}
+              {selectedEvent.description && (
+                <p className="text-sm mt-4 whitespace-pre-wrap break-words">
+                  <Linkified text={selectedEvent.description} />
+                </p>
+              )}
               {isAssignedToSelected && (
                 <Badge tone="gold" className="mt-4">
                   {t("roster.youAreAssigned")}
@@ -485,20 +604,60 @@ function CalendarPageContent() {
                 </>
               )}
               {!selectedEvent.rosterId && !!user && (user.role === "admin" || selectedEvent.createdBy === user.id) && (
-                <div className="flex gap-2 mt-5">
-                  <Button variant="outline" className="flex-1" onClick={() => openEditEvent(selectedEvent)}>
-                    <Pencil size={14} /> {t("calendar.editEventButton")}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="flex-1 !text-red-500"
-                    onClick={() => {
-                      setDeleteError(null);
-                      setDeleteTarget(selectedEvent);
-                    }}
-                  >
-                    <Trash2 size={14} /> {t("calendar.deleteEventButton")}
-                  </Button>
+                <div className="mt-5 space-y-2">
+                  {statusError && <p className="text-xs text-red-500 font-medium">{statusError}</p>}
+                  <div className="grid grid-cols-2 gap-2">
+                    {selectedEvent.status !== "cancelled" && (
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setStatusError(null);
+                          setMoveTarget(selectedEvent);
+                        }}
+                        disabled={statusBusy}
+                      >
+                        <CalendarClock size={14} /> {t("calendar.moveEventButton")}
+                      </Button>
+                    )}
+                    {selectedEvent.status !== "cancelled" && selectedEvent.status !== "postponed" && (
+                      <Button variant="outline" onClick={() => setEventStatus(selectedEvent, "postponed")} loading={statusBusy} disabled={statusBusy}>
+                        <Hourglass size={14} /> {t("calendar.postponeEventButton")}
+                      </Button>
+                    )}
+                    {selectedEvent.status !== "cancelled" && (
+                      <Button
+                        variant="outline"
+                        className="!text-red-500"
+                        onClick={() => {
+                          setStatusError(null);
+                          setCancelTarget(selectedEvent);
+                        }}
+                        disabled={statusBusy}
+                      >
+                        <Ban size={14} /> {t("calendar.cancelEventButton")}
+                      </Button>
+                    )}
+                    {selectedEvent.status && (
+                      <Button variant="outline" onClick={() => setEventStatus(selectedEvent, null)} loading={statusBusy} disabled={statusBusy}>
+                        <Undo2 size={14} /> {selectedEvent.status === "moved" ? t("calendar.undoMoveButton") : t("calendar.restoreEventButton")}
+                      </Button>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" className="flex-1" onClick={() => openEditEvent(selectedEvent)}>
+                      <Pencil size={14} /> {t("calendar.editEventButton")}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="flex-1 !text-red-500"
+                      onClick={() => {
+                        setDeleteError(null);
+                        setDeleteTarget(selectedEvent);
+                      }}
+                    >
+                      <Trash2 size={14} /> {t("calendar.deleteEventButton")}
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
@@ -548,8 +707,11 @@ function CalendarPageContent() {
                 >
                   <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: e.color }} />
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold truncate">{e.title}</p>
-                    <p className="text-[11px] text-[var(--text-secondary)]">{e.time ?? t("calendar.allDay")}</p>
+                    <p className={cn("text-sm font-semibold truncate", e.status === "cancelled" && "line-through opacity-60")}>{e.title}</p>
+                    <p className="text-[11px] text-[var(--text-secondary)] flex items-center gap-2 flex-wrap">
+                      {e.time ?? t("calendar.allDay")}
+                      <StatusBadge event={e} />
+                    </p>
                   </div>
                 </button>
               ))
@@ -603,6 +765,19 @@ function CalendarPageContent() {
         onClose={() => setNewEventOpen(false)}
         initialDate={newEventDate}
         editing={editingEvent}
+      />
+
+      {/* Remounted per event so the date field starts from that event's date. */}
+      <MoveEventModal key={moveTarget?.id ?? "none"} event={moveTarget} onClose={() => setMoveTarget(null)} />
+      <ConfirmDialog
+        open={!!cancelTarget}
+        onClose={() => setCancelTarget(null)}
+        onConfirm={() => cancelTarget && setEventStatus(cancelTarget, "cancelled")}
+        title={t("calendar.cancelEventConfirmTitle")}
+        message={t("calendar.cancelEventConfirmMessage")}
+        confirmLabel={t("calendar.cancelEventButton")}
+        confirming={statusBusy}
+        error={statusError}
       />
 
       <ConfirmDialog

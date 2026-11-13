@@ -148,7 +148,7 @@ interface AppState {
 
   // calendar
   createEvent: (item: Omit<CalendarEvent, "id">) => Promise<CalendarEvent>;
-  updateEvent: (id: string, data: Partial<Omit<CalendarEvent, "id">>) => Promise<CalendarEvent>;
+  updateEvent: (id: string, data: Partial<Omit<CalendarEvent, "id" | "status">> & { status?: CalendarEvent["status"] | null }) => Promise<CalendarEvent>;
   removeEvent: (id: string) => Promise<void>;
 
   // holidays

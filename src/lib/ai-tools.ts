@@ -448,7 +448,7 @@ const tools: ToolDef[] = [
         .slice(0, 60);
       return {
         summary: "Listed events",
-        result: list.map((e) => ({ id: e.id, title: e.title, date: e.date, endDate: e.endDate, time: e.time, type: e.type, location: e.location, description: e.description })),
+        result: list.map((e) => ({ id: e.id, title: e.title, date: e.date, endDate: e.endDate, time: e.time, type: e.type, location: e.location, description: e.description, status: e.status ?? null, movedFrom: e.originalDate ?? null })),
       };
     },
   },
@@ -635,6 +635,37 @@ const tools: ToolDef[] = [
       if (Object.keys(body).length === 0) throw new ToolError("Nothing to change — pass at least one field to update.");
       const updated = await call<CalendarEvent>(eventPATCH, rt.token, "PATCH", `/api/events/${event.id}`, body, { id: event.id });
       return { summary: `Updated event "${updated.title}" (${updated.date})`, result: { id: updated.id } };
+    },
+  },
+  {
+    name: "change_event_status",
+    description:
+      "Move, postpone, cancel or restore a calendar event. The event stays on the calendar, labelled Moved / Postponed / Cancelled, and everyone is notified. 'move' needs the new date and puts the event on that day (the label shows where it came from); 'postpone' keeps it on its day, labelled Postponed; 'cancel' labels it Cancelled; 'restore' removes the label (an undone move goes back to its original day). Only administrators or the event's creator may do this, and roster events are managed on the Roster page.",
+    parameters: schema(
+      {
+        event: s("Event title or id (use list_events to find it)."),
+        action: { type: "string", enum: ["move", "postpone", "cancel", "restore"], description: "What to do with the event." },
+        date: s("The new date, YYYY-MM-DD. Required for 'move'."),
+      },
+      ["event", "action"]
+    ),
+    write: true,
+    async run(args, rt) {
+      const snap = await rt.snapshot();
+      const event = pick(snap.calendarEvents, needStr(args, "event"), (e) => e.title, "event");
+      const action = needStr(args, "action");
+      let body: Record<string, unknown>;
+      if (action === "move") {
+        const date = str(args, "date");
+        if (!date) throw new ToolError("Which date should the event move to? Ask the user for the new date.");
+        body = { status: "moved", date: assertIsoDate(date, "date") };
+      } else if (action === "postpone") body = { status: "postponed" };
+      else if (action === "cancel") body = { status: "cancelled" };
+      else if (action === "restore") body = { status: null };
+      else throw new ToolError('"action" must be move, postpone, cancel or restore.');
+      const updated = await call<CalendarEvent>(eventPATCH, rt.token, "PATCH", `/api/events/${event.id}`, body, { id: event.id });
+      const verb = { move: `Moved "${updated.title}" to ${updated.date}`, postpone: `Marked "${updated.title}" as postponed`, cancel: `Marked "${updated.title}" as cancelled`, restore: `Restored "${updated.title}" (${updated.date})` }[action];
+      return { summary: verb as string, result: { id: updated.id, date: updated.date, status: updated.status ?? null } };
     },
   },
   {

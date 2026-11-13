@@ -20,7 +20,7 @@ import { MotifCluster } from "@/components/dashboard/MotifCluster";
 import { LessonCard } from "@/components/lessons/LessonCard";
 import { PostCard, typeTone } from "@/components/updates/PostCard";
 import { getUser, getClass, useAppStore } from "@/lib/store";
-import { parseDate, formatDate, cleanRoom } from "@/lib/utils";
+import { parseDate, formatDate, cleanRoom, cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/language-context";
 import { enumLabels } from "@/lib/i18n/enum-labels";
 
@@ -218,8 +218,15 @@ export default function DashboardPage() {
                       <span className="text-[17px] font-bold leading-none text-[var(--text-primary)]">{parseDate(e.date).getDate()}</span>
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[13px] font-semibold truncate">{e.title}</p>
-                      <p className="text-[11px] text-[var(--text-secondary)]">{e.time ?? t("dashboard.allDay")} {e.location && `· ${e.location}`}</p>
+                      <p className={cn("text-[13px] font-semibold truncate", e.status === "cancelled" && "line-through opacity-60")}>{e.title}</p>
+                      <p className="text-[11px] text-[var(--text-secondary)]">
+                        {e.status && (
+                          <span className={cn("font-bold mr-1.5", e.status === "cancelled" ? "text-red-500" : e.status === "postponed" ? "text-[var(--color-gold-deep)]" : "text-[var(--color-sage-deep)]")}>
+                            {t(e.status === "cancelled" ? "calendar.statusCancelled" : e.status === "postponed" ? "calendar.statusPostponed" : "calendar.statusMoved")}
+                          </span>
+                        )}
+                        {e.time ?? t("dashboard.allDay")} {e.location && `· ${e.location}`}
+                      </p>
                     </div>
                   </StaggerItem>
                 ))}

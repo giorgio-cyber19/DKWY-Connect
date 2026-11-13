@@ -253,6 +253,10 @@ export interface CalendarEvent {
   rosterId?: string;
   /** User who created the event — they (and administrators) may edit or delete it. Absent on older events. */
   createdBy?: string;
+  /** Set when the event was moved to another day, postponed or cancelled; absent for a normal event. */
+  status?: "moved" | "postponed" | "cancelled";
+  /** For a moved event: the day it was on before it was moved. */
+  originalDate?: string;
 }
 
 export interface Holiday {

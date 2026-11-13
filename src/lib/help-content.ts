@@ -496,6 +496,19 @@ const nl: HelpContent = {
             "Klik op **Nieuw Evenement**, of klik op een **dag** in de kalender en kies daar de optie om een evenement toe te voegen.",
             "Vul de titel in, kies het type (bijvoorbeeld Zondagsles, Leraarsvergadering, Kinderevenement) en eventueel tijd, plaats en omschrijving.",
             "Klik op **Evenement toevoegen**.",
+            "Plak je een **link** (bijvoorbeeld naar een Zoom-vergadering of een website) in de beschrijving, dan is die in het evenement een **klikbare link**: één klik en je gaat naar die website.",
+          ],
+        },
+        {
+          kind: "steps",
+          title: "Een evenement verplaatsen, uitstellen of afgelasten",
+          items: [
+            "Klik op het evenement. Als je beheerder bent, of het evenement zelf hebt gemaakt, zie je de knoppen **Verplaatsen**, **Uitstellen** en **Afgelasten**.",
+            "**Verplaatsen:** er opent een venster waarin je de **nieuwe datum** kiest. Het evenement staat daarna op die dag, met het label *Verplaatst* en de datum waar het vandaan komt.",
+            "**Uitstellen:** het evenement blijft op zijn dag staan met het label *Uitgesteld*, bijvoorbeeld als de nieuwe datum nog niet bekend is. Later kun je het alsnog verplaatsen.",
+            "**Afgelasten:** na een bevestiging staat het evenement doorgestreept met het label *Afgelast*. Zo ziet iedereen dat het niet doorgaat.",
+            "Het label staat overal waar het evenement getoond wordt: in de agenda, de dagweergave en op het dashboard. Iedereen krijgt er ook een melding van.",
+            "Per ongeluk gedaan? Klik op **Herstellen** (of **Verplaatsing ongedaan maken**). Evenementen uit het rooster pas je aan op de roosterpagina.",
           ],
         },
         {
@@ -1082,6 +1095,19 @@ const en: HelpContent = {
             "Click **New Event**, or click a **day** in the calendar and choose the option there to add an event.",
             "Enter the title, choose the type (for example Sunday Lesson, Teacher Meeting, Children Event) and optionally the time, location and description.",
             "Click **Add Event**.",
+            "If you paste a **link** (for example to a Zoom meeting or a website) into the description, it becomes a **clickable link** in the event: one click and you go to that website.",
+          ],
+        },
+        {
+          kind: "steps",
+          title: "Moving, postponing or cancelling an event",
+          items: [
+            "Click the event. If you are an administrator, or created the event yourself, you'll see the buttons **Move**, **Postpone** and **Cancel event**.",
+            "**Move:** a window opens where you choose the **new date**. The event then sits on that day, labelled *Moved* with the date it came from.",
+            "**Postpone:** the event stays on its day, labelled *Postponed*, for example when the new date isn't known yet. You can still move it later.",
+            "**Cancel:** after a confirmation the event is shown struck through and labelled *Cancelled*, so everybody sees it isn't happening.",
+            "The label shows everywhere the event appears: the calendar, the day view and the dashboard. Everyone also gets a notification.",
+            "Did it by mistake? Click **Restore** (or **Undo move**). Events that come from the roster are changed on the Roster page.",
           ],
         },
         {
