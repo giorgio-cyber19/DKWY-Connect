@@ -84,7 +84,7 @@ interface AppState {
   clearNotifications: () => Promise<void>;
 
   // teachers / users
-  createTeacher: (input: { name: string; email: string; classId: string | null; title: string; username?: string }) => Promise<{ user: User; tempPassword: string }>;
+  createTeacher: (input: { name: string; email: string; classId: string | null; title: string; username?: string }) => Promise<{ user: User; tempPassword: string; emailSent: boolean }>;
   toggleUserStatus: (id: string) => Promise<void>;
   resetUserPassword: (id: string) => Promise<string>;
   setUsername: (id: string, username: string | null) => Promise<void>;
@@ -299,14 +299,14 @@ export const useAppStore = create<AppState>()(
       },
 
       createTeacher: async (input) => {
-        const { user, tempPassword } = await apiPost<{ user: User; tempPassword: string }>("/api/teachers", input);
+        const { user, tempPassword, emailSent } = await apiPost<{ user: User; tempPassword: string; emailSent: boolean }>("/api/teachers", input);
         set((s) => ({
           users: [...s.users, user],
           classes: input.classId
             ? s.classes.map((c) => (c.id === input.classId ? { ...c, teacherIds: Array.from(new Set([...c.teacherIds, user.id])) } : c))
             : s.classes,
         }));
-        return { user, tempPassword };
+        return { user, tempPassword, emailSent };
       },
 
       toggleUserStatus: async (id) => {

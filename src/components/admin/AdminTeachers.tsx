@@ -14,7 +14,20 @@ import { translateApiError } from "@/lib/i18n/errors";
 
 const inputClass = "w-full text-sm px-3.5 py-2.5 rounded-xl border border-[var(--border-soft)] bg-transparent focus-ring focus:border-[var(--color-gold)] transition-colors";
 
-function CredentialReveal({ email, tempPassword, onDone }: { email: string; tempPassword: string; onDone: () => void }) {
+function CredentialReveal({
+  email,
+  username,
+  tempPassword,
+  emailSent,
+  onDone,
+}: {
+  email: string;
+  username?: string;
+  tempPassword: string;
+  /** true/false after creating an account (the welcome email); null/undefined when no email was involved. */
+  emailSent?: boolean | null;
+  onDone: () => void;
+}) {
   const { t } = useLanguage();
   const [copied, setCopied] = useState(false);
 
@@ -32,10 +45,25 @@ function CredentialReveal({ email, tempPassword, onDone }: { email: string; temp
       </div>
       <div>
         <p className="text-sm font-semibold mb-1">{t("admin.teachersAccountCreatedTitle")}</p>
-        <p className="text-[13px] text-[var(--text-secondary)]">
-          {t("admin.teachersCredentialSharePrefix")} <strong>{email}</strong> {t("admin.teachersCredentialShareSuffix")}
-        </p>
+        {emailSent == null ? (
+          <p className="text-[13px] text-[var(--text-secondary)]">
+            {t("admin.teachersCredentialSharePrefix")} <strong>{email}</strong> {t("admin.teachersCredentialShareSuffix")}
+          </p>
+        ) : emailSent ? (
+          <p className="text-[13px] text-[var(--text-secondary)]">
+            {t("admin.teachersEmailSentPrefix")} <strong>{email}</strong>. {t("admin.teachersEmailSentSuffix")}
+          </p>
+        ) : (
+          <p className="text-[13px] text-red-500 font-medium">
+            {t("admin.teachersEmailFailedPrefix")} <strong>{email}</strong> {t("admin.teachersEmailFailedSuffix")}
+          </p>
+        )}
       </div>
+      {username && (
+        <p className="text-[13px] text-[var(--text-secondary)]">
+          {t("admin.teachersUsernameLabel")}: <strong className="font-mono">{username}</strong>
+        </p>
+      )}
       <div className="flex items-center gap-2 px-3.5 py-3 rounded-xl bg-black/[0.04] font-mono text-sm">
         <span className="flex-1">{tempPassword}</span>
         <button onClick={copy} className="p-1.5 rounded-lg hover:bg-black/5 text-[var(--text-secondary)]">
@@ -59,7 +87,7 @@ function CreateTeacherModal({ open, onClose }: { open: boolean; onClose: () => v
   const [title, setTitle] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [created, setCreated] = useState<{ email: string; tempPassword: string } | null>(null);
+  const [created, setCreated] = useState<{ email: string; username?: string; tempPassword: string; emailSent: boolean } | null>(null);
 
   function reset() {
     setName("");
@@ -76,14 +104,14 @@ function CreateTeacherModal({ open, onClose }: { open: boolean; onClose: () => v
     setSubmitting(true);
     setError("");
     try {
-      const { tempPassword } = await useAppStore.getState().createTeacher({
+      const { user, tempPassword, emailSent } = await useAppStore.getState().createTeacher({
         name: name.trim(),
         email: email.trim(),
         username: username.trim() || undefined,
         classId: classId || null,
         title: title.trim() || "Teacher",
       });
-      setCreated({ email: email.trim(), tempPassword });
+      setCreated({ email: email.trim(), username: user.username, tempPassword, emailSent });
     } catch (err) {
       setError(translateApiError(err, language));
     } finally {
@@ -104,7 +132,9 @@ function CreateTeacherModal({ open, onClose }: { open: boolean; onClose: () => v
       {created ? (
         <CredentialReveal
           email={created.email}
+          username={created.username}
           tempPassword={created.tempPassword}
+          emailSent={created.emailSent}
           onDone={() => {
             reset();
             onClose();

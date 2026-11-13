@@ -588,8 +588,9 @@ const nl: HelpContent = {
           title: "Een leraar toevoegen",
           items: [
             "Ga naar **Beheer → Leraren** en klik op **Leraaraccount Aanmaken**.",
-            "Vul de naam en het e-mailadres in, eventueel een titel, en kies bij **Klas Toewijzen** de klas van de leraar. Klik op **Account Aanmaken**.",
-            "De app toont één keer een **tijdelijk wachtwoord**. Geef dat door aan de leraar; die kiest bij de eerste keer inloggen een eigen wachtwoord.",
+            "Vul de naam en het e-mailadres in, eventueel een titel, en kies bij **Klas Toewijzen** de klas van de leraar. Laat je de **gebruikersnaam** leeg, dan wordt dat automatisch de eerste letter van de voornaam plus de achternaam (bijvoorbeeld *gpaidin*). Klik op **Account Aanmaken**.",
+            "De leraar krijgt direct een **e-mail** met het e-mailadres, de gebruikersnaam en een **eenmalig wachtwoord**. Jij ziet het wachtwoord ook één keer in beeld. Lukt het mailen niet, dan staat dat er duidelijk bij en geef je het wachtwoord zelf door.",
+            "De leraar kiest bij de eerste keer inloggen een eigen wachtwoord.",
             "Met **Wachtwoord Resetten** maak je een nieuw eenmalig wachtwoord; met **Account Uitschakelen** blokkeer je een account zonder gegevens te verliezen.",
           ],
         },
@@ -1166,8 +1167,9 @@ const en: HelpContent = {
           title: "Adding a teacher",
           items: [
             "Go to **Admin → Teachers** and click **Create Teacher Account**.",
-            "Enter the name and email address, optionally a title, and choose the teacher's class under **Assign Class**. Click **Create Account**.",
-            "The app shows a **temporary password** once. Pass it on to the teacher; they choose their own password the first time they sign in.",
+            "Enter the name and email address, optionally a title, and choose the teacher's class under **Assign Class**. If you leave the **username** blank, it becomes the first letter of the first name plus the surname (for example *gpaidin*). Click **Create Account**.",
+            "The teacher immediately gets an **email** with their email address, username and a **one-time password**. You also see the password once on screen. If the email can't be sent, the app says so and you pass the password on yourself.",
+            "The teacher chooses their own password the first time they sign in.",
             "**Reset Password** creates a new one-time password; **Disable Account** blocks an account without losing any data.",
           ],
         },

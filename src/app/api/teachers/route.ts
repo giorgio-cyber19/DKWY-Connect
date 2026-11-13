@@ -3,7 +3,8 @@ import { getBearerToken, verifySessionToken } from "@/lib/session";
 import { hashPassword, generateTempPassword, toPublicUser } from "@/lib/password";
 import { getCollection, getEntity, putEntity, newId, appendFeed } from "@/lib/db";
 import { pickColor } from "@/lib/colors";
-import { normalizeUsername, isValidUsernameFormat, isUsernameTaken, isEmailTaken } from "@/lib/username";
+import { normalizeUsername, isValidUsernameFormat, isUsernameTaken, isEmailTaken, suggestUsername } from "@/lib/username";
+import { sendWelcomeEmail } from "@/lib/email";
 import type { User, SchoolClass, AuditLogEntry } from "@/lib/types";
 
 export async function POST(request: Request) {
@@ -30,15 +31,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "email_taken", message: "That email is already in use by another account." }, { status: 409 });
   }
 
-  const username = normalizeUsername(body?.username);
-  if (username) {
-    if (!isValidUsernameFormat(username)) {
+  const requestedUsername = normalizeUsername(body?.username);
+  // No username typed in? Use first letter of the first name + surname (when that is still free).
+  const username = requestedUsername ?? suggestUsername(name, existingUsers);
+  if (requestedUsername) {
+    if (!isValidUsernameFormat(requestedUsername)) {
       return NextResponse.json(
         { error: "bad_request", message: "Usernames must be 3-24 characters: letters, numbers, dots, underscores, or hyphens." },
         { status: 400 }
       );
     }
-    if (isUsernameTaken(existingUsers, username)) {
+    if (isUsernameTaken(existingUsers, requestedUsername)) {
       return NextResponse.json({ error: "username_taken", message: "That username is already in use." }, { status: 409 });
     }
   }
@@ -73,5 +76,8 @@ export async function POST(request: Request) {
     200
   );
 
-  return NextResponse.json({ user: toPublicUser(user), tempPassword });
+  // The account exists either way; the admin is told if the email could not be sent so they can pass the password on themselves.
+  const emailSent = await sendWelcomeEmail(user, tempPassword);
+
+  return NextResponse.json({ user: toPublicUser(user), tempPassword, emailSent });
 }
