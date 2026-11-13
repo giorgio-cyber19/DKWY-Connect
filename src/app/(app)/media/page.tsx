@@ -457,7 +457,7 @@ export default function MediaPage() {
               onClick={() => setCurrentFolderId(currentFolder.parentId ?? null)}
               {...crumbDrop(currentFolder.parentId ?? null)}
               className={cn(
-                "mr-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[var(--border-soft)] bg-[var(--bg-elevated)] text-[13px] font-semibold text-[var(--text-primary)] hover:bg-black/[0.05] transition-colors focus-ring",
+                "mr-2 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[var(--color-gold)] text-[#151a2d] text-[13px] font-bold shadow-sm hover:brightness-105 active:brightness-95 transition focus-ring",
                 transfer.overKey === (currentFolder.parentId ?? "root") && "ring-2 ring-[var(--color-blue)]"
               )}
             >
