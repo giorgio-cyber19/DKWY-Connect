@@ -60,6 +60,26 @@ function SortHeader({ label, active, dir, onClick, className }: { label: string;
   );
 }
 
+export interface FolderRowData {
+  id: string;
+  name: string;
+  /** ISO date or datetime. */
+  modified: string;
+  ownerName: string;
+  ownerColor?: string;
+}
+
+/** What folder rows (and tiles) do: open, menu, drag, and receive drops. */
+export interface FolderActions {
+  onOpen: (id: string) => void;
+  onMenu: MenuHandler;
+  drag?: DragSource;
+  dragTarget: string | null;
+  onDragOver: (e: React.DragEvent, id: string) => void;
+  onDragLeave: (e: React.DragEvent) => void;
+  onDrop: (e: React.DragEvent, id: string) => void;
+}
+
 export function LibraryList({
   rows,
   sortKey,
@@ -68,6 +88,8 @@ export function LibraryList({
   onOpen,
   onMenu,
   drag,
+  folders,
+  folderActions,
 }: {
   rows: LibraryRow[];
   sortKey: LibrarySortKey;
@@ -76,6 +98,9 @@ export function LibraryList({
   onOpen: (id: string) => void;
   onMenu: MenuHandler;
   drag?: DragSource;
+  /** Folders listed above the files, in the same columns (like Google Drive). */
+  folders?: FolderRowData[];
+  folderActions?: FolderActions;
 }) {
   const { t, language } = useLanguage();
 
@@ -96,6 +121,47 @@ export function LibraryList({
         </div>
         <div className="w-8 shrink-0" />
       </div>
+
+      {folderActions &&
+        folders?.map((folder) => (
+          <div
+            key={folder.id}
+            role="row"
+            onClick={() => folderActions.onOpen(folder.id)}
+            onContextMenu={(e) => folderActions.onMenu(e, folder.id)}
+            onDragOver={(e) => folderActions.onDragOver(e, folder.id)}
+            onDragLeave={folderActions.onDragLeave}
+            onDrop={(e) => folderActions.onDrop(e, folder.id)}
+            draggable={!!folderActions.drag}
+            onDragStart={folderActions.drag?.onDragStart(folder.id)}
+            onDragEnd={folderActions.drag?.onDragEnd}
+            data-folder-row
+            className={cn(
+              "group flex items-center gap-3 px-3 h-12 border-b border-[var(--border-softer)] text-[13px] cursor-pointer hover:bg-[color-mix(in_srgb,var(--color-ink)_4%,transparent)] transition-colors",
+              folderActions.drag?.draggingId === folder.id && "opacity-40",
+              folderActions.dragTarget === folder.id && "ring-2 ring-inset ring-[var(--color-blue)] bg-[color-mix(in_srgb,var(--color-blue)_8%,transparent)]"
+            )}
+          >
+            <div role="cell" className="flex-1 min-w-0 flex items-center gap-3">
+              <Folder size={20} fill="currentColor" className="shrink-0 text-[var(--text-secondary)]" />
+              <div className="min-w-0">
+                <p className="font-medium truncate leading-tight">{folder.name}</p>
+                <p className="@xl:hidden text-[10.5px] text-[var(--text-secondary)] truncate leading-tight">{formatDate(modifiedDay(folder.modified), undefined, language)}</p>
+              </div>
+            </div>
+            <div role="cell" className="hidden @3xl:flex w-40 shrink-0 items-center gap-2 min-w-0 text-[var(--text-secondary)]">
+              <Avatar name={folder.ownerName || "?"} color={folder.ownerColor} size="xs" />
+              <span className="truncate">{folder.ownerName}</span>
+            </div>
+            <div role="cell" className="hidden @xl:block w-36 shrink-0 text-[var(--text-secondary)]">
+              {formatDate(modifiedDay(folder.modified), undefined, language)}
+            </div>
+            <div role="cell" className="w-16 @lg:w-24 shrink-0 text-right text-[var(--text-secondary)]">
+              —
+            </div>
+            <MoreButton label={t("library.moreActions")} onClick={(e) => folderActions.onMenu(e, folder.id)} />
+          </div>
+        ))}
 
       {rows.map((row) => (
         <div

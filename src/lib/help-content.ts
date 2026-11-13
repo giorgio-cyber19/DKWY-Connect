@@ -443,6 +443,7 @@ const nl: HelpContent = {
           title: "Mappen en submappen",
           items: [
             "Kies **Toevoegen → Nieuwe map** en geef de map een naam.",
+            "In de lijstweergave staan de mappen **bovenaan, onder elkaar**, net als in Google Drive, met dezelfde kolommen als de bestanden. Klik op een kolomkop (**Naam**, **Laatst gewijzigd**, **Grootte**) om te sorteren; klik nog een keer om de volgorde om te draaien. Met de knoppen rechtsboven in de werkbalk wissel je tussen lijst en tegels.",
             "Klik op een map om hem te openen. In een map kun je opnieuw **Nieuwe map** kiezen: zo maak je een **submap**. Je kunt maximaal 8 niveaus diep.",
             "Boven de lijst staat het mappad (bijvoorbeeld *Alle bestanden / Formulieren / 2026*). Klik op een onderdeel om daar terug te springen.",
             "**Verplaatsen:** sleep een bestand of map met de muis op een andere map. Sleep je het op een onderdeel van het mappad (of op **Alle bestanden**), dan gaat het daar naartoe. Op een telefoon of tablet gebruik je de ⋮-knop of de rechtermuisknop → **Verplaatsen naar…** en kies je de map.",
@@ -1025,6 +1026,7 @@ const en: HelpContent = {
           title: "Folders and subfolders",
           items: [
             "Choose **Add → New folder** and give the folder a name.",
+            "In the list view the folders sit **at the top, one below the other**, just like in Google Drive, with the same columns as the files. Click a column heading (**Name**, **Last modified**, **Size**) to sort; click again to reverse the order. Use the buttons in the toolbar to switch between list and tiles.",
             "Click a folder to open it. Inside a folder you can choose **New folder** again: that makes a **subfolder**. You can go up to 8 levels deep.",
             "Above the list is the folder path (for example *All files / Forms / 2026*). Click any part to jump back there.",
             "**Move:** drag a file or folder onto another folder. Drop it on a part of the folder path (or on **All files**) to move it there. On a phone or tablet use the ⋮ button or right-click → **Move to…** and choose the folder.",

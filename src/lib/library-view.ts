@@ -121,3 +121,13 @@ export function applyLibraryView<T>(items: T[], entryOf: (item: T) => LibraryEnt
   });
   return kept.map((x) => x.item);
 }
+
+/**
+ * Folders for a list view: like Google Drive they sit above the files and follow the same sort —
+ * by name, or by creation date when sorting on "modified". Folders have no size, so sorting on size keeps them A–Z.
+ */
+export function sortFolderRows<T extends { name: string; createdAt: string }>(folders: T[], key: LibrarySortKey, dir: "asc" | "desc"): T[] {
+  const byName = (a: T, b: T) => a.name.localeCompare(b.name, undefined, { sensitivity: "base", numeric: true });
+  const sorted = [...folders].sort(key === "modified" ? (a, b) => a.createdAt.localeCompare(b.createdAt) || byName(a, b) : byName);
+  return key === "size" || dir === "asc" ? sorted : sorted.reverse();
+}

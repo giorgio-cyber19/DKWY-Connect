@@ -36,7 +36,7 @@ import { translateApiError } from "@/lib/i18n/errors";
 import { formatDate, cn } from "@/lib/utils";
 import { hasDraggedFiles, readDroppedContent } from "@/lib/dropped-files";
 import { splitFileName } from "@/lib/file-name";
-import { applyLibraryView, hasActiveFilters, parseSizeToBytes, DEFAULT_VIEW_STATE, type LibraryEntry, type LibraryViewState } from "@/lib/library-view";
+import { applyLibraryView, hasActiveFilters, parseSizeToBytes, sortFolderRows, DEFAULT_VIEW_STATE, type LibraryEntry, type LibraryViewState } from "@/lib/library-view";
 import { LibraryToolbar, type LibraryLayout } from "@/components/library/LibraryToolbar";
 import { LibraryList, LibraryGrid, FolderTiles, type LibraryRow } from "@/components/library/LibraryFiles";
 import { PdfViewer } from "@/components/library/PdfViewer";
@@ -108,7 +108,7 @@ export default function MediaPage() {
   const [dragTarget, setDragTarget] = useState<string | null>(null);
   const [dropNotice, setDropNotice] = useState<string | null>(null);
   const [viewState, setViewState] = useState<LibraryViewState>(DEFAULT_VIEW_STATE);
-  const [layout, setLayout] = useState<LibraryLayout>("grid");
+  const [layout, setLayout] = useState<LibraryLayout>("list");
   const [renameTarget, setRenameTarget] = useState<MediaItem | null>(null);
   const [renameBase, setRenameBase] = useState("");
   const [renaming, setRenaming] = useState(false);
@@ -427,6 +427,38 @@ export default function MediaPage() {
 
   const showFolders = !query.trim();
 
+  // Folders act the same as tiles (grid view) and as rows (list view).
+  const folderActions = {
+    onOpen: setCurrentFolderId,
+    onMenu: folderMenu,
+    drag: folderDrag,
+    dragTarget: dragTarget ?? transfer.overKey,
+    onDragOver: (e: React.DragEvent, id: string) => {
+      if (transfer.handleOver(e, id)) return;
+      if (!hasDraggedFiles(e.dataTransfer)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      e.dataTransfer.dropEffect = "copy";
+      setDragTarget(id);
+    },
+    onDragLeave: (e: React.DragEvent) => {
+      if (transfer.handleLeave(e)) return;
+      if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragTarget(null);
+    },
+    onDrop: (e: React.DragEvent, id: string) => {
+      if (transfer.handleDrop(e, id)) return;
+      const folder = folders.find((f) => f.id === id);
+      if (folder) handleDrop(e, folder);
+    },
+  };
+  const listFolders = layout === "list" && showFolders && subfolders.length > 0;
+  const folderRowData = listFolders
+    ? sortFolderRows(subfolders, viewState.sortKey, viewState.sortDir).map((folder) => {
+        const owner = getUser(folder.createdBy);
+        return { id: folder.id, name: folder.name, modified: folder.createdAt, ownerName: owner?.name ?? "", ownerColor: owner?.avatarColor };
+      })
+    : [];
+
   return (
     <div className="bg-[var(--bg-elevated)] border border-[var(--border-soft)] rounded-[20px] p-5 sm:p-6">
       <PageHeader
@@ -554,37 +586,14 @@ export default function MediaPage() {
             </span>
           </div>
         )}
-        {showFolders && subfolders.length > 0 && (
+        {layout === "grid" && showFolders && subfolders.length > 0 && (
           <div className="mb-5">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)] mb-2.5">{t("library.foldersLabel")}</h3>
-            <FolderTiles
-              folders={subfolders}
-              dragTarget={dragTarget ?? transfer.overKey}
-              drag={folderDrag}
-              onOpen={setCurrentFolderId}
-              onMenu={folderMenu}
-              onDragOver={(e, id) => {
-                if (transfer.handleOver(e, id)) return;
-                if (!hasDraggedFiles(e.dataTransfer)) return;
-                e.preventDefault();
-                e.stopPropagation();
-                e.dataTransfer.dropEffect = "copy";
-                setDragTarget(id);
-              }}
-              onDragLeave={(e) => {
-                if (transfer.handleLeave(e)) return;
-                if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragTarget(null);
-              }}
-              onDrop={(e, id) => {
-                if (transfer.handleDrop(e, id)) return;
-                const folder = folders.find((f) => f.id === id);
-                if (folder) handleDrop(e, folder);
-              }}
-            />
+            <FolderTiles folders={subfolders} {...folderActions} />
           </div>
         )}
 
-        {rows.length === 0 ? (
+        {rows.length === 0 && !listFolders ? (
           filtered.length > 0 && hasActiveFilters(viewState) ? (
             <EmptyState
               icon={Folder}
@@ -611,9 +620,9 @@ export default function MediaPage() {
           )
         ) : (
           <>
-            {showFolders && subfolders.length > 0 && <h3 className="text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)] mb-2.5">{t("library.filesLabel")}</h3>}
+            {layout === "grid" && showFolders && subfolders.length > 0 && <h3 className="text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)] mb-2.5">{t("library.filesLabel")}</h3>}
             {layout === "list" ? (
-              <LibraryList rows={rows} sortKey={viewState.sortKey} sortDir={viewState.sortDir} onSort={sortBy} onOpen={openRow} onMenu={rowMenu} drag={fileDrag} />
+              <LibraryList rows={rows} sortKey={viewState.sortKey} sortDir={viewState.sortDir} onSort={sortBy} onOpen={openRow} onMenu={rowMenu} drag={fileDrag} folders={folderRowData} folderActions={folderActions} />
             ) : (
               <LibraryGrid rows={rows} onOpen={openRow} onMenu={rowMenu} selectedIds={selected} onToggleSelect={toggleSelect} drag={fileDrag} />
             )}
