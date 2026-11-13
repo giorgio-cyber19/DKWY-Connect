@@ -204,12 +204,18 @@ export default function DashboardPage() {
               <StaggerGrid className="space-y-3">
                 {upcomingEvents.map((e) => (
                   <StaggerItem key={e.id} className="flex items-center gap-3">
+                    {/* The day number uses the normal text colour so it reads in light and dark; the event colour tints the tile, its border and the month. */}
                     <div
-                      className="w-10 h-10 rounded-xl flex flex-col items-center justify-center shrink-0"
-                      style={{ background: `color-mix(in srgb, ${e.color} 16%, transparent)`, color: e.color }}
+                      className="w-12 h-12 rounded-xl flex flex-col items-center justify-center gap-0.5 shrink-0 border"
+                      style={{
+                        background: `color-mix(in srgb, ${e.color} 24%, var(--bg-elevated))`,
+                        borderColor: `color-mix(in srgb, ${e.color} 55%, transparent)`,
+                      }}
                     >
-                      <span className="text-[9px] font-bold leading-none">{formatDate(e.date, { month: "short", day: undefined, year: undefined }, language)}</span>
-                      <span className="text-[13px] font-bold leading-none">{parseDate(e.date).getDate()}</span>
+                      <span className="text-[10px] font-bold uppercase leading-none tracking-wide" style={{ color: `color-mix(in srgb, ${e.color} 40%, var(--text-primary))` }}>
+                        {formatDate(e.date, { month: "short", day: undefined, year: undefined }, language)}
+                      </span>
+                      <span className="text-[17px] font-bold leading-none text-[var(--text-primary)]">{parseDate(e.date).getDate()}</span>
                     </div>
                     <div className="min-w-0">
                       <p className="text-[13px] font-semibold truncate">{e.title}</p>
