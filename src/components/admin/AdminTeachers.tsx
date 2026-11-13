@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { UserPlus, MoreVertical, KeyRound, Ban, CheckCircle2, Check, Copy, AtSign } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Avatar } from "@/components/ui/Avatar";
@@ -232,6 +232,23 @@ export function AdminTeachers() {
   const [resetResult, setResetResult] = useState<{ email: string; tempPassword: string } | null>(null);
   const [usernameTarget, setUsernameTarget] = useState<{ id: string; name: string; username?: string } | null>(null);
 
+  // Close the row menu on an outside click or Escape.
+  useEffect(() => {
+    if (!menuFor) return;
+    function onPointerDown(e: MouseEvent) {
+      if (!(e.target as Element | null)?.closest("[data-teacher-menu]")) setMenuFor(null);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setMenuFor(null);
+    }
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [menuFor]);
+
   function toggleStatus(id: string) {
     useAppStore.getState().toggleUserStatus(id);
     setMenuFor(null);
@@ -259,7 +276,7 @@ export function AdminTeachers() {
         {users.map((u) => {
           const cls = u.classId ? getClass(u.classId) : undefined;
           return (
-            <StaggerItem key={u.id}>
+            <StaggerItem key={u.id} className={menuFor === u.id ? "relative z-30" : undefined}>
               <Card className="p-4 flex items-center gap-3.5 relative">
                 <Avatar name={u.name} color={u.avatarColor} size="md" />
                 <div className="min-w-0 flex-1">
@@ -273,25 +290,25 @@ export function AdminTeachers() {
                   </p>
                 </div>
                 {u.role !== "admin" && (
-                  <div className="relative">
-                    <button onClick={() => setMenuFor(menuFor === u.id ? null : u.id)} className="p-2 rounded-lg hover:bg-black/5 text-[var(--text-secondary)]">
+                  <div className="relative" data-teacher-menu>
+                    <button onClick={() => setMenuFor(menuFor === u.id ? null : u.id)} aria-haspopup="menu" aria-expanded={menuFor === u.id} className="p-2 rounded-lg hover:bg-black/5 text-[var(--text-secondary)]">
                       <MoreVertical size={16} />
                     </button>
                     {menuFor === u.id && (
-                      <div className="absolute right-0 top-full mt-1 w-52 glass-solid rounded-xl card-shadow-hover overflow-hidden z-10">
+                      <div role="menu" className="absolute right-0 top-full mt-1 w-64 glass-solid rounded-xl card-shadow-hover overflow-hidden z-10">
                         <button
                           onClick={() => {
                             setUsernameTarget({ id: u.id, name: u.name, username: u.username });
                             setMenuFor(null);
                           }}
-                          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-medium hover:bg-black/[0.04]"
+                          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left text-[13px] font-medium whitespace-nowrap hover:bg-black/[0.04]"
                         >
                           <AtSign size={14} /> {t("admin.teachersEditUsernameAction")}
                         </button>
-                        <button onClick={() => resetPassword(u)} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-medium hover:bg-black/[0.04]">
+                        <button onClick={() => resetPassword(u)} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left text-[13px] font-medium whitespace-nowrap hover:bg-black/[0.04]">
                           <KeyRound size={14} /> {t("admin.teachersResetPasswordAction")}
                         </button>
-                        <button onClick={() => toggleStatus(u.id)} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-medium hover:bg-black/[0.04]">
+                        <button onClick={() => toggleStatus(u.id)} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left text-[13px] font-medium whitespace-nowrap hover:bg-black/[0.04]">
                           {u.status === "active" ? <Ban size={14} className="text-red-500" /> : <CheckCircle2 size={14} className="text-[var(--color-sage-deep)]" />}
                           {u.status === "active" ? t("admin.teachersDisableAccountAction") : t("admin.teachersReEnableAccountAction")}
                         </button>
