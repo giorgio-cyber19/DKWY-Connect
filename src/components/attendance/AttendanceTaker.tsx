@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, Minus, Plus, CircleCheck, UserPlus, ClipboardCheck, Search } from "lucide-react";
+import { Check, Minus, Plus, CircleCheck, UserPlus, ClipboardCheck, Search, CalendarDays, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
@@ -16,38 +16,29 @@ import { getUser, useAppStore } from "@/lib/store";
 import { cn, formatDate } from "@/lib/utils";
 import type { AttendanceRecord, AttendanceStatus, Child } from "@/lib/types";
 
-type Step = "closed" | "select" | "addChild";
+type Step = "select" | "addChild";
 
-function Chips({ children, tone }: { children: Child[]; tone: "present" | "absent" | "excused" }) {
-  const styles = {
-    present: "bg-[color-mix(in_srgb,var(--color-sage-deep)_14%,transparent)] text-[var(--color-sage-deep)]",
-    absent: "bg-[color-mix(in_srgb,#ef4444_14%,transparent)] text-red-500",
-    excused: "bg-[color-mix(in_srgb,var(--color-gold-deep)_16%,transparent)] text-[var(--color-gold-deep)]",
-  };
-  return (
-    <ul className="flex flex-wrap gap-1.5">
-      {children.map((c) => (
-        <li key={c.id} className={cn("px-2.5 py-1 rounded-full text-[12.5px] font-semibold", styles[tone])}>
-          {c.name}
-        </li>
-      ))}
-    </ul>
-  );
+interface SavedSummary {
+  date: string;
+  present: number;
+  absent: number;
+  excused: number;
+  visitors: number;
 }
 
-function Register({ classId, date, pupils, onSaved }: { classId: string; date: string; pupils: Child[]; onSaved: () => void }) {
+/** Step 2: tick who was there on `date`. Mounted only after the date has been chosen. */
+function Register({ classId, date, pupils, onClose, onSaved }: { classId: string; date: string; pupils: Child[]; onClose: () => void; onSaved: (summary: SavedSummary) => void }) {
   const { t, language } = useLanguage();
   const { user } = useAuth();
   const classes = useAppStore((s) => s.classes);
   const [loaded, setLoaded] = useState(false);
   const [existing, setExisting] = useState<AttendanceRecord | null>(null);
-  const [step, setStep] = useState<Step>("closed");
+  const [step, setStep] = useState<Step>("select");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [visitors, setVisitors] = useState(0);
   const [note, setNote] = useState("");
   const [search, setSearch] = useState("");
   const [saving, setSaving] = useState(false);
-  const [justSaved, setJustSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -56,6 +47,10 @@ function Register({ classId, date, pupils, onSaved }: { classId: string; date: s
       .then(({ record }) => {
         if (cancelled) return;
         setExisting(record);
+        // Start from what was saved for this day (or from nobody for a new register).
+        setSelected(new Set(pupils.filter((c) => record?.marks[c.id] === "present").map((c) => c.id)));
+        setVisitors(record?.visitors ?? 0);
+        setNote(record?.note ?? "");
         setLoaded(true);
       })
       .catch((err) => {
@@ -75,19 +70,6 @@ function Register({ classId, date, pupils, onSaved }: { classId: string; date: s
     const q = search.trim().toLowerCase();
     return q ? pupils.filter((c) => c.name.toLowerCase().includes(q)) : pupils;
   }, [pupils, search]);
-
-  if (!loaded) return <p className="text-sm text-[var(--text-secondary)] py-6">{t("attendance.loading")}</p>;
-
-  /** Opens the picker, starting from what was saved (or from nobody for a new register). */
-  function openPicker() {
-    setSelected(new Set(pupils.filter((c) => existing?.marks[c.id] === "present").map((c) => c.id)));
-    setVisitors(existing?.visitors ?? 0);
-    setNote(existing?.note ?? "");
-    setSearch("");
-    setError(null);
-    setJustSaved(false);
-    setStep("select");
-  }
 
   function toggle(childId: string) {
     setSelected((prev) => {
@@ -109,10 +91,14 @@ function Register({ classId, date, pupils, onSaved }: { classId: string; date: s
         else marks[child.id] = existing?.marks[child.id] === "excused" ? "excused" : "absent";
       }
       const res = await apiPut<{ record: AttendanceRecord }>("/api/attendance", { classId, date, marks, visitors, note });
-      setExisting(res.record);
-      setJustSaved(true);
-      setStep("closed");
-      onSaved();
+      const values = Object.values(res.record.marks);
+      onSaved({
+        date,
+        present: values.filter((m) => m === "present").length,
+        absent: values.filter((m) => m === "absent").length,
+        excused: values.filter((m) => m === "excused").length,
+        visitors: res.record.visitors,
+      });
     } catch (err) {
       setError(translateApiError(err, language));
     } finally {
@@ -120,86 +106,21 @@ function Register({ classId, date, pupils, onSaved }: { classId: string; date: s
     }
   }
 
-  const marks = existing?.marks ?? {};
-  const presentKids = pupils.filter((c) => marks[c.id] === "present");
-  const absentKids = pupils.filter((c) => marks[c.id] === "absent");
-  const excusedKids = pupils.filter((c) => marks[c.id] === "excused");
   const savedBy = existing ? getUser(existing.updatedBy ?? existing.takenBy)?.name : undefined;
   const dateLabel = formatDate(date, { weekday: "long", day: "numeric", month: "long" }, language);
 
   return (
-    <div className="space-y-4">
-      {!existing ? (
-        <div className="flex flex-col items-center text-center gap-3 py-6 rounded-2xl border border-dashed border-[var(--border-soft)]">
-          <div className="w-11 h-11 rounded-2xl bg-[color-mix(in_srgb,var(--color-gold)_16%,transparent)] flex items-center justify-center text-[var(--color-gold-deep)]">
-            <ClipboardCheck size={20} />
-          </div>
-          <p className="text-sm text-[var(--text-secondary)] max-w-sm">{t("attendance.noRegisterYet")}</p>
-          <Button onClick={openPicker}>
-            <Plus size={15} /> {t("attendance.addRegister")}
-          </Button>
-        </div>
-      ) : (
-        <div className="space-y-3.5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-[13px] font-semibold flex flex-wrap gap-x-3 gap-y-1">
-              <span className="text-[var(--color-sage-deep)]">
-                {presentKids.length} {t("attendance.summaryPresent")}
-              </span>
-              <span className="text-red-500">
-                {absentKids.length} {t("attendance.summaryAbsent")}
-              </span>
-              {excusedKids.length > 0 && (
-                <span className="text-[var(--color-gold-deep)]">
-                  {excusedKids.length} {t("attendance.summaryExcused")}
-                </span>
-              )}
-              {existing.visitors > 0 && (
-                <span className="text-[var(--text-secondary)]">
-                  {existing.visitors} {t("attendance.visitorsShort")}
-                </span>
-              )}
-            </p>
-            <Button size="sm" onClick={openPicker}>
-              <Plus size={14} /> {t("attendance.editRegister")}
-            </Button>
-          </div>
-
-          {presentKids.length > 0 && (
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-wide text-[var(--text-secondary)] mb-1.5">{t("attendance.present")}</p>
-              <Chips tone="present">{presentKids}</Chips>
-            </div>
-          )}
-          {absentKids.length > 0 && (
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-wide text-[var(--text-secondary)] mb-1.5">{t("attendance.absent")}</p>
-              <Chips tone="absent">{absentKids}</Chips>
-            </div>
-          )}
-          {excusedKids.length > 0 && (
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-wide text-[var(--text-secondary)] mb-1.5">{t("attendance.excused")}</p>
-              <Chips tone="excused">{excusedKids}</Chips>
-            </div>
-          )}
-          {existing.note && <p className="text-[13px] text-[var(--text-secondary)] italic">“{existing.note}”</p>}
-          <p className="text-[12px] text-[var(--text-secondary)]">
-            {existing.updatedBy ? `${t("attendance.lastUpdatedBy")} ` : `${t("attendance.alreadyRecorded")} `}
-            <span className="font-semibold text-[var(--text-primary)]">{savedBy ?? "—"}</span>
-          </p>
-        </div>
-      )}
-
-      {error && step === "closed" && <p className="text-xs text-red-500 font-medium">{error}</p>}
-      {justSaved && (
-        <p className="text-[13px] font-semibold text-[var(--color-sage-deep)] flex items-center gap-1.5">
-          <CircleCheck size={15} /> {t("attendance.saved")}
-        </p>
-      )}
-
-      <Modal open={step === "select"} onClose={() => setStep("closed")} title={`${t("attendance.modalTitle")} — ${dateLabel}`} size="md">
+    <div>
+      <Modal open={step === "select"} onClose={onClose} title={`${t("attendance.modalTitle")} — ${dateLabel}`} size="md">
+        {!loaded ? (
+          <p className="text-sm text-[var(--text-secondary)] py-6">{t("attendance.loading")}</p>
+        ) : (
         <div className="space-y-4">
+          {existing && (
+            <p className="text-[12.5px] font-medium rounded-xl px-3.5 py-2.5 bg-[color-mix(in_srgb,var(--color-gold)_14%,transparent)] text-[var(--color-gold-deep)]">
+              {t("attendance.existingNotice")} {savedBy ?? "—"}. {t("attendance.existingNoticeEnd")}
+            </p>
+          )}
           <p className="text-[13px] text-[var(--text-secondary)]">{t("attendance.modalHint")}</p>
 
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -302,6 +223,7 @@ function Register({ classId, date, pupils, onSaved }: { classId: string; date: s
             {saving ? t("attendance.saving") : existing ? t("attendance.update") : t("attendance.save")}
           </Button>
         </div>
+        )}
       </Modal>
 
       {/* The picker is hidden while this is open, so only one dialog is up at a time; the ticks are kept. */}
@@ -317,49 +239,130 @@ function Register({ classId, date, pupils, onSaved }: { classId: string; date: s
   );
 }
 
-/** The attendance card: pick a date, tap + and tick who was there — everyone not ticked is absent. */
-export function AttendanceTaker({ classId, pupils }: { classId: string; pupils: Child[] }) {
-  const { t } = useLanguage();
+/** Step 1: choose the date the attendance is for. Nothing else is shown until this is done. */
+function DateStep({ initialDate, onCancel, onContinue }: { initialDate: string; onCancel: () => void; onContinue: (date: string) => void }) {
+  const { t, language } = useLanguage();
   const { user } = useAuth();
   const today = todayInAmsterdam();
-  const [date, setDate] = useState(today);
+  const isAdmin = user?.role === "admin";
+  const min = isAdmin ? undefined : addDays(today, -MAX_BACKFILL_DAYS);
+  const [date, setDate] = useState(initialDate);
+  const valid = !!date && date <= today && (!min || date >= min);
+
+  return (
+    <Modal open onClose={onCancel} title={t("attendance.dateStepTitle")} size="sm">
+      <form
+        className="space-y-4"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (valid) onContinue(date);
+        }}
+      >
+        <p className="text-[13px] text-[var(--text-secondary)]">{t("attendance.dateStepHint")}</p>
+        <div>
+          <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1.5 block">{t("attendance.dateLabel")}</label>
+          <input
+            type="date"
+            autoFocus
+            value={date}
+            max={today}
+            min={min}
+            onChange={(e) => setDate(e.target.value)}
+            className="w-full text-base px-3.5 py-3 rounded-xl border border-[var(--border-soft)] bg-transparent focus-ring focus:border-[var(--color-gold)]"
+          />
+          {valid && <p className="text-[13px] font-semibold mt-2 flex items-center gap-1.5"><CalendarDays size={14} className="text-[var(--color-gold-deep)]" /> {formatDate(date, { weekday: "long", day: "numeric", month: "long", year: "numeric" }, language)}</p>}
+          {!isAdmin && <p className="text-[11px] text-[var(--text-secondary)] mt-2">{t("attendance.backfillHint")}</p>}
+        </div>
+        <Button type="submit" size="lg" className="w-full" disabled={!valid}>
+          {t("attendance.continueButton")} <ArrowRight size={16} />
+        </Button>
+      </form>
+    </Modal>
+  );
+}
+
+/**
+ * The attendance card. One clear button starts it: first choose the date, then tick who was there
+ * (everyone not ticked is absent) and save. The overview below lists every saved Sunday.
+ */
+export function AttendanceTaker({ classId, pupils }: { classId: string; pupils: Child[] }) {
+  const { t, language } = useLanguage();
+  const today = todayInAmsterdam();
+  const [flow, setFlow] = useState<{ date: string; stage: "date" | "pick" } | null>(null);
+  const [lastSaved, setLastSaved] = useState<SavedSummary | null>(null);
   const [version, setVersion] = useState(0);
   const registerRef = useRef<HTMLDivElement>(null);
   const className = useAppStore((s) => s.classes.find((c) => c.id === classId)?.name ?? "");
-  const isAdmin = user?.role === "admin";
 
+  function start() {
+    setLastSaved(null);
+    setFlow({ date: today, stage: "date" });
+  }
+
+  /** From the overview: a date was clicked, so it is already chosen — go straight to the checklist. */
   function openDate(next: string) {
-    setDate(next);
-    registerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    setLastSaved(null);
+    setFlow({ date: next, stage: "pick" });
   }
 
   return (
     <div className="space-y-6">
-    <div ref={registerRef} className="scroll-mt-24">
-    <Card hover={false} className="p-5 sm:p-6">
-      <div className="flex flex-wrap items-end justify-between gap-3 mb-4">
-        <div>
-          <h2 className="font-display text-xl font-semibold">{t("attendance.heading")}</h2>
-          <p className="text-[12.5px] text-[var(--text-secondary)]">{t("attendance.subtitle")}</p>
-        </div>
-        <div>
-          <label className="text-xs font-semibold text-[var(--text-secondary)] mb-1 block">{t("attendance.dateLabel")}</label>
-          <input
-            type="date"
-            value={date}
-            max={today}
-            min={isAdmin ? undefined : addDays(today, -MAX_BACKFILL_DAYS)}
-            onChange={(e) => e.target.value && setDate(e.target.value)}
-            className="text-sm px-3 py-2 rounded-xl border border-[var(--border-soft)] bg-transparent focus-ring"
-          />
-        </div>
+      <div ref={registerRef} className="scroll-mt-24">
+        <Card hover={false} className="p-5 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+            <div className="flex items-start gap-3.5 min-w-0">
+              <div className="shrink-0 w-12 h-12 rounded-2xl bg-[color-mix(in_srgb,var(--color-gold)_18%,transparent)] flex items-center justify-center text-[var(--color-gold-deep)]">
+                <ClipboardCheck size={22} />
+              </div>
+              <div className="min-w-0">
+                <h2 className="font-display text-xl font-semibold">{t("attendance.heading")}</h2>
+                <p className="text-[13px] text-[var(--text-secondary)]">{t("attendance.subtitle")}</p>
+              </div>
+            </div>
+            <Button size="lg" variant="secondary" className="w-full sm:w-auto shrink-0 shadow-md" onClick={start}>
+              <ClipboardCheck size={18} /> {t("attendance.startButton")}
+            </Button>
+          </div>
+
+          <ol className="mt-5 grid sm:grid-cols-3 gap-2.5 text-[12.5px]">
+            {[t("attendance.step1"), t("attendance.step2"), t("attendance.step3")].map((label, i) => (
+              <li key={i} className="flex items-center gap-2.5 rounded-xl px-3 py-2 bg-[color-mix(in_srgb,var(--color-ink)_4%,transparent)]">
+                <span className="shrink-0 w-5 h-5 rounded-full bg-[var(--color-gold)] text-[#151a2d] text-[11px] font-bold flex items-center justify-center">{i + 1}</span>
+                <span className="font-medium">{label}</span>
+              </li>
+            ))}
+          </ol>
+
+          {lastSaved && (
+            <p className="mt-4 text-[13px] font-semibold text-[var(--color-sage-deep)] flex flex-wrap items-center gap-x-1.5 gap-y-1">
+              <CircleCheck size={15} /> {t("attendance.saved")}
+              <span className="font-medium text-[var(--text-secondary)]">
+                {formatDate(lastSaved.date, { weekday: "long", day: "numeric", month: "long" }, language)}: {lastSaved.present} {t("attendance.summaryPresent")}, {lastSaved.absent} {t("attendance.summaryAbsent")}
+                {lastSaved.excused > 0 && `, ${lastSaved.excused} ${t("attendance.summaryExcused")}`}
+                {lastSaved.visitors > 0 && `, ${lastSaved.visitors} ${t("attendance.visitorsShort")}`}
+              </span>
+            </p>
+          )}
+        </Card>
       </div>
 
-      <Register key={`${classId}|${date}`} classId={classId} date={date} pupils={pupils} onSaved={() => setVersion((v) => v + 1)} />
-      {!isAdmin && <p className="text-[11px] text-[var(--text-secondary)] mt-4">{t("attendance.backfillHint")}</p>}
-    </Card>
-    </div>
-    <AttendanceHistory classId={classId} className={className} pupils={pupils} version={version} onOpenDate={openDate} />
+      {flow?.stage === "date" && <DateStep initialDate={flow.date} onCancel={() => setFlow(null)} onContinue={(date) => setFlow({ date, stage: "pick" })} />}
+      {flow?.stage === "pick" && (
+        <Register
+          key={`${classId}|${flow.date}`}
+          classId={classId}
+          date={flow.date}
+          pupils={pupils}
+          onClose={() => setFlow(null)}
+          onSaved={(summary) => {
+            setFlow(null);
+            setLastSaved(summary);
+            setVersion((v) => v + 1);
+          }}
+        />
+      )}
+
+      <AttendanceHistory classId={classId} className={className} pupils={pupils} version={version} onOpenDate={openDate} />
     </div>
   );
 }
