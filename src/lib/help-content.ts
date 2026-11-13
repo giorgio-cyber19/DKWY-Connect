@@ -497,6 +497,7 @@ const nl: HelpContent = {
             "Vul de titel in, kies het type (bijvoorbeeld Zondagsles, Leraarsvergadering, Kinderevenement) en eventueel tijd, plaats en omschrijving.",
             "Klik op **Evenement toevoegen**.",
             "Plak je een **link** (bijvoorbeeld naar een Zoom-vergadering of een website) in de beschrijving, dan is die in het evenement een **klikbare link**: één klik en je gaat naar die website.",
+            "Kies je als type **Lerarenvergadering** of **Oudervergadering**, dan krijgen **alle gebruikers automatisch een e-mail** met de titel, datum, tijd, plaats en beschrijving, en een knop naar de agenda. Andere typen krijgen alleen een melding in de app.",
           ],
         },
         {
@@ -1096,6 +1097,7 @@ const en: HelpContent = {
             "Enter the title, choose the type (for example Sunday Lesson, Teacher Meeting, Children Event) and optionally the time, location and description.",
             "Click **Add Event**.",
             "If you paste a **link** (for example to a Zoom meeting or a website) into the description, it becomes a **clickable link** in the event: one click and you go to that website.",
+            "If you choose **Teacher Meeting** or **Parent Meeting** as the type, **all users automatically get an email** with the title, date, time, location and description, and a button to the calendar. Other types only produce a notification in the app.",
           ],
         },
         {

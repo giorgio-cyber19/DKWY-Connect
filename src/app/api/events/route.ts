@@ -1,8 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { getBearerToken, verifySessionToken } from "@/lib/session";
-import { putEntity, newId, appendFeed } from "@/lib/db";
+import { putEntity, newId, appendFeed, getCollection } from "@/lib/db";
+import { MEETING_TYPES, sendMeetingNotificationEmails } from "@/lib/email";
 import { eventTypeColors } from "@/lib/calendar-colors";
-import type { CalendarEvent, Notification } from "@/lib/types";
+import type { CalendarEvent, Notification, User } from "@/lib/types";
 
 const ROSTER_EVENT_TYPE: CalendarEvent["type"] = "Sunday School & Youth Roster";
 
@@ -46,5 +47,18 @@ export async function POST(request: Request) {
     },
     100
   );
+
+  // A meeting is announced by email to every active user (after the response, so saving stays quick).
+  if (MEETING_TYPES.includes(event.type)) {
+    after(async () => {
+      const users = await getCollection<User>("users");
+      await sendMeetingNotificationEmails(
+        event,
+        users.find((u) => u.id === claims.userId),
+        users.filter((u) => u.status === "active" && !!u.email)
+      );
+    });
+  }
+
   return NextResponse.json(event);
 }
