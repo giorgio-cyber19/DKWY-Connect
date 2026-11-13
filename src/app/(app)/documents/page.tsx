@@ -15,7 +15,7 @@ import {
   ExternalLink,
   Pencil,
   Trash2,
-  ChevronLeft,
+  ArrowLeft,
   Plus,
   FolderInput,
   Copy,
@@ -447,11 +447,22 @@ export default function DocumentsPage() {
         {!query.trim() && currentFolder && (
           <nav aria-label={t("library.breadcrumb")} className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm font-semibold text-[var(--text-secondary)]">
             <button
+              type="button"
+              onClick={() => setCurrentFolderId(currentFolder.parentId ?? null)}
+              {...crumbDrop(currentFolder.parentId ?? null)}
+              className={cn(
+                "mr-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[var(--border-soft)] bg-[var(--bg-elevated)] text-[13px] font-semibold text-[var(--text-primary)] hover:bg-black/[0.05] transition-colors focus-ring",
+                transfer.overKey === (currentFolder.parentId ?? "root") && "ring-2 ring-[var(--color-blue)]"
+              )}
+            >
+              <ArrowLeft size={15} /> {t("common.back")}
+            </button>
+            <button
               onClick={() => setCurrentFolderId(null)}
               {...crumbDrop(null)}
               className={cn("flex items-center gap-1.5 hover:text-[var(--text-primary)] transition-colors rounded-md -mx-1 px-1", transfer.overKey === "root" && "ring-2 ring-[var(--color-blue)] text-[var(--text-primary)]")}
             >
-              <ChevronLeft size={15} /> {t("library.backToAllFiles")}
+              {t("library.backToAllFiles")}
             </button>
             {breadcrumb.map((f, i) => (
               <span key={f.id} className="flex items-center gap-1.5">
