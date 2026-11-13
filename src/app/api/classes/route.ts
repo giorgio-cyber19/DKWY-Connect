@@ -3,6 +3,7 @@ import { getBearerToken, verifySessionToken } from "@/lib/session";
 import { getCollection, putEntity, newId, appendFeed } from "@/lib/db";
 import { pickColor } from "@/lib/colors";
 import type { SchoolClass, AuditLogEntry } from "@/lib/types";
+import { cleanRoom } from "@/lib/utils";
 
 export async function POST(request: Request) {
   const claims = verifySessionToken(getBearerToken(request));
@@ -14,9 +15,9 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const name = body?.name;
   const ageGroupId = body?.ageGroupId;
-  const room = body?.room;
-  if (typeof name !== "string" || !name.trim() || typeof ageGroupId !== "string" || !ageGroupId || typeof room !== "string") {
-    return NextResponse.json({ error: "bad_request", message: "Name, age group, and room are required." }, { status: 400 });
+  const room = typeof body?.room === "string" ? cleanRoom(body.room) : ""; // optional
+  if (typeof name !== "string" || !name.trim() || typeof ageGroupId !== "string" || !ageGroupId) {
+    return NextResponse.json({ error: "bad_request", message: "Name and age group are required." }, { status: 400 });
   }
 
   const existingClasses = await getCollection<SchoolClass>("classes");
@@ -25,7 +26,7 @@ export async function POST(request: Request) {
     name: name.trim(),
     ageGroupId,
     teacherIds: [],
-    room: room.trim(),
+    room,
     color: pickColor(existingClasses.length),
     childCount: 0,
   };

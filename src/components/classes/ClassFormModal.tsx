@@ -7,6 +7,7 @@ import { useAppStore } from "@/lib/store";
 import { useLanguage } from "@/lib/language-context";
 import { translateApiError } from "@/lib/i18n/errors";
 import type { SchoolClass } from "@/lib/types";
+import { cleanRoom } from "@/lib/utils";
 
 const inputClass = "w-full text-sm px-3.5 py-2.5 rounded-xl border border-[var(--border-soft)] bg-transparent focus-ring focus:border-[var(--color-gold)] transition-colors";
 
@@ -26,7 +27,7 @@ export function ClassFormModal({ state, onClose, ageGroupIds, onSaved }: { state
     if (open) {
       setName(editing?.name ?? "");
       setAgeGroupId(editing?.ageGroupId ?? ageGroupIds[0]?.id ?? "");
-      setRoom(editing?.room ?? "");
+      setRoom(cleanRoom(editing?.room));
       setError("");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -37,7 +38,7 @@ export function ClassFormModal({ state, onClose, ageGroupIds, onSaved }: { state
     setSubmitting(true);
     setError("");
     try {
-      const data = { name: name.trim(), ageGroupId, room: room.trim() || "TBD" };
+      const data = { name: name.trim(), ageGroupId, room: room.trim() };
       let saved: SchoolClass;
       if (editing) {
         await useAppStore.getState().updateClass(editing.id, data);

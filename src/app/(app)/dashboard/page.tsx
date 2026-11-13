@@ -20,7 +20,7 @@ import { MotifCluster } from "@/components/dashboard/MotifCluster";
 import { LessonCard } from "@/components/lessons/LessonCard";
 import { PostCard, typeTone } from "@/components/updates/PostCard";
 import { getUser, getClass, useAppStore } from "@/lib/store";
-import { parseDate, formatDate } from "@/lib/utils";
+import { parseDate, formatDate, cleanRoom } from "@/lib/utils";
 import { useLanguage } from "@/lib/language-context";
 import { enumLabels } from "@/lib/i18n/enum-labels";
 
@@ -90,7 +90,7 @@ export default function DashboardPage() {
           <div>
             <span className="inline-block text-[11px] font-bold uppercase tracking-[0.14em] px-3 py-1 rounded-full bg-[var(--color-gold)] text-[#151a2d] mb-3 sm:mb-4">
               {t("dashboard.thisSundayPill")}
-              {myClass?.room && <> · {t("dashboard.roomPrefix")} {myClass.room}</>}
+              {cleanRoom(myClass?.room) && <> · {t("dashboard.roomPrefix")} {cleanRoom(myClass?.room)}</>}
             </span>
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-white/80 mb-2">{t(`dashboard.${getGreetingKey()}`)}</p>
             <h1 className="font-display text-2xl sm:text-4xl font-semibold mb-2">{t("dashboard.welcomeBackPrefix")} {user.name.split(" ")[0]} 👋</h1>

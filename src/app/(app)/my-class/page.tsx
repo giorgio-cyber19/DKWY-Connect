@@ -18,6 +18,7 @@ import { getAgeGroup, useAppStore } from "@/lib/store";
 import { useLanguage } from "@/lib/language-context";
 import { enumLabels } from "@/lib/i18n/enum-labels";
 import type { SchoolClass } from "@/lib/types";
+import { cleanRoom } from "@/lib/utils";
 
 function ClassDetail({ schoolClass, isAdmin, onEdit }: { schoolClass: SchoolClass; isAdmin: boolean; onEdit: () => void }) {
   const { t, language } = useLanguage();
@@ -36,7 +37,7 @@ function ClassDetail({ schoolClass, isAdmin, onEdit }: { schoolClass: SchoolClas
       <PageHeader
         eyebrow={t("myClass.allClassesEyebrow")}
         title={schoolClass.name}
-        description={`${ageGroup?.name} (${ageGroup?.range}) · ${schoolClass.room}`}
+        description={[`${ageGroup?.name} (${ageGroup?.range})`, cleanRoom(schoolClass.room)].filter(Boolean).join(" · ")}
         actions={
           isAdmin && (
             <Button variant="outline" size="sm" onClick={onEdit}>
@@ -65,15 +66,17 @@ function ClassDetail({ schoolClass, isAdmin, onEdit }: { schoolClass: SchoolClas
             <p className="text-[11.5px] text-[var(--text-secondary)] mt-1">{t("myClass.lessonPlansStat")}</p>
           </div>
         </Card>
-        <Card className="p-5 flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-2xl bg-[color-mix(in_srgb,var(--color-sage)_16%,transparent)] flex items-center justify-center text-[var(--color-sage-deep)]">
-            <MapPin size={19} />
-          </div>
-          <div>
-            <p className="font-display text-xl font-semibold leading-none">{schoolClass.room}</p>
-            <p className="text-[11.5px] text-[var(--text-secondary)] mt-1">{t("myClass.meetingRoom")}</p>
-          </div>
-        </Card>
+        {cleanRoom(schoolClass.room) && (
+          <Card className="p-5 flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-[color-mix(in_srgb,var(--color-sage)_16%,transparent)] flex items-center justify-center text-[var(--color-sage-deep)]">
+              <MapPin size={19} />
+            </div>
+            <div>
+              <p className="font-display text-xl font-semibold leading-none">{cleanRoom(schoolClass.room)}</p>
+              <p className="text-[11.5px] text-[var(--text-secondary)] mt-1">{t("myClass.meetingRoom")}</p>
+            </div>
+          </Card>
+        )}
       </div>
 
       <section className="mb-8">
@@ -216,7 +219,7 @@ function MyClassContent() {
                   <Users size={20} />
                 </div>
                 <h3 className="font-display font-semibold text-lg">{c.name}</h3>
-                <p className="text-[12.5px] text-[var(--text-secondary)] mb-3">{ageGroup?.name} · {c.room}</p>
+                <p className="text-[12.5px] text-[var(--text-secondary)] mb-3">{[ageGroup?.name, cleanRoom(c.room)].filter(Boolean).join(" · ")}</p>
                 <p className="text-sm font-semibold">{c.childCount} {t("myClass.childrenSuffix")}</p>
               </Card>
             );

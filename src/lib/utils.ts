@@ -93,3 +93,9 @@ export function timeAgo(iso: string, language: Language = "en") {
   if (weeks < 5) return t.weeks(weeks);
   return formatDate(iso, undefined, language);
 }
+
+/** A class's room as it should be shown: empty when none was given (older classes stored the placeholder "TBD"). */
+export function cleanRoom(room: string | undefined | null): string {
+  const value = (room ?? "").trim();
+  return /^tbd$/i.test(value) ? "" : value;
+}

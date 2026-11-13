@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getBearerToken, verifySessionToken } from "@/lib/session";
 import { getEntity, putEntity, deleteEntity, getCollection, newId, appendFeed } from "@/lib/db";
 import type { SchoolClass, Child, User, AuditLogEntry } from "@/lib/types";
+import { cleanRoom } from "@/lib/utils";
 
 export async function PATCH(request: Request, ctx: RouteContext<"/api/classes/[id]">) {
   const claims = verifySessionToken(getBearerToken(request));
@@ -17,7 +18,7 @@ export async function PATCH(request: Request, ctx: RouteContext<"/api/classes/[i
   const body = await request.json().catch(() => null);
   const name = typeof body?.name === "string" ? body.name.trim() : schoolClass.name;
   const ageGroupId = typeof body?.ageGroupId === "string" ? body.ageGroupId : schoolClass.ageGroupId;
-  const room = typeof body?.room === "string" ? body.room.trim() : schoolClass.room;
+  const room = typeof body?.room === "string" ? cleanRoom(body.room) : cleanRoom(schoolClass.room);
   if (!name || !ageGroupId) {
     return NextResponse.json({ error: "bad_request", message: "Name and age group are required." }, { status: 400 });
   }

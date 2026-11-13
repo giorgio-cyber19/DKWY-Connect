@@ -30,6 +30,7 @@ import { pickColor } from "@/lib/colors";
 import type { PublicUser } from "@/lib/password";
 import type { SessionClaims } from "@/lib/session";
 import { folderPathLabel } from "@/lib/library-folders";
+import { cleanRoom } from "./utils";
 import type {
   AgeGroup,
   AttendanceRecord,
@@ -314,7 +315,7 @@ const tools: ToolDef[] = [
           id: c.id,
           name: c.name,
           ageGroup: ageGroupName(snap, c.ageGroupId),
-          room: c.room,
+          room: cleanRoom(c.room) || null,
           teachers: c.teacherIds.map((id) => userName(snap, id)),
           childCount: c.childCount,
         })),
@@ -978,13 +979,13 @@ const tools: ToolDef[] = [
   // ------------------------------------------------------------ classes & age groups
   {
     name: "create_class",
-    description: "Create a class (administrators only).",
-    parameters: schema({ name: s("Class name."), ageGroup: s("Age group name or id."), room: s("Room name/number.") }, ["name", "ageGroup", "room"]),
+    description: "Create a class (administrators only). The room is optional — leave it out when the user doesn't mention one.",
+    parameters: schema({ name: s("Class name."), ageGroup: s("Age group name or id."), room: s("Room name/number (optional).") }, ["name", "ageGroup"]),
     write: true,
     async run(args, rt) {
       const snap = await rt.snapshot();
       const ag = pick(snap.ageGroups, needStr(args, "ageGroup"), (a) => a.name, "age group");
-      const cls = await call<SchoolClass>(classesPOST, rt.token, "POST", "/api/classes", { name: needStr(args, "name"), ageGroupId: ag.id, room: needStr(args, "room") });
+      const cls = await call<SchoolClass>(classesPOST, rt.token, "POST", "/api/classes", { name: needStr(args, "name"), ageGroupId: ag.id, room: str(args, "room") ?? "" });
       return { summary: `Created class "${cls.name}"`, result: { id: cls.id } };
     },
   },

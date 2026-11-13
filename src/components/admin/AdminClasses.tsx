@@ -13,6 +13,7 @@ import { useLanguage } from "@/lib/language-context";
 import { translateApiError } from "@/lib/i18n/errors";
 import { ClassFormModal, type ClassModalState } from "@/components/classes/ClassFormModal";
 import type { AgeGroup, SchoolClass } from "@/lib/types";
+import { cleanRoom } from "@/lib/utils";
 
 const inputClass = "w-full text-sm px-3.5 py-2.5 rounded-xl border border-[var(--border-soft)] bg-transparent focus-ring focus:border-[var(--color-gold)] transition-colors";
 
@@ -228,8 +229,12 @@ export function AdminClasses() {
                       </div>
                     </div>
                     <h3 className="font-display font-semibold text-lg">{c.name}</h3>
-                    <p className="text-[12.5px] text-[var(--text-secondary)] mb-3 flex items-center gap-1">
-                      <MapPin size={11} /> {c.room}
+                    <p className="text-[12.5px] text-[var(--text-secondary)] mb-3 flex items-center gap-1 min-h-[1.1rem]">
+                      {cleanRoom(c.room) && (
+                        <>
+                          <MapPin size={11} /> {cleanRoom(c.room)}
+                        </>
+                      )}
                     </p>
                     <div className="flex items-center justify-between pt-3 border-t border-[var(--border-softer)] text-[12.5px]">
                       <span className="text-[var(--text-secondary)]">{teacher?.name ?? t("admin.classesNoTeacherAssigned")}</span>
