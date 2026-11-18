@@ -561,7 +561,7 @@ const nl: HelpContent = {
           kind: "steps",
           title: "Alleen voor beheerders: zondagen toevoegen en verwijderen",
           items: [
-            "Voeg een zondag toe met **Rij Toevoegen**: de nieuwe rij komt onderaan, op de zondag na de laatste zondag in het rooster. Wil je er meerdere tegelijk? Gebruik **Meerdere Zondagen Toevoegen** (kies de startdatum en het aantal weken).",
+            "Voeg een zondag toe met **Rij Toevoegen**: de nieuwe rij komt onderaan, op de zondag na de laatste zondag in het rooster. Je blijft in de maand die je bekijkt; staat de nieuwe rij in een andere maand, dan verschijnt er een melding met de knop **Bekijken** om erheen te gaan. Wijzigingen aan het rooster geven de andere gebruikers geen melding. Wil je er meerdere tegelijk? Gebruik **Meerdere Zondagen Toevoegen** (kies de startdatum en het aantal weken).",
             "Met **Dupliceren** of **Verwijderen** op een rij kopieer of verwijder je een zondag. Elke rij heeft een bijbehorend evenement in de kalender (**Bekijk in Kalender**).",
           ],
         },
@@ -1163,7 +1163,7 @@ const en: HelpContent = {
           kind: "steps",
           title: "Administrators only: adding and deleting Sundays",
           items: [
-            "Add a Sunday with **Add Row**: the new row goes at the bottom, on the Sunday after the last Sunday on the roster. Want several at once? Use **Add Multiple Sundays** (pick the start date and number of weeks).",
+            "Add a Sunday with **Add Row**: the new row goes at the bottom, on the Sunday after the last Sunday on the roster. You stay in the month you're viewing; if the new row is in another month, a message with a **Show** button takes you there. Roster changes don't send other users a notification. Want several at once? Use **Add Multiple Sundays** (pick the start date and number of weeks).",
             "**Duplicate** or **Delete** on a row copies or removes a Sunday. Every row has a matching event in the calendar (**View in Calendar**).",
           ],
         },

@@ -56,7 +56,8 @@ function RosterPageContent() {
   const [focusRowId, setFocusRowId] = useState<string | null>(null);
   // Non-null while the "add multiple Sundays" dialog is open: the suggested first date.
   const [addMultipleStart, setAddMultipleStart] = useState<string | null>(null);
-  const [addNotice, setAddNotice] = useState<string | null>(null);
+  // What was just added; `date` is set when the new row is outside the current view (so a "Show" button can go there).
+  const [addNotice, setAddNotice] = useState<{ text: string; date?: string } | null>(null);
 
   const isAdmin = user?.role === "admin";
   const canEdit = !!user; // teachers update the roster too; adding and deleting rows is for administrators
@@ -75,15 +76,21 @@ function RosterPageContent() {
   }, [addNotice]);
 
   /**
-   * New rows land on their own dates, which may be in another month than the one being viewed — and an active
-   * filter would hide a brand-new, still-empty row — so jump to the first new date and drop the filters,
-   * otherwise it looks as if nothing happened.
+   * New rows land on their own dates. The view stays exactly where it is (jumping to another month made the rows
+   * you were looking at disappear); when the new row isn't in what you're viewing, the confirmation has a Show button.
    */
   function revealAdded(firstDate: string, message: string) {
+    const added = parseDate(firstDate);
+    const filtered = !!(filters.dateFrom || filters.dateTo || filters.userId || filters.search);
+    const inView = tab === "roster" && !filtered && isSameMonth(added, cursor);
+    setAddNotice({ text: message, date: inView ? undefined : firstDate });
+  }
+
+  function showAdded(date: string) {
     setFilters(emptyRosterFilters);
-    setCursor(parseDate(firstDate));
+    setCursor(parseDate(date));
     setTab("roster");
-    setAddNotice(message);
+    setAddNotice(null);
   }
 
   function updateFilters(patch: Partial<RosterFilterState>) {
@@ -136,7 +143,7 @@ function RosterPageContent() {
       setFocusRowId(entry.id);
       revealAdded(date, `${t("roster.addedRowNotice")}: ${formatDate(date, { weekday: "long" }, language)}`);
     } catch {
-      setAddNotice(t("roster.addFailed"));
+      setAddNotice({ text: t("roster.addFailed") });
     }
   }
 
@@ -201,7 +208,12 @@ function RosterPageContent() {
 
         {addNotice && (
           <p className="no-print flex items-center gap-1.5 text-[13px] font-semibold text-[var(--color-sage-deep)] mb-3" role="status">
-            <CircleCheck size={15} /> {addNotice}
+            <CircleCheck size={15} /> {addNotice.text}
+            {addNotice.date && (
+              <button type="button" onClick={() => showAdded(addNotice.date!)} className="ml-1 underline underline-offset-2 hover:opacity-80">
+                {t("roster.showAddedRow")}
+              </button>
+            )}
           </p>
         )}
 

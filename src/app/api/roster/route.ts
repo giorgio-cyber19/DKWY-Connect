@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { getBearerToken, verifySessionToken } from "@/lib/session";
-import { putEntity, newId, appendFeed } from "@/lib/db";
+import { putEntity, newId } from "@/lib/db";
 import { createLinkedCalendarEvent } from "@/lib/roster-sync";
-import type { RosterEntry, Notification } from "@/lib/types";
+import type { RosterEntry } from "@/lib/types";
 
 export async function POST(request: Request) {
   const claims = verifySessionToken(getBearerToken(request));
@@ -38,19 +38,7 @@ export async function POST(request: Request) {
   entry.calendarEventId = calendarEvent.id;
   await putEntity("rosterEntries", entry);
 
-  await appendFeed<Notification>(
-    "notifications",
-    {
-      id: newId("n"),
-      title: "New roster entry added",
-      description: `${entry.date} — ${entry.theme || entry.serviceType || "Sunday School & Youth Roster"}`,
-      date: now,
-      read: false,
-      type: "event",
-      href: `/roster/${entry.id}`,
-    },
-    100
-  );
+  // Adding, editing or deleting roster rows is routine bookkeeping: nobody is notified about it.
 
   return NextResponse.json({ rosterEntry: entry, calendarEvent });
 }
