@@ -326,13 +326,13 @@ export default function DocumentsPage() {
     ];
   }
 
-  async function handleOpenInGoogle(fileId: string) {
+  async function handleOpenInGoogle(fileId: string, kind: "sheet" | "doc") {
     setOpenError(null);
     // Opened synchronously (before the await) so browsers don't treat it as an
     // unrequested popup — its destination is filled in once the share link is ready.
     const newTab = window.open("", "_blank");
     try {
-      const url = await openInGoogleEditor(fileId);
+      const url = await openInGoogleEditor(fileId, kind);
       if (newTab) newTab.location.href = url;
     } catch (err) {
       newTab?.close();
@@ -347,10 +347,10 @@ export default function DocumentsPage() {
       items.push({ label: t("library.open"), icon: <Eye size={15} />, onClick: () => setViewingDoc(item) });
     }
     if (item.fileType === "xlsx" && item.driveFileId) {
-      items.push({ label: t("documents.openInGoogleSheets"), icon: <ExternalLink size={15} />, onClick: () => handleOpenInGoogle(item.driveFileId!) });
+      items.push({ label: t("documents.openInGoogleSheets"), icon: <ExternalLink size={15} />, onClick: () => handleOpenInGoogle(item.driveFileId!, "sheet") });
     }
     if (item.fileType === "docx" && item.driveFileId) {
-      items.push({ label: t("documents.openInGoogleDocs"), icon: <ExternalLink size={15} />, onClick: () => handleOpenInGoogle(item.driveFileId!) });
+      items.push({ label: t("documents.openInGoogleDocs"), icon: <ExternalLink size={15} />, onClick: () => handleOpenInGoogle(item.driveFileId!, "doc") });
     }
     if (item.driveFileId) {
       items.push({

@@ -213,8 +213,8 @@ export function driveDownloadUrl(fileId: string): string {
 
 /** Makes the file link-shareable (anyone with the link can view + edit) and returns
  * its Drive preview URL, from which Google's own UI offers "Open with Google Sheets/Docs". */
-export async function openInGoogleEditor(fileId: string): Promise<string> {
-  const res = await fetch(`/api/drive/${fileId}/share`, { method: "POST", headers: authHeaders() });
+export async function openInGoogleEditor(fileId: string, kind?: "sheet" | "doc"): Promise<string> {
+  const res = await fetch(`/api/drive/${fileId}/share`, { method: "POST", headers: { ...authHeaders(), "Content-Type": "application/json" }, body: JSON.stringify({ kind }) });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     if (data.error === "not_configured") throw new DriveNotConfiguredError(data.message);
