@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ZoomIn, ZoomOut, MoveHorizontal, FileWarning } from "lucide-react";
 import { useLanguage } from "@/lib/language-context";
+import { fixDocxLinks } from "@/lib/docx-links";
 
 /**
  * Word documents shown the way Word and Google Docs show them: real pages on a grey desk, with the
@@ -13,6 +14,40 @@ import { useLanguage } from "@/lib/language-context";
 const ZOOM_MIN = 0.4;
 const ZOOM_MAX = 3;
 const ZOOM_STEP = 0.2;
+
+const PLAIN_LINK = /(https?:\/\/[^\s<>"']+|www\.[^\s<>"']+|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})/g;
+const TRAILING_PUNCTUATION = /[.,;:!?)\]}'"]+$/;
+
+/** Word only underlines what was made a hyperlink; web and e-mail addresses typed as plain text should be clickable too. */
+function linkifyPlainText(root: HTMLElement) {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const targets: Text[] = [];
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    const text = node as Text;
+    if (!text.parentElement?.closest("a, style, script") && /(https?:\/\/|www\.|@)/i.test(text.data)) targets.push(text);
+  }
+  for (const text of targets) {
+    const parts = text.data.split(PLAIN_LINK);
+    if (parts.length < 3) continue;
+    const fragment = document.createDocumentFragment();
+    parts.forEach((part, i) => {
+      if (i % 2 === 0) {
+        if (part) fragment.append(part);
+        return;
+      }
+      const trailing = part.match(TRAILING_PUNCTUATION)?.[0] ?? "";
+      const address = trailing ? part.slice(0, -trailing.length) : part;
+      const a = document.createElement("a");
+      a.textContent = address;
+      a.href = address.includes("@") && !/^https?:/i.test(address) ? `mailto:${address}` : /^https?:\/\//i.test(address) ? address : `https://${address}`;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      fragment.append(a);
+      if (trailing) fragment.append(trailing);
+    });
+    text.replaceWith(fragment);
+  }
+}
 
 export function WordViewer({ buffer }: { buffer: ArrayBuffer }) {
   const { t } = useLanguage();
@@ -32,7 +67,9 @@ export function WordViewer({ buffer }: { buffer: ArrayBuffer }) {
       try {
         const { renderAsync } = await import("docx-preview");
         host.innerHTML = "";
-        await renderAsync(buffer, host, undefined, {
+        // Hyperlinks that Word stored as fields are rewritten into ordinary links first, or they would not show.
+        const readable = await fixDocxLinks(buffer);
+        await renderAsync(readable, host, undefined, {
           className: "docx",
           inWrapper: true,
           breakPages: true,
@@ -55,6 +92,8 @@ export function WordViewer({ buffer }: { buffer: ArrayBuffer }) {
             a.setAttribute("rel", "noopener noreferrer");
           }
         });
+
+        linkifyPlainText(host);
 
         // Open at full size, or shrunk to fit on a narrow screen.
         const page = host.querySelector<HTMLElement>("section.docx");
@@ -99,7 +138,19 @@ export function WordViewer({ buffer }: { buffer: ArrayBuffer }) {
 
   return (
     <div className="relative flex-1 min-h-0 flex flex-col">
-      <div ref={scrollRef} className="word-viewer flex-1 min-h-0 overflow-auto bg-[color-mix(in_srgb,var(--color-ink)_9%,var(--bg-elevated))]">
+      <div
+        ref={scrollRef}
+        onClick={(e) => {
+          const link = (e.target as HTMLElement).closest("a");
+          const href = link?.getAttribute("href");
+          if (!link || !href?.startsWith("#")) return;
+          e.preventDefault();
+          const name = decodeURIComponent(href.slice(1));
+          const target = pagesRef.current?.querySelector(`[id="${name.replace(/"/g, '\\"')}"]`);
+          target?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }}
+        className="word-viewer flex-1 min-h-0 overflow-auto bg-[color-mix(in_srgb,var(--color-ink)_9%,var(--bg-elevated))]"
+      >
         {fallbackHtml !== null ? (
           <div className="mx-auto my-4 max-w-[794px] bg-white text-black shadow-md px-6 sm:px-14 py-10 prose-doc" dangerouslySetInnerHTML={{ __html: fallbackHtml }} />
         ) : (

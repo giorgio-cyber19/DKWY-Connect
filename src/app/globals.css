@@ -462,6 +462,15 @@ body {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22), 0 6px 18px rgba(0, 0, 0, 0.14) !important;
   margin-bottom: 16px !important;
 }
+/* Hyperlinks look like links, as in Word: blue and underlined (a run's own colour still wins). */
+.word-viewer .docx-wrapper a[href] {
+  color: #0563c1;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.word-viewer .docx-wrapper a[href]:hover {
+  color: #003e92;
+}
 .word-viewer .docx-wrapper img {
   max-width: none;
 }
