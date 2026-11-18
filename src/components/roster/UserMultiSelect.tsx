@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
 import { useLanguage } from "@/lib/language-context";
+import { shortName } from "@/lib/utils";
 import type { User } from "@/lib/types";
 
 export function UserMultiSelect({
@@ -71,10 +72,12 @@ export function UserMultiSelect({
         {selectedUsers.map((u) => (
           <span
             key={u.id}
-            className="roster-chip inline-flex items-center gap-1.5 pl-1 pr-2 py-1 rounded-full bg-[color-mix(in_srgb,var(--color-ink)_6%,transparent)] max-w-full"
+            className="roster-chip inline-flex items-center gap-1.5 pl-1 pr-2 py-1 rounded-full bg-[color-mix(in_srgb,var(--color-ink)_6%,transparent)] max-w-full print:bg-transparent print:p-0 print:rounded-none"
           >
-            <Avatar name={u.name} color={u.avatarColor} src={u.photo} size="xs" />
-            <span className="roster-chip-name text-xs font-medium min-w-0">{u.name}</span>
+            {/* On paper: no round picture, and the name as an initial plus surname ("G. Paidin"). */}
+            <Avatar name={u.name} color={u.avatarColor} src={u.photo} size="xs" className="print:hidden" />
+            <span className="roster-chip-name text-xs font-medium min-w-0 print:hidden">{u.name}</span>
+            <span className="roster-chip-name text-xs font-medium min-w-0 hidden print:inline">{shortName(u.name)}</span>
             {u.status === "disabled" && <Badge tone="danger">{t("roster.disabledTag")}</Badge>}
             {!readOnly && (
               <button

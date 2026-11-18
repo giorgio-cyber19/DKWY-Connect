@@ -547,7 +547,7 @@ const nl: HelpContent = {
             "Het rooster toont één **kwartaal** tegelijk: **Q1** januari–maart, **Q2** april–juni, **Q3** juli–september en **Q4** oktober–december. Wissel met de pijltjes of klik op **Q1** t/m **Q4**.",
             "Klik op **Mijn Toewijzingen** om alleen te zien waarvoor jij bent ingedeeld.",
             "Filter op periode (van–tot, of de snelkeuzes zoals “Deze maand” en “Komende 3 maanden”), op persoon, of zoek op een woord.",
-            "Met **Rooster Afdrukken** print je het rooster.",
+            "Met **Rooster Afdrukken** print je het rooster of sla je het op als PDF. Op papier staan de aangewezen leraren compact als voorletter en achternaam (bijvoorbeeld *G. Paidin*), zonder ronde plaatje.",
           ],
         },
         {
@@ -1150,7 +1150,7 @@ const en: HelpContent = {
             "The roster shows one **quarter** at a time: **Q1** January–March, **Q2** April–June, **Q3** July–September and **Q4** October–December. Switch with the arrows or click **Q1** to **Q4**.",
             "Click **My Assignments** to see only what you're assigned to.",
             "Filter by period (from–to, or the shortcuts such as “This month” and “Next 3 months”), by person, or search for a word.",
-            "**Print Roster** prints the roster.",
+            "**Print Roster** prints the roster or saves it as a PDF. On paper the assigned teachers appear compactly as initial and surname (for example *G. Paidin*), without the round picture.",
           ],
         },
         {
