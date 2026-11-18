@@ -8,6 +8,7 @@ import { useLanguage } from "@/lib/language-context";
 import { translateApiError } from "@/lib/i18n/errors";
 import { driveDownloadUrl, updateFileInDrive } from "@/lib/upload";
 import { cn } from "@/lib/utils";
+import { WordViewer } from "./WordViewer";
 import type { DocumentItem } from "@/lib/types";
 
 const XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
@@ -34,7 +35,7 @@ export function DocumentViewer({ doc, onClose }: { doc: DocumentItem; onClose: (
   const { t, language } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [html, setHtml] = useState<string | null>(null);
+  const [docxBuffer, setDocxBuffer] = useState<ArrayBuffer | null>(null);
   const [sheetNames, setSheetNames] = useState<string[]>([]);
   const [activeSheet, setActiveSheet] = useState("");
   const [sheetsData, setSheetsData] = useState<Record<string, string[][]>>({});
@@ -82,10 +83,8 @@ export function DocumentViewer({ doc, onClose }: { doc: DocumentItem; onClose: (
           setActiveSheet(wb.SheetNames[0] ?? "");
           setSheetsData(data);
         } else if (doc.fileType === "docx") {
-          const mammothModule = await import("mammoth");
-          const mammoth = mammothModule.default ?? mammothModule;
-          const result = await mammoth.convertToHtml({ arrayBuffer: buffer });
-          if (!cancelled) setHtml(result.value);
+          // Shown by WordViewer as real pages (docx-preview), with a plain reading view as the fallback.
+          if (!cancelled) setDocxBuffer(buffer);
         }
       } catch (err) {
         if (!cancelled) {
@@ -214,9 +213,7 @@ export function DocumentViewer({ doc, onClose }: { doc: DocumentItem; onClose: (
           <p className="text-sm font-semibold">{loadError}</p>
         </div>
       ) : doc.fileType === "docx" ? (
-        <div className="flex-1 overflow-y-auto">
-          <div className="max-w-3xl mx-auto px-8 py-10 prose-doc" dangerouslySetInnerHTML={{ __html: html ?? "" }} />
-        </div>
+        docxBuffer && <WordViewer buffer={docxBuffer} />
       ) : (
         <div className="flex-1 flex flex-col min-h-0">
           {sheetNames.length > 1 && (

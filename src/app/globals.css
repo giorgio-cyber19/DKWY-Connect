@@ -450,3 +450,21 @@ body {
     clip-path: circle(150% at var(--vt-x, 50%) var(--vt-y, 50%));
   }
 }
+
+/* Word viewer (docx-preview): white pages with a soft shadow on a grey desk, whatever the app theme is. */
+.word-viewer .docx-wrapper {
+  background: transparent !important;
+  padding: 18px 12px !important;
+}
+.word-viewer .docx-wrapper > section.docx {
+  background: #fff;
+  color: #000;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22), 0 6px 18px rgba(0, 0, 0, 0.14) !important;
+  margin-bottom: 16px !important;
+}
+.word-viewer .docx-wrapper img {
+  max-width: none;
+}
+.word-viewer .docx-wrapper table {
+  border-collapse: collapse;
+}

@@ -457,7 +457,7 @@ const nl: HelpContent = {
           kind: "list",
           title: "Met een bestand werken (rechtermuisknop op het bestand, of de ⋮-knop)",
           items: [
-            "**Openen:** PDF-, Word- en Excel-bestanden bekijk je in de app; Excel-bestanden kun je ook bewerken. Een PDF opent in de ingebouwde PDF-viewer: scroll door de pagina's, zoom in en uit, spring naar een pagina en download hem. Sluiten doe je met **✕** of **Esc**. Je kunt ze ook openen in Google Documenten of Spreadsheets.",
+            "**Openen:** PDF-, Word- en Excel-bestanden bekijk je in de app; Excel-bestanden kun je ook bewerken. Een Word-bestand opent als een echte pagina, zoals in Word of Google Documenten, met de opmaak, kleuren, markeringen, lijsten, tabellen en afbeeldingen van het document; met de knoppen rechtsonder zoom je in en uit. Een PDF opent in de ingebouwde PDF-viewer: scroll door de pagina's, zoom in en uit, spring naar een pagina en download hem. Sluiten doe je met **✕** of **Esc**. Je kunt ze ook openen in Google Documenten of Spreadsheets.",
             "**Hernoemen:** de naam verandert direct ook in Google Drive. De extensie (bijvoorbeeld .pdf) blijft gelijk.",
             "**Downloaden** — het bestand komt op je eigen apparaat.",
             "**Verwijderen:** het bestand gaat naar de prullenbak van Google Drive, dus je kunt het daar nog terughalen.",
@@ -1057,7 +1057,7 @@ const en: HelpContent = {
           kind: "list",
           title: "Working with a file (right-click the file, or the ⋮ button)",
           items: [
-            "**Open:** you view PDF, Word and Excel files in the app; Excel files can also be edited. A PDF opens in the built-in PDF viewer: scroll through the pages, zoom in and out, jump to a page and download it. Close it with **✕** or **Esc**. You can also open them in Google Docs or Sheets.",
+            "**Open:** you view PDF, Word and Excel files in the app; Excel files can also be edited. A Word file opens as a real page, like in Word or Google Docs, with the document's formatting, colours, highlights, lists, tables and images; use the buttons at the bottom right to zoom. A PDF opens in the built-in PDF viewer: scroll through the pages, zoom in and out, jump to a page and download it. Close it with **✕** or **Esc**. You can also open them in Google Docs or Sheets.",
             "**Rename:** the name changes in Google Drive too, straight away. The extension (for example .pdf) stays the same.",
             "**Download** — the file is saved to your own device.",
             "**Delete:** the file goes to the Google Drive trash, so you can still recover it there.",
