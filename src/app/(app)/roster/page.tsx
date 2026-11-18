@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { addMonths, subMonths, format, isSameMonth } from "date-fns";
+import { addQuarters, subQuarters, format, isSameQuarter, getQuarter } from "date-fns";
 import { nl as nlLocale } from "date-fns/locale";
 import { ChevronLeft, ChevronRight, Plus, Printer, ClipboardList, CalendarPlus, CircleCheck } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -82,7 +82,7 @@ function RosterPageContent() {
   function revealAdded(firstDate: string, message: string) {
     const added = parseDate(firstDate);
     const filtered = !!(filters.dateFrom || filters.dateTo || filters.userId || filters.search);
-    const inView = tab === "roster" && !filtered && isSameMonth(added, cursor);
+    const inView = tab === "roster" && !filtered && isSameQuarter(added, cursor);
     setAddNotice({ text: message, date: inView ? undefined : firstDate });
   }
 
@@ -116,7 +116,7 @@ function RosterPageContent() {
 
   const scopedEntries = useMemo(() => {
     if (usingDateRange) return filtered;
-    return filtered.filter((r) => isSameMonth(parseDate(r.date), cursor));
+    return filtered.filter((r) => isSameQuarter(parseDate(r.date), cursor));
   }, [filtered, usingDateRange, cursor]);
 
   const myAssignments = useMemo(() => {
@@ -127,9 +127,14 @@ function RosterPageContent() {
       .sort((a, b) => a.date.localeCompare(b.date));
   }, [rosterEntries, user]);
 
-  const printRangeLabel = usingDateRange
-    ? `${filters.dateFrom || "…"} – ${filters.dateTo || "…"}`
-    : format(cursor, "MMMM yyyy", { locale: dateFnsLocale });
+  // The roster is shown one quarter at a time: Q1 Jan–Mar, Q2 Apr–Jun, Q3 Jul–Sep, Q4 Oct–Dec.
+  const cursorQuarter = getQuarter(cursor);
+  const cursorYear = cursor.getFullYear();
+  const quarterMonths = (q: number) =>
+    `${format(new Date(cursorYear, (q - 1) * 3, 1), "MMMM", { locale: dateFnsLocale })} – ${format(new Date(cursorYear, (q - 1) * 3 + 2, 1), "MMMM", { locale: dateFnsLocale })}`;
+  const quarterLabel = `Q${cursorQuarter} ${cursorYear}`;
+
+  const printRangeLabel = usingDateRange ? `${filters.dateFrom || "…"} – ${filters.dateTo || "…"}` : `${quarterLabel} (${quarterMonths(cursorQuarter)})`;
 
   function latestRosterDate(): string {
     return rosterEntries.reduce((max, r) => (r.date > max ? r.date : max), toIsoDate(new Date()));
@@ -194,14 +199,34 @@ function RosterPageContent() {
             </span>
           </div>
           {tab === "roster" && !usingDateRange && (
-            <div className="flex items-center gap-3">
-              <button onClick={() => setCursor((c) => subMonths(c, 1))} className="p-2 rounded-xl hover:bg-black/5">
-                <ChevronLeft size={17} />
-              </button>
-              <p className="font-display font-semibold text-lg w-36 text-center">{format(cursor, "MMMM yyyy", { locale: dateFnsLocale })}</p>
-              <button onClick={() => setCursor((c) => addMonths(c, 1))} className="p-2 rounded-xl hover:bg-black/5">
-                <ChevronRight size={17} />
-              </button>
+            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+              <div className="flex items-center gap-2">
+                <button onClick={() => setCursor((c) => subQuarters(c, 1))} className="p-2 rounded-xl hover:bg-black/5" aria-label={t("roster.previousQuarter")} title={t("roster.previousQuarter")}>
+                  <ChevronLeft size={17} />
+                </button>
+                <div className="text-center w-44">
+                  <p className="font-display font-semibold text-lg leading-tight">{quarterLabel}</p>
+                  <p className="text-[11.5px] text-[var(--text-secondary)]">{quarterMonths(cursorQuarter)}</p>
+                </div>
+                <button onClick={() => setCursor((c) => addQuarters(c, 1))} className="p-2 rounded-xl hover:bg-black/5" aria-label={t("roster.nextQuarter")} title={t("roster.nextQuarter")}>
+                  <ChevronRight size={17} />
+                </button>
+              </div>
+              <div className="flex items-center gap-1" role="group" aria-label={t("roster.quarterPicker")}>
+                {[1, 2, 3, 4].map((q) => (
+                  <button
+                    key={q}
+                    onClick={() => setCursor(new Date(cursorYear, (q - 1) * 3, 1))}
+                    title={quarterMonths(q)}
+                    aria-pressed={q === cursorQuarter}
+                    className={`px-3 py-1.5 rounded-lg text-[12.5px] font-bold transition-colors focus-ring ${
+                      q === cursorQuarter ? "bg-[var(--color-gold)] text-[#151a2d]" : "text-[var(--text-secondary)] hover:bg-black/5 hover:text-[var(--text-primary)]"
+                    }`}
+                  >
+                    Q{q}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>

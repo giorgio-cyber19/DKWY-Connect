@@ -60,7 +60,10 @@ const en = {
   clearFilters: "Clear filters",
 
   noEntriesTitle: "No roster entries yet",
-  noEntriesThisMonth: "No roster entries this month.",
+  noEntriesThisMonth: "No roster entries this quarter.",
+  previousQuarter: "Previous quarter",
+  nextQuarter: "Next quarter",
+  quarterPicker: "Choose a quarter",
 
   myAssignmentsTitle: "My Upcoming Assignments",
   myAssignmentsEmptyTitle: "No upcoming assignments",
@@ -137,7 +140,10 @@ const nl: typeof en = {
   clearFilters: "Filters wissen",
 
   noEntriesTitle: "Nog geen roosterpunten",
-  noEntriesThisMonth: "Geen roosterpunten deze maand.",
+  noEntriesThisMonth: "Geen roosterpunten dit kwartaal.",
+  previousQuarter: "Vorig kwartaal",
+  nextQuarter: "Volgend kwartaal",
+  quarterPicker: "Kies een kwartaal",
 
   myAssignmentsTitle: "Mijn Aankomende Toewijzingen",
   myAssignmentsEmptyTitle: "Geen aankomende toewijzingen",

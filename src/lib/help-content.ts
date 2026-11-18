@@ -544,6 +544,7 @@ const nl: HelpContent = {
           title: "Voor iedereen",
           items: [
             "Bekijk per zondag het thema, de leraren, de voorganger, liturgie en muziek.",
+            "Het rooster toont één **kwartaal** tegelijk: **Q1** januari–maart, **Q2** april–juni, **Q3** juli–september en **Q4** oktober–december. Wissel met de pijltjes of klik op **Q1** t/m **Q4**.",
             "Klik op **Mijn Toewijzingen** om alleen te zien waarvoor jij bent ingedeeld.",
             "Filter op periode (van–tot, of de snelkeuzes zoals “Deze maand” en “Komende 3 maanden”), op persoon, of zoek op een woord.",
             "Met **Rooster Afdrukken** print je het rooster.",
@@ -561,7 +562,7 @@ const nl: HelpContent = {
           kind: "steps",
           title: "Alleen voor beheerders: zondagen toevoegen en verwijderen",
           items: [
-            "Voeg een zondag toe met **Rij Toevoegen**: de nieuwe rij komt onderaan, op de zondag na de laatste zondag in het rooster. Je blijft in de maand die je bekijkt; staat de nieuwe rij in een andere maand, dan verschijnt er een melding met de knop **Bekijken** om erheen te gaan. Wijzigingen aan het rooster geven de andere gebruikers geen melding. Wil je er meerdere tegelijk? Gebruik **Meerdere Zondagen Toevoegen** (kies de startdatum en het aantal weken).",
+            "Voeg een zondag toe met **Rij Toevoegen**: de nieuwe rij komt onderaan, op de zondag na de laatste zondag in het rooster. Je blijft in het kwartaal dat je bekijkt; staat de nieuwe rij in een ander kwartaal, dan verschijnt er een melding met de knop **Bekijken** om erheen te gaan. Wijzigingen aan het rooster geven de andere gebruikers geen melding. Wil je er meerdere tegelijk? Gebruik **Meerdere Zondagen Toevoegen** (kies de startdatum en het aantal weken).",
             "Met **Dupliceren** of **Verwijderen** op een rij kopieer of verwijder je een zondag. Elke rij heeft een bijbehorend evenement in de kalender (**Bekijk in Kalender**).",
           ],
         },
@@ -1146,6 +1147,7 @@ const en: HelpContent = {
           title: "For everyone",
           items: [
             "See the theme, teachers, preacher, liturgy and music per Sunday.",
+            "The roster shows one **quarter** at a time: **Q1** January–March, **Q2** April–June, **Q3** July–September and **Q4** October–December. Switch with the arrows or click **Q1** to **Q4**.",
             "Click **My Assignments** to see only what you're assigned to.",
             "Filter by period (from–to, or the shortcuts such as “This month” and “Next 3 months”), by person, or search for a word.",
             "**Print Roster** prints the roster.",
@@ -1163,7 +1165,7 @@ const en: HelpContent = {
           kind: "steps",
           title: "Administrators only: adding and deleting Sundays",
           items: [
-            "Add a Sunday with **Add Row**: the new row goes at the bottom, on the Sunday after the last Sunday on the roster. You stay in the month you're viewing; if the new row is in another month, a message with a **Show** button takes you there. Roster changes don't send other users a notification. Want several at once? Use **Add Multiple Sundays** (pick the start date and number of weeks).",
+            "Add a Sunday with **Add Row**: the new row goes at the bottom, on the Sunday after the last Sunday on the roster. You stay in the quarter you're viewing; if the new row is in another quarter, a message with a **Show** button takes you there. Roster changes don't send other users a notification. Want several at once? Use **Add Multiple Sundays** (pick the start date and number of weeks).",
             "**Duplicate** or **Delete** on a row copies or removes a Sunday. Every row has a matching event in the calendar (**View in Calendar**).",
           ],
         },
