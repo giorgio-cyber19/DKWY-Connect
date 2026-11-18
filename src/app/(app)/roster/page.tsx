@@ -124,22 +124,12 @@ function RosterPageContent() {
     ? `${filters.dateFrom || "…"} – ${filters.dateTo || "…"}`
     : format(cursor, "MMMM yyyy", { locale: dateFnsLocale });
 
-  async function handleAddRow() {
-    const date = toIsoDate(new Date());
-    try {
-      const entry = await useAppStore.getState().createRosterEntry({ date, ...blankFields });
-      setFocusRowId(entry.id);
-      revealAdded(date, `${t("roster.addedRowNotice")}: ${formatDate(date, { weekday: "long" }, language)}`);
-    } catch {
-      setAddNotice(t("roster.addFailed"));
-    }
-  }
-
   function latestRosterDate(): string {
     return rosterEntries.reduce((max, r) => (r.date > max ? r.date : max), toIsoDate(new Date()));
   }
 
-  async function handleAddNextSunday() {
+  /** A new row goes after the last one: the Sunday following the latest date on the roster. */
+  async function handleAddRow() {
     const date = toIsoDate(nextSundayAfter(parseDate(latestRosterDate())));
     try {
       const entry = await useAppStore.getState().createRosterEntry({ date, ...blankFields });
@@ -172,9 +162,6 @@ function RosterPageContent() {
                 <>
                   <Button variant="outline" onClick={() => setAddMultipleStart(toIsoDate(nextSundayAfter(parseDate(latestRosterDate()))))}>
                     <CalendarPlus size={15} /> {t("roster.addMultipleSundays")}
-                  </Button>
-                  <Button variant="outline" onClick={handleAddNextSunday}>
-                    <Plus size={15} /> {t("roster.addNextSunday")}
                   </Button>
                   <Button onClick={handleAddRow}>
                     <Plus size={15} /> {t("roster.addRow")}
