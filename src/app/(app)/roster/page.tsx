@@ -57,7 +57,7 @@ function RosterPageContent() {
   // Non-null while the "add multiple Sundays" dialog is open: the suggested first date.
   const [addMultipleStart, setAddMultipleStart] = useState<string | null>(null);
   // What was just added; `date` is set when the new row is outside the current view (so a "Show" button can go there).
-  const [addNotice, setAddNotice] = useState<{ text: string; date?: string } | null>(null);
+  const [addNotice, setAddNotice] = useState<{ text: string; date?: string; ok?: boolean; undo?: () => Promise<void> } | null>(null);
 
   const isAdmin = user?.role === "admin";
   const canEdit = !!user; // teachers update the roster too; adding and deleting rows is for administrators
@@ -232,8 +232,21 @@ function RosterPageContent() {
         </div>
 
         {addNotice && (
-          <p className="no-print flex items-center gap-1.5 text-[13px] font-semibold text-[var(--color-sage-deep)] mb-3" role="status">
+          <p className={`no-print flex items-center gap-1.5 text-[13px] font-semibold mb-3 ${addNotice.ok === false ? "text-red-500" : "text-[var(--color-sage-deep)]"}`} role="status">
             <CircleCheck size={15} /> {addNotice.text}
+            {addNotice.undo && (
+              <button
+                type="button"
+                onClick={async () => {
+                  const undo = addNotice.undo!;
+                  setAddNotice(null);
+                  await undo();
+                }}
+                className="ml-1 underline underline-offset-2 hover:opacity-80"
+              >
+                {t("roster.undoMove")}
+              </button>
+            )}
             {addNotice.date && (
               <button type="button" onClick={() => showAdded(addNotice.date!)} className="ml-1 underline underline-offset-2 hover:opacity-80">
                 {t("roster.showAddedRow")}
@@ -258,7 +271,9 @@ function RosterPageContent() {
                 focusRowId={focusRowId}
                 isAdmin={isAdmin}
                 canEdit={canEdit}
+                canReorder={canEdit && !filters.userId && !filters.search}
                 onSaveStatusChange={setSaveStatus}
+                onMoveNotice={(n) => setAddNotice({ text: n.text, ok: n.ok, undo: n.undo })}
               />
             </div>
             <div className="sm:hidden">

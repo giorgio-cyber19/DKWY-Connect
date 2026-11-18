@@ -2,14 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Copy, Trash2, CalendarDays } from "lucide-react";
+import { Copy, Trash2, CalendarDays, GripVertical } from "lucide-react";
 import { EditableTextCell, type CellNavigation } from "./EditableTextCell";
 import { EditableDateCell } from "./EditableDateCell";
 import { UserMultiSelect } from "./UserMultiSelect";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useAppStore } from "@/lib/store";
 import { useLanguage } from "@/lib/language-context";
-import { cn } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 import type { RosterEntry, User } from "@/lib/types";
 import type { TranslationKey } from "@/lib/i18n";
 
@@ -25,6 +25,33 @@ const PLACEHOLDER_KEYS = {
   musicalAccompaniment: "roster.musicalAccompanimentPlaceholder",
 } as const satisfies Record<TextField, TranslationKey>;
 
+/** What a Sunday holds besides its date: dragging a row moves these between Sundays, the dates stay in place. */
+type Content = Pick<RosterEntry, "sundaySchoolUserIds" | "teenClubUserIds" | "theme" | "notes" | "serviceType" | "preacher" | "liturgy" | "musicalAccompaniment">;
+
+function contentOf(entry: RosterEntry): Content {
+  return {
+    sundaySchoolUserIds: [...entry.sundaySchoolUserIds],
+    teenClubUserIds: [...entry.teenClubUserIds],
+    theme: entry.theme,
+    notes: entry.notes,
+    serviceType: entry.serviceType,
+    preacher: entry.preacher,
+    liturgy: entry.liturgy,
+    musicalAccompaniment: entry.musicalAccompaniment,
+  };
+}
+
+function sameContent(a: Content, b: Content): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
+export interface RosterMoveNotice {
+  text: string;
+  ok: boolean;
+  /** Puts everything back the way it was. */
+  undo?: () => Promise<void>;
+}
+
 const thClass = "sticky top-0 z-10 bg-[var(--bg-elevated)] text-[10px] font-bold uppercase tracking-wide text-[var(--text-secondary)] text-left px-2.5 py-2.5 border-b border-[var(--border-soft)] whitespace-nowrap";
 const tdClass = "px-1.5 py-1 border-b border-[var(--border-softer)] align-top";
 
@@ -35,7 +62,9 @@ export function RosterSpreadsheet({
   focusRowId,
   isAdmin,
   canEdit,
+  canReorder,
   onSaveStatusChange,
+  onMoveNotice,
 }: {
   entries: RosterEntry[];
   users: User[];
@@ -46,9 +75,14 @@ export function RosterSpreadsheet({
   isAdmin: boolean;
   /** Teachers and administrators may edit cells; only administrators add, duplicate or delete rows. */
   canEdit: boolean;
+  /** Whether rows can be dragged to another Sunday (needs edit rights and an unfiltered view). */
+  canReorder?: boolean;
   onSaveStatusChange?: (status: "idle" | "saving" | "saved") => void;
+  onMoveNotice?: (notice: RosterMoveNotice) => void;
 }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dropAt, setDropAt] = useState<{ id: string; after: boolean } | null>(null);
   const [activeCell, setActiveCell] = useState<{ entryId: string; field: TextField } | null>(null);
   const [flashId, setFlashId] = useState<string | null>(highlightId ?? null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -83,6 +117,66 @@ export function RosterSpreadsheet({
     beginSave();
     try {
       await useAppStore.getState().updateRosterEntry(entry.id, patch);
+    } finally {
+      endSave();
+    }
+  }
+
+  /**
+   * Drag-and-drop: the dragged Sunday's plan (teachers, theme, notes, service, preacher, liturgy, music) moves to the
+   * Sunday it is dropped on; the Sundays in between shift one place. Dates never change, so calendar events stay put.
+   */
+  async function moveRow(fromId: string, targetId: string, after: boolean) {
+    const from = entries.findIndex((e) => e.id === fromId);
+    const hover = entries.findIndex((e) => e.id === targetId);
+    if (from < 0 || hover < 0) return;
+    const insertAt = hover + (after ? 1 : 0);
+    const to = insertAt > from ? insertAt - 1 : insertAt;
+    if (to === from) return;
+
+    const before = entries.map(contentOf);
+    const next = [...before];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+
+    const changes: { id: string; before: Content; after: Content }[] = [];
+    for (let i = Math.min(from, to); i <= Math.max(from, to); i++) {
+      if (!sameContent(before[i], next[i])) changes.push({ id: entries[i].id, before: before[i], after: next[i] });
+    }
+    if (changes.length === 0) return;
+
+    const apply = async (list: { id: string; content: Content }[]) => {
+      for (const item of list) await useAppStore.getState().updateRosterEntry(item.id, item.content);
+    };
+    const short = (iso: string) => formatDate(iso, { day: "numeric", month: "short", year: undefined }, language);
+
+    beginSave();
+    const done: typeof changes = [];
+    try {
+      for (const change of changes) {
+        await useAppStore.getState().updateRosterEntry(change.id, change.after);
+        done.push(change);
+      }
+      onMoveNotice?.({
+        ok: true,
+        text: `${t("roster.rowMovedNotice")}: ${short(entries[from].date)} → ${short(entries[to].date)}`,
+        undo: async () => {
+          beginSave();
+          try {
+            await apply(changes.map((c) => ({ id: c.id, content: c.before })));
+          } finally {
+            endSave();
+          }
+        },
+      });
+    } catch {
+      // Put back whatever was already moved so no Sunday ends up with someone else's plan.
+      try {
+        await apply(done.map((c) => ({ id: c.id, content: c.before })));
+      } catch {
+        /* the next sync shows the true state */
+      }
+      onMoveNotice?.({ ok: false, text: t("roster.moveRowFailed") });
     } finally {
       endSave();
     }
@@ -192,9 +286,59 @@ export function RosterSpreadsheet({
               ref={(el) => {
                 rowRefs.current[entry.id] = el;
               }}
+              onDragOver={
+                dragId
+                  ? (e) => {
+                      e.preventDefault();
+                      e.dataTransfer.dropEffect = "move";
+                      const box = e.currentTarget.getBoundingClientRect();
+                      const after = e.clientY > box.top + box.height / 2;
+                      if (dropAt?.id !== entry.id || dropAt.after !== after) setDropAt({ id: entry.id, after });
+                    }
+                  : undefined
+              }
+              onDrop={
+                dragId
+                  ? (e) => {
+                      e.preventDefault();
+                      const target = dropAt?.id === entry.id ? dropAt : { id: entry.id, after: false };
+                      const from = dragId;
+                      setDragId(null);
+                      setDropAt(null);
+                      if (from) moveRow(from, entry.id, target.after);
+                    }
+                  : undefined
+              }
+              className={cn(
+                dragId === entry.id && "opacity-40",
+                dragId && dropAt?.id === entry.id && dragId !== entry.id && (dropAt.after ? "[&>td]:shadow-[inset_0_-3px_0_0_var(--color-blue)]" : "[&>td]:shadow-[inset_0_3px_0_0_var(--color-blue)]")
+              )}
             >
               <td className={cn(tdClass, rowBg, "transition-colors duration-[1500ms] sticky left-0 z-[5]")}>
-                <EditableDateCell value={entry.date} onCommit={(value) => commitField(entry, { date: value })} readOnly={!canEdit} />
+                <div className="flex items-center gap-1">
+                  {canReorder && (
+                    <span
+                      draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.effectAllowed = "move";
+                        e.dataTransfer.setData("text/plain", entry.id);
+                        const row = rowRefs.current[entry.id];
+                        if (row) e.dataTransfer.setDragImage(row, 12, 12);
+                        setDragId(entry.id);
+                      }}
+                      onDragEnd={() => {
+                        setDragId(null);
+                        setDropAt(null);
+                      }}
+                      title={t("roster.dragRowHint")}
+                      aria-label={t("roster.dragRowHint")}
+                      className="no-print shrink-0 cursor-grab active:cursor-grabbing p-0.5 rounded text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-black/5"
+                    >
+                      <GripVertical size={15} />
+                    </span>
+                  )}
+                  <EditableDateCell value={entry.date} onCommit={(value) => commitField(entry, { date: value })} readOnly={!canEdit} />
+                </div>
               </td>
               <td className={cn(tdClass, rowBg, "transition-colors duration-[1500ms]")}>
                 <UserMultiSelect

@@ -556,6 +556,7 @@ const nl: HelpContent = {
           items: [
             "Klik op een cel om hem te bewerken: kies leraren, of vul thema, opmerkingen, soort dienst, voorganger, liturgie of muziek in. Alles wordt automatisch bewaard, net als in een spreadsheet.",
             "Wijzig je de datum van een rij, dan verschuift het bijbehorende evenement in de kalender mee.",
+            "**Rijen slepen:** pak het greepje (⋮⋮) links bij de datum en sleep het programma van een zondag naar een andere zondag. Een blauwe lijn laat zien waar het terechtkomt. Leraren, thema, opmerkingen, soort dienst, voorganger, liturgie en muziek gaan mee; de datums blijven staan en de zondagen ertussen schuiven één plek op. Via **Ongedaan maken** in de melding zet je het terug. Slepen werkt binnen het kwartaal dat je bekijkt, niet als je op persoon of woord filtert en niet op een telefoon.",
           ],
         },
         {
@@ -1159,6 +1160,7 @@ const en: HelpContent = {
           items: [
             "Click a cell to edit it: pick teachers, or fill in the theme, notes, service type, preacher, liturgy or music. Everything is saved automatically, just like a spreadsheet.",
             "If you change the date of a row, its matching calendar event moves with it.",
+            "**Dragging rows:** grab the handle (⋮⋮) at the left next to the date and drag a Sunday's plan to another Sunday. A blue line shows where it will land. Teachers, theme, notes, service type, preacher, liturgy and music move along; the dates stay put and the Sundays in between shift one place. Use **Undo** in the message to put it back. Dragging works within the quarter you're viewing, not while filtering by person or word, and not on a phone.",
           ],
         },
         {
